@@ -40,6 +40,7 @@ export type MenuId =
   | "adm-groups"
   | "adm-claim-mappings"
   | "adm-form-connectors"
+  | "adm-notifications"
   | "adm-field-constraints"
   | "view-app"
   | "adm-tags"
@@ -88,6 +89,7 @@ export interface NavEntry {
     | "/filters"
     | "/claim-mappings"
     | "/form-connectors"
+    | "/notifications"
     | "/field-constraints"
     | "/metrics"
     | "/reports"
@@ -298,6 +300,14 @@ export const NAV_CATEGORIES: NavCategory[] = [
         labelKey: "nav.claimMappings",
         icon: "claimMapping",
         privileges: ["Manager"],
+      },
+      // Who the alerts are sent to, by mail or to the team messaging.
+      {
+        to: "/notifications",
+        menuId: "adm-notifications",
+        labelKey: "nav.notifications",
+        icon: "notification",
+        privileges: ["AlertsManager"],
       },
     ],
   },

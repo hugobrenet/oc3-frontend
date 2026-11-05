@@ -122,7 +122,7 @@ export interface Bookmark {
   id: string;
 }
 
-const PREFS_KEY = ["user", "self", "prefs"];
+export const PREFS_KEY = ["user", "self", "prefs"];
 
 function asPrefs(value: unknown): UserPrefs {
   return typeof value === "object" && value !== null ? (value as UserPrefs) : {};

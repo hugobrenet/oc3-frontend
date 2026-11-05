@@ -74,7 +74,8 @@
     "formConnectors": "Form connectors",
     "compModules": "Modules",
     "quotas": "Disk quotas",
-    "saves": "Backups"
+    "saves": "Backups",
+    "notifications": "Notifications"
   },
   "shortcuts": {
     "title": "Keyboard shortcuts",
@@ -1923,6 +1924,22 @@
         "auto": "As the format",
         "h23": "24-hour",
         "h12": "12-hour"
+      }
+    },
+    "notifications": {
+      "hint": "The new alerts of the apps your groups are responsible for, mailed to you, one message a minute at most.",
+      "mailDisabled": "The collector sends no mail at the moment: these settings take effect once it does.",
+      "enabled": "Mail me the alerts ({{email}})",
+      "level": "From the level",
+      "delay": "After (min)",
+      "periods": "On the periods",
+      "saved": "Saved",
+      "levels": {
+        "debug": "all (debug)",
+        "info": "all (info)",
+        "warning": "warning",
+        "error": "error",
+        "critical": "critical"
       }
     }
   },
@@ -4237,6 +4254,26 @@
     },
     "delete": {
       "question": "Delete {{name}} from the safe? Its content goes too; the services and rulesets referencing it will no longer get it. Its previous versions stay. This cannot be undone."
+    },
+    "secrets": {
+      "title": "Secrets stored apart from the files",
+      "intro": "The secrets of the form connectors and of the notification channels are encrypted with the master key of the safe, but stored in their own rows, not as files of the safe: they are listed here, never their values, with the key they depend on. After a new master key is made active, oc3 safe rewrap wraps them with it, as it does the files; an older key can be removed from the keys file once nothing depends on it any more.",
+      "empty": "No secret stored apart from the files.",
+      "stale_one": "{{count}} secret still depends on an older master key: run oc3 safe rewrap before removing it.",
+      "stale_other": "{{count}} secrets still depend on an older master key: run oc3 safe rewrap before removing it.",
+      "fields": {
+        "kind": "Held by",
+        "name": "Name",
+        "key": "Master key",
+        "updated": "Updated"
+      },
+      "kinds": {
+        "form_connector": "Form connector",
+        "notification_channel": "Notification channel"
+      },
+      "keyActive": "active",
+      "keyOld": "older key",
+      "keyMissing": "key missing: the secrets do not open"
     }
   },
   "assistant": {
@@ -5143,6 +5180,186 @@
         "location": "Location",
         "owner": "Owner"
       }
+    }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "intro": "Where the alerts of the dashboard are sent, beside the mails each user sets in their profile: the channels (mail lists, Slack, Mattermost, Teams, generic webhooks) and the subscriptions of the groups to them. The collector sends them once a minute, one message per subscription detailing the most severe alerts.",
+    "save": "Save",
+    "saving": "Saving…",
+    "disabled": "disabled",
+    "none": "None",
+    "fields": {
+      "name": "Name",
+      "type": "Type",
+      "description": "Description",
+      "destination": "Destination",
+      "subscriptions": "Subscriptions",
+      "updated": "Updated",
+      "addresses": "Mail addresses",
+      "username": "Sender name",
+      "icon_url": "Sender picture URL",
+      "networks": "Private networks",
+      "channel": "Channel",
+      "group": "Group",
+      "scope": "Alerts",
+      "min_severity": "From severity",
+      "delay_min": "Delay (min)",
+      "filters": "Filters",
+      "types_include": "Only the types",
+      "types_exclude": "Except the types",
+      "envs": "Environments",
+      "filterset": "Filterset",
+      "recipient": "Recipient",
+      "alert": "Alert",
+      "state": "State"
+    },
+    "types": {
+      "email": "Mail",
+      "slack": "Slack",
+      "mattermost": "Mattermost",
+      "teams": "Teams",
+      "webhook": "Webhook"
+    },
+    "severities": {
+      "notice": "notice",
+      "warning": "warning",
+      "error": "error",
+      "critical": "critical",
+      "alert": "alert"
+    },
+    "scope": {
+      "responsible": "Those of the apps the group is responsible for",
+      "all": "All the alerts of the collector"
+    },
+    "scopeShort": {
+      "responsible": "its apps",
+      "all": "all"
+    },
+    "states": {
+      "pending": "sending",
+      "sent": "sent",
+      "failed": "failed"
+    },
+    "days": {
+      "mon": "Monday",
+      "tue": "Tuesday",
+      "wed": "Wednesday",
+      "thu": "Thursday",
+      "fri": "Friday",
+      "sat": "Saturday",
+      "sun": "Sunday"
+    },
+    "periods": {
+      "always": "Always",
+      "never": "Never",
+      "custom": "From… to…",
+      "begin": "Start on {{day}}",
+      "end": "End on {{day}}",
+      "hint": "Local time of the collector. A period ending before it starts spans midnight. Out of the periods, the alerts wait for the next one."
+    },
+    "filters": {
+      "include": "only {{types}}",
+      "exclude": "except {{types}}",
+      "envs": "envs {{envs}}",
+      "filterset": "filterset #{{id}}",
+      "periods": "periods",
+      "resolved": "resolutions"
+    },
+    "channels": {
+      "title": "Channels",
+      "new": "New channel",
+      "intro": "The destinations of the alerts. A webhook URL is a secret: it is stored encrypted with the master key of the safe, in the channel itself, not as a file of the safe (the Safe view lists it apart), and never shown again.",
+      "empty": "No channel yet.",
+      "urlSet": "URL set",
+      "signed": "signed",
+      "noUrl": "No URL",
+      "noSubscription": "No subscription: nothing is sent"
+    },
+    "subscriptions": {
+      "title": "Subscriptions",
+      "new": "New subscription",
+      "intro": "The alerts of a group sent to a channel. A group responsible for no app receives nothing, unless its subscription takes all the alerts.",
+      "empty": "No subscription yet."
+    },
+    "deliveries": {
+      "title": "Latest deliveries",
+      "intro": "What was sent where, kept as long as the alert is in the dashboard (two days more for the subscriptions announcing the resolutions). A failed delivery is tried again, up to four times. Columns, filters and sort as in the other lists.",
+      "gone": "resolved since",
+      "nextTry": "Next try"
+    },
+    "channel": {
+      "createTitle": "New channel",
+      "editTitle": "Channel {{name}}",
+      "nameHint": "1 to 64 letters, digits, \".\", \"_\" or \"-\".",
+      "enabled": "Enabled: the subscriptions send to it",
+      "destination": "Destination",
+      "addressesHint": "One per line. Every alert of the subscriptions goes to all of them.",
+      "usernameHint": "Shown as the sender, when the webhook lets the sender choose it.",
+      "networksHint": "One CIDR prefix per line, when the webhook host is on a private network (an internal Mattermost say); the public addresses are always allowed. Plain http is accepted only then.",
+      "secret": {
+        "url": "Webhook URL",
+        "secret": "Signing secret"
+      },
+      "secretHint": {
+        "slack": "Slack: an incoming webhook of the app of the workspace (https://hooks.slack.com/services/…).",
+        "mattermost": "Mattermost: Integrations > Incoming webhooks (https://…/hooks/…).",
+        "teams": "Teams: a Workflows flow \"When a Teams webhook request is received\", posting the Adaptive Card to the channel.",
+        "webhook": "Any https endpoint receiving the JSON document of the alerts (version 1).",
+        "email": "",
+        "secret": "Optional: the messages are then signed, X-OC3-Signature being sha256= and the HMAC-SHA256 of X-OC3-Timestamp, a dot and the body."
+      },
+      "testTitle": "Test",
+      "testIntro": "Sends a test message now, the channel enabled or not.",
+      "testRun": "Send a test message",
+      "testRunning": "Sending…",
+      "testOk": "accepted in {{ms}} ms",
+      "testFailed": "refused: {{message}}",
+      "delete": "Delete the channel",
+      "deleteQuestion": "Delete the channel {{name}} and its subscriptions?"
+    },
+    "subscription": {
+      "createTitle": "New subscription",
+      "editTitle": "Subscription",
+      "who": "Who",
+      "which": "Which alerts",
+      "when": "When",
+      "enabled": "Enabled",
+      "typesHint": "Alert types as the dashboard shows them, one per line; empty for all.",
+      "envsHint": "None checked: every environment.",
+      "filtersetHint": "Only the alerts of the nodes and services of the filterset. A filterset selecting nothing lets no alert through.",
+      "noFilterset": "No filterset",
+      "resolved": "Announce the alerts sent once they are resolved (gone from the dashboard)",
+      "delete": "Delete the subscription",
+      "deleteQuestion": "Stop sending the alerts of {{group}} to {{channel}}?"
+    },
+    "deliveryFields": {
+      "updated": "Updated",
+      "state": "State",
+      "attempts": "Tries",
+      "recipient_kind": "Recipient type",
+      "recipient_label": "Recipient",
+      "channel_name": "Channel",
+      "group_role": "Group",
+      "alert_severity": "Severity",
+      "alert_object": "Object",
+      "alert_type": "Alert type",
+      "alert_message": "Message",
+      "alert_present": "In the dashboard",
+      "last_error": "Error",
+      "next_try": "Next try",
+      "created": "Created",
+      "alert_id": "Alert id",
+      "recipient": "Recipient key",
+      "id": "Id"
+    },
+    "recipientKinds": {
+      "subscription": "subscription",
+      "user": "personal mail"
+    },
+    "present": {
+      "yes": "yes",
+      "no": "no"
     }
   }
 }

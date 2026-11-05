@@ -28,6 +28,7 @@ import { UserGroupsParts } from "@/features/users/UserGroupsParts";
 import { useUserGroups } from "@/features/users/use-user-groups";
 import { isSession, useCredentials } from "@/lib/api/auth";
 import { useImpersonation } from "@/lib/api/impersonation";
+import { NotificationsCard } from "./NotificationsCard";
 import { PasswordSection } from "./PasswordSection";
 import { ProfileCard } from "./ProfileCard";
 
@@ -145,7 +146,7 @@ export function ProfilePage() {
         </ProfileCard>
         <PasswordSection email={data?.email ?? undefined} />
         <GroupsCard />
-        {detailCard("notifications")}
+        <NotificationsCard />
         <AppearanceCard />
         {detailCard("restrictions")}
         <SavedSettingsCard />

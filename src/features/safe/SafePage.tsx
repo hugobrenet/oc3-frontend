@@ -22,6 +22,7 @@ import { STATS_LIMIT, toValueStats, type ValueStats } from "@/lib/api/value-stat
 import { useViewPrefs, withSavedSearch } from "@/lib/user-prefs";
 import { EncryptionMark } from "./EncryptionMark";
 import { SafeDetailPanel } from "./SafeDetailPanel";
+import { SafeSecretsSection } from "./SafeSecretsSection";
 import { SafeUploadPanel } from "./SafeUploadPanel";
 import { formatBytes, type SafeFileRow } from "./use-safe";
 
@@ -163,6 +164,10 @@ export function SafePage() {
   const canUpload =
     privileges.data !== undefined && hasPrivilege(privileges.data, ["SafeUploader"]);
   const [uploading, setUploading] = useState(false);
+  // The secrets kept apart from the files, to those managing what holds them.
+  const seesSecrets =
+    privileges.data !== undefined &&
+    hasPrivilege(privileges.data, ["FormsManager", "AlertsManager"]);
 
   /** Ids of the whole selection, filters included, without pagination. */
   async function allIds(): Promise<string[]> {
@@ -226,6 +231,16 @@ export function SafePage() {
         selectAllMatching={allIds}
         filterable
       />
+
+      {seesSecrets && (
+        <SafeSecretsSection
+          onOpen={() => {
+            // The panel of a secret's holder takes the right edge the file panels use.
+            setUploading(false);
+            update({ sel: undefined, tab: undefined });
+          }}
+        />
+      )}
 
       <SafeUploadPanel
         open={uploading}

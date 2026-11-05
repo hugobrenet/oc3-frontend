@@ -30,6 +30,7 @@ import { ServiceActionsPage } from "@/features/service-actions/ServiceActionsPag
 import { FiltersPage } from "@/features/filters/FiltersPage";
 import { ClaimMappingsPage } from "@/features/claim-mappings/ClaimMappingsPage";
 import { FormConnectorsPage } from "@/features/form-connectors/FormConnectorsPage";
+import { NotificationsPage } from "@/features/notifications/NotificationsPage";
 import { FieldConstraintsPage } from "@/features/field-constraints/FieldConstraintsPage";
 import { FiltersetsPage } from "@/features/filtersets/FiltersetsPage";
 import { FormsPage } from "@/features/forms/FormsPage";
@@ -312,6 +313,14 @@ const formConnectorsRoute = createRoute({
   validateSearch: parseListSearch,
 });
 
+// The channels and subscriptions of the alert notifications: AlertsManager, as the api.
+const notificationsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/notifications",
+  component: NotificationsPage,
+  validateSearch: parseListSearch,
+});
+
 const claimMappingsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/claim-mappings",
@@ -503,6 +512,7 @@ const routeTree = rootRoute.addChildren([
   filtersRoute,
   claimMappingsRoute,
   formConnectorsRoute,
+  notificationsRoute,
   fieldConstraintsRoute,
   filtersetsRoute,
   formsRoute,

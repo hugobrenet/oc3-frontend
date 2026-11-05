@@ -74,7 +74,8 @@
     "formConnectors": "Connecteurs de formulaires",
     "compModules": "Modules",
     "quotas": "Quotas disques",
-    "saves": "Sauvegardes"
+    "saves": "Sauvegardes",
+    "notifications": "Notifications"
   },
   "shortcuts": {
     "title": "Raccourcis clavier",
@@ -1923,6 +1924,22 @@
         "auto": "Selon le format",
         "h23": "24 heures",
         "h12": "12 heures"
+      }
+    },
+    "notifications": {
+      "hint": "Les nouvelles alertes des applications dont vos groupes sont responsables, envoyées par mail, un message par minute au plus.",
+      "mailDisabled": "Le collecteur n'envoie pas de mail pour l'instant : ces réglages s'appliqueront dès qu'il le fera.",
+      "enabled": "M'envoyer les alertes par mail ({{email}})",
+      "level": "À partir du niveau",
+      "delay": "Après (min)",
+      "periods": "Sur les plages",
+      "saved": "Enregistré",
+      "levels": {
+        "debug": "toutes (debug)",
+        "info": "toutes (info)",
+        "warning": "warning",
+        "error": "error",
+        "critical": "critical"
       }
     }
   },
@@ -4237,6 +4254,26 @@
     },
     "delete": {
       "question": "Supprimer {{name}} du coffre-fort ? Son contenu part aussi ; les services et rulesets qui le référencent ne le recevront plus. Ses versions précédentes restent. Cette opération est irréversible."
+    },
+    "secrets": {
+      "title": "Secrets stockés hors des fichiers",
+      "intro": "Les secrets des connecteurs de formulaires et des canaux de notification sont chiffrés avec la clé maître du safe, mais stockés dans leurs propres enregistrements, pas comme fichiers du safe : ils sont listés ici, jamais leurs valeurs, avec la clé dont ils dépendent. Après l'activation d'une nouvelle clé maître, oc3 safe rewrap les rechiffre avec elle, comme les fichiers ; une ancienne clé peut être retirée du fichier des clés quand plus rien n'en dépend.",
+      "empty": "Aucun secret stocké hors des fichiers.",
+      "stale_one": "{{count}} secret dépend encore d'une ancienne clé maître : lancer oc3 safe rewrap avant de la retirer.",
+      "stale_other": "{{count}} secrets dépendent encore d'une ancienne clé maître : lancer oc3 safe rewrap avant de la retirer.",
+      "fields": {
+        "kind": "Détenu par",
+        "name": "Nom",
+        "key": "Clé maître",
+        "updated": "Modifié"
+      },
+      "kinds": {
+        "form_connector": "Connecteur de formulaire",
+        "notification_channel": "Canal de notification"
+      },
+      "keyActive": "active",
+      "keyOld": "ancienne clé",
+      "keyMissing": "clé absente : les secrets ne s'ouvrent pas"
     }
   },
   "assistant": {
@@ -5143,6 +5180,186 @@
         "location": "Emplacement",
         "owner": "Propriétaire"
       }
+    }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "intro": "Où partent les alertes du dashboard, en plus des mails que chacun règle dans son profil : les canaux (listes mail, Slack, Mattermost, Teams, webhooks génériques) et les abonnements des groupes à ces canaux. Le collecteur les envoie chaque minute, un message par abonnement détaillant les alertes les plus graves.",
+    "save": "Enregistrer",
+    "saving": "Enregistrement…",
+    "disabled": "désactivé",
+    "none": "Aucun",
+    "fields": {
+      "name": "Nom",
+      "type": "Type",
+      "description": "Description",
+      "destination": "Destination",
+      "subscriptions": "Abonnements",
+      "updated": "Modifié",
+      "addresses": "Adresses mail",
+      "username": "Nom de l'expéditeur",
+      "icon_url": "URL de l'image de l'expéditeur",
+      "networks": "Réseaux privés",
+      "channel": "Canal",
+      "group": "Groupe",
+      "scope": "Alertes",
+      "min_severity": "À partir de",
+      "delay_min": "Délai (min)",
+      "filters": "Filtres",
+      "types_include": "Seulement les types",
+      "types_exclude": "Sauf les types",
+      "envs": "Environnements",
+      "filterset": "Filterset",
+      "recipient": "Destinataire",
+      "alert": "Alerte",
+      "state": "État"
+    },
+    "types": {
+      "email": "Mail",
+      "slack": "Slack",
+      "mattermost": "Mattermost",
+      "teams": "Teams",
+      "webhook": "Webhook"
+    },
+    "severities": {
+      "notice": "notice",
+      "warning": "warning",
+      "error": "error",
+      "critical": "critical",
+      "alert": "alert"
+    },
+    "scope": {
+      "responsible": "Celles des applications dont le groupe est responsable",
+      "all": "Toutes les alertes du collecteur"
+    },
+    "scopeShort": {
+      "responsible": "ses applications",
+      "all": "toutes"
+    },
+    "states": {
+      "pending": "en cours",
+      "sent": "envoyé",
+      "failed": "échec"
+    },
+    "days": {
+      "mon": "Lundi",
+      "tue": "Mardi",
+      "wed": "Mercredi",
+      "thu": "Jeudi",
+      "fri": "Vendredi",
+      "sat": "Samedi",
+      "sun": "Dimanche"
+    },
+    "periods": {
+      "always": "Toujours",
+      "never": "Jamais",
+      "custom": "De… à…",
+      "begin": "Début le {{day}}",
+      "end": "Fin le {{day}}",
+      "hint": "Heure locale du collecteur. Une plage qui finit avant de commencer passe minuit. Hors plage, les alertes attendent la suivante."
+    },
+    "filters": {
+      "include": "seulement {{types}}",
+      "exclude": "sauf {{types}}",
+      "envs": "env. {{envs}}",
+      "filterset": "filterset n° {{id}}",
+      "periods": "plages horaires",
+      "resolved": "résolutions"
+    },
+    "channels": {
+      "title": "Canaux",
+      "new": "Nouveau canal",
+      "intro": "Les destinations des alertes. L'URL d'un webhook est un secret : elle est stockée chiffrée avec la clé maître du safe, dans le canal lui-même et non comme fichier du safe (la vue Safe la liste à part), et n'est plus jamais affichée.",
+      "empty": "Aucun canal pour l'instant.",
+      "urlSet": "URL renseignée",
+      "signed": "signé",
+      "noUrl": "Pas d'URL",
+      "noSubscription": "Aucun abonnement : rien n'est envoyé"
+    },
+    "subscriptions": {
+      "title": "Abonnements",
+      "new": "Nouvel abonnement",
+      "intro": "Les alertes d'un groupe envoyées à un canal. Un groupe responsable d'aucune application ne reçoit rien, sauf si son abonnement prend toutes les alertes.",
+      "empty": "Aucun abonnement pour l'instant."
+    },
+    "deliveries": {
+      "title": "Derniers envois",
+      "intro": "Ce qui est parti où, conservé tant que l'alerte est dans le dashboard (deux jours de plus pour les abonnements qui annoncent les résolutions). Un envoi en échec est retenté, jusqu'à quatre fois. Colonnes, filtres et tri comme dans les autres listes.",
+      "gone": "résolue depuis",
+      "nextTry": "Prochain essai"
+    },
+    "channel": {
+      "createTitle": "Nouveau canal",
+      "editTitle": "Canal {{name}}",
+      "nameHint": "1 à 64 lettres, chiffres, « . », « _ » ou « - ».",
+      "enabled": "Actif : les abonnements y envoient",
+      "destination": "Destination",
+      "addressesHint": "Une par ligne. Chaque alerte des abonnements part à toutes.",
+      "usernameHint": "Affiché comme expéditeur, quand le webhook le permet.",
+      "networksHint": "Un préfixe CIDR par ligne, quand le serveur du webhook est sur un réseau privé (un Mattermost interne par exemple) ; les adresses publiques sont toujours permises. Le http en clair n'est accepté que dans ce cas.",
+      "secret": {
+        "url": "URL du webhook",
+        "secret": "Secret de signature"
+      },
+      "secretHint": {
+        "slack": "Slack : un webhook entrant de l'application de l'espace de travail (https://hooks.slack.com/services/…).",
+        "mattermost": "Mattermost : Intégrations > Webhooks entrants (https://…/hooks/…).",
+        "teams": "Teams : un flux Workflows « Lors de la réception d'une requête webhook Teams », qui publie la carte Adaptive Card dans le canal.",
+        "webhook": "Tout point d'entrée https recevant le document JSON des alertes (version 1).",
+        "email": "",
+        "secret": "Facultatif : les messages sont alors signés, X-OC3-Signature valant sha256= suivi du HMAC-SHA256 de X-OC3-Timestamp, d'un point et du corps."
+      },
+      "testTitle": "Essai",
+      "testIntro": "Envoie tout de suite un message d'essai, que le canal soit actif ou non.",
+      "testRun": "Envoyer un message d'essai",
+      "testRunning": "Envoi…",
+      "testOk": "accepté en {{ms}} ms",
+      "testFailed": "refusé : {{message}}",
+      "delete": "Supprimer le canal",
+      "deleteQuestion": "Supprimer le canal {{name}} et ses abonnements ?"
+    },
+    "subscription": {
+      "createTitle": "Nouvel abonnement",
+      "editTitle": "Abonnement",
+      "who": "Qui",
+      "which": "Quelles alertes",
+      "when": "Quand",
+      "enabled": "Actif",
+      "typesHint": "Types d'alertes tels que le dashboard les affiche, un par ligne ; vide pour tous.",
+      "envsHint": "Aucun coché : tous les environnements.",
+      "filtersetHint": "Seulement les alertes des nœuds et services du filterset. Un filterset qui ne sélectionne rien ne laisse passer aucune alerte.",
+      "noFilterset": "Aucun filterset",
+      "resolved": "Annoncer les alertes envoyées une fois résolues (disparues du dashboard)",
+      "delete": "Supprimer l'abonnement",
+      "deleteQuestion": "Ne plus envoyer les alertes de {{group}} à {{channel}} ?"
+    },
+    "deliveryFields": {
+      "updated": "Modifié",
+      "state": "État",
+      "attempts": "Essais",
+      "recipient_kind": "Type de destinataire",
+      "recipient_label": "Destinataire",
+      "channel_name": "Canal",
+      "group_role": "Groupe",
+      "alert_severity": "Sévérité",
+      "alert_object": "Objet",
+      "alert_type": "Type d'alerte",
+      "alert_message": "Message",
+      "alert_present": "Dans le dashboard",
+      "last_error": "Erreur",
+      "next_try": "Prochain essai",
+      "created": "Créé",
+      "alert_id": "Id de l'alerte",
+      "recipient": "Clé du destinataire",
+      "id": "Id"
+    },
+    "recipientKinds": {
+      "subscription": "abonnement",
+      "user": "mail personnel"
+    },
+    "present": {
+      "yes": "oui",
+      "no": "non"
     }
   }
 }

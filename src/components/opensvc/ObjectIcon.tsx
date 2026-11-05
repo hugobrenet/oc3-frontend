@@ -1,4 +1,5 @@
 import {
+  BellIcon,
   AlertTriangleIcon,
   DashboardIcon,
   AsteriskIcon,
@@ -78,6 +79,7 @@ export type ObjectKind =
   | "fieldConstraint"
   | "compAttachment"
   | "formConnector"
+  | "notification"
   | "orchestration";
 
 /**
@@ -164,6 +166,8 @@ const KINDS: Record<ObjectKind, { Icon: typeof ServerIcon; className: string }> 
   compAttachment: { Icon: LinkIcon, className: "text-icon-compliance" },
   // A link in the tint of the forms: the external APIs they call.
   formConnector: { Icon: LinkIcon, className: "text-icon-form" },
+  // The tint of the alerts it sends.
+  notification: { Icon: BellIcon, className: "text-icon-dashboard" },
 };
 
 export function ObjectIcon({ kind, className }: { kind: ObjectKind; className?: string }) {
