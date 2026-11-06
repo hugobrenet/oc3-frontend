@@ -25,6 +25,7 @@ export type MenuId =
   | "view-node-net"
   | "view-disks"
   | "view-disks-quotas"
+  | "view-arrays"
   | "view-saves"
   | "view-san"
   | "view-nodes-hw"
@@ -77,6 +78,7 @@ export interface NavEntry {
     | "/networks"
     | "/disks"
     | "/quotas"
+    | "/arrays"
     | "/saves"
     | "/san-switches"
     | "/packages"
@@ -198,6 +200,7 @@ export const NAV_CATEGORIES: NavCategory[] = [
       { to: "/networks", menuId: "view-node-net", labelKey: "nav.networks", icon: "network" },
       { to: "/disks", menuId: "view-disks", labelKey: "nav.disks", icon: "disk" },
       { to: "/quotas", menuId: "view-disks-quotas", labelKey: "nav.quotas", icon: "disk" },
+      { to: "/arrays", menuId: "view-arrays", labelKey: "nav.arrays", icon: "array" },
       { to: "/saves", menuId: "view-saves", labelKey: "nav.saves", icon: "save" },
       { to: "/san-switches", menuId: "view-san", labelKey: "nav.switches", icon: "switch" },
       { to: "/hardware", menuId: "view-nodes-hw", labelKey: "nav.hardware", icon: "hardware" },

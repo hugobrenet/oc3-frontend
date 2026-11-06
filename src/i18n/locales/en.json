@@ -74,6 +74,7 @@
     "formConnectors": "Form connectors",
     "compModules": "Modules",
     "quotas": "Disk quotas",
+    "arrays": "Storage arrays",
     "saves": "Backups",
     "notifications": "Notifications"
   },
@@ -5408,6 +5409,70 @@
       "invalid": "Not valid JSON: {{message}}",
       "run": "Import",
       "running": "Importing…"
+    }
+  },
+  "arrays": {
+    "title": "Storage arrays",
+    "intro": "The storage arrays the agents inventory, as the nodes inventorying them, their proxies, report them. An array shows its disk groups, its luns and the nodes and services using them, and its target ports. A StorageManager writes its comment and sets its proxies; the quotas of the disk groups have their own view.",
+    "fields": {
+      "array_name": "Name",
+      "array_model": "Model",
+      "array_firmware": "Firmware",
+      "array_cache": "Cache (MB)",
+      "array_level": "Level",
+      "array_comment": "Comment",
+      "array_updated": "Updated",
+      "id": "Record id"
+    },
+    "detail": {
+      "title": "Storage array",
+      "tabs": "Storage array tabs",
+      "editHint": "As a StorageManager, you change the comment in place.",
+      "groups": {
+        "identity": "Array",
+        "record": "Record"
+      }
+    },
+    "tabs": {
+      "diskgroups": "Disk groups",
+      "disks": "Disks",
+      "targets": "Target ports"
+    },
+    "proxies": {
+      "title": "Proxies",
+      "intro": "The nodes whose agent inventories the array: a node pushing the array becomes one by itself.",
+      "none": "No node inventories this array.",
+      "add": "Set a node as proxy",
+      "noMatch": "No node matches.",
+      "remove": "Unset {{node}} as proxy",
+      "added": "{{node}} set as proxy.",
+      "removed": "{{node}} unset as proxy."
+    },
+    "dg": {
+      "intro": "Sizes in MB. The reserved space is the sum of the quotas of the disk group.",
+      "empty": "No disk group reported.",
+      "dg_name": "Disk group",
+      "dg_size": "Size",
+      "dg_used": "Used",
+      "dg_free": "Free",
+      "dg_reserved": "Reserved",
+      "dg_updated": "Updated"
+    },
+    "targets": {
+      "empty": "No target port reported.",
+      "array_tgtid": "Port WWN",
+      "updated": "Updated"
+    },
+    "disks": {
+      "search": "Search the disks",
+      "empty": "No disk.",
+      "disk_id": "Disk id",
+      "disk_devid": "Device id",
+      "disk_name": "Name",
+      "disk_size": "Size (MB)",
+      "disk_group": "Disk group",
+      "node": "Node",
+      "service": "Service"
     }
   }
 }

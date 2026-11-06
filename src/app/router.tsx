@@ -15,6 +15,7 @@ import { CheckContextualPage } from "@/features/checks/CheckContextualPage";
 import { PackagesPage } from "@/features/packages/PackagesPage";
 import { HardwarePage } from "@/features/hardware/HardwarePage";
 import { SwitchesPage } from "@/features/switches/SwitchesPage";
+import { ArraysPage } from "@/features/arrays/ArraysPage";
 import { MetricsPage } from "@/features/metrics/MetricsPage";
 import { ReportsPage } from "@/features/reports/ReportsPage";
 import { ReportReaderPage } from "@/features/report-reader/ReportReaderPage";
@@ -216,6 +217,13 @@ const clustersRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/clusters",
   component: ClustersPage,
+  validateSearch: parseListSearch,
+});
+
+const arraysRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/arrays",
+  component: ArraysPage,
   validateSearch: parseListSearch,
 });
 
@@ -495,6 +503,7 @@ const routeTree = rootRoute.addChildren([
   checksRoute,
   checkDefaultsRoute,
   checkContextualRoute,
+  arraysRoute,
   switchesRoute,
   metricsRoute,
   reportsRoute,

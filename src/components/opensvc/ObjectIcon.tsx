@@ -48,6 +48,7 @@ export type ObjectKind =
   | "action"
   | "network"
   | "disk"
+  | "array"
   | "save"
   | "app"
   | "tag"
@@ -108,6 +109,8 @@ const KINDS: Record<ObjectKind, { Icon: typeof ServerIcon; className: string }> 
   orchestration: { Icon: ListChecksIcon, className: "text-icon-service" },
   network: { Icon: NetworkIcon, className: "text-icon-network" },
   disk: { Icon: DatabaseIcon, className: "text-icon-disk" },
+  // A storage array: the disks it serves, in their tint.
+  array: { Icon: DatabaseIcon, className: "text-icon-disk" },
   save: { Icon: ArchiveIcon, className: "text-icon-disk" },
   app: { Icon: AsteriskIcon, className: "text-icon-app" },
   // The collector's dark cyan label (`tag16`); the Tags menu entry and view show a pair.

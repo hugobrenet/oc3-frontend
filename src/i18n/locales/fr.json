@@ -74,6 +74,7 @@
     "formConnectors": "Connecteurs de formulaires",
     "compModules": "Modules",
     "quotas": "Quotas disques",
+    "arrays": "Baies de stockage",
     "saves": "Sauvegardes",
     "notifications": "Notifications"
   },
@@ -5408,6 +5409,70 @@
       "invalid": "JSON invalide : {{message}}",
       "run": "Importer",
       "running": "Import…"
+    }
+  },
+  "arrays": {
+    "title": "Baies de stockage",
+    "intro": "Les baies de stockage que les agents inventorient, telles que les nœuds qui les inventorient, leurs proxies, les rapportent. Une baie montre ses groupes de disques, ses luns avec les nœuds et services qui les utilisent, et ses ports cibles. Un StorageManager écrit son commentaire et règle ses proxies ; les quotas des groupes de disques ont leur propre vue.",
+    "fields": {
+      "array_name": "Nom",
+      "array_model": "Modèle",
+      "array_firmware": "Firmware",
+      "array_cache": "Cache (Mo)",
+      "array_level": "Niveau",
+      "array_comment": "Commentaire",
+      "array_updated": "Mise à jour",
+      "id": "Id d'enregistrement"
+    },
+    "detail": {
+      "title": "Baie de stockage",
+      "tabs": "Onglets de la baie",
+      "editHint": "En tant que StorageManager, vous modifiez le commentaire sur place.",
+      "groups": {
+        "identity": "Baie",
+        "record": "Enregistrement"
+      }
+    },
+    "tabs": {
+      "diskgroups": "Groupes de disques",
+      "disks": "Disques",
+      "targets": "Ports cibles"
+    },
+    "proxies": {
+      "title": "Proxies",
+      "intro": "Les nœuds dont l'agent inventorie la baie : un nœud qui pousse la baie le devient de lui-même.",
+      "none": "Aucun nœud n'inventorie cette baie.",
+      "add": "Définir un nœud comme proxy",
+      "noMatch": "Aucun nœud ne correspond.",
+      "remove": "Retirer {{node}} des proxies",
+      "added": "{{node}} défini comme proxy.",
+      "removed": "{{node}} retiré des proxies."
+    },
+    "dg": {
+      "intro": "Tailles en Mo. L'espace réservé est la somme des quotas du groupe de disques.",
+      "empty": "Aucun groupe de disques rapporté.",
+      "dg_name": "Groupe de disques",
+      "dg_size": "Taille",
+      "dg_used": "Utilisé",
+      "dg_free": "Libre",
+      "dg_reserved": "Réservé",
+      "dg_updated": "Mise à jour"
+    },
+    "targets": {
+      "empty": "Aucun port cible rapporté.",
+      "array_tgtid": "WWN du port",
+      "updated": "Mise à jour"
+    },
+    "disks": {
+      "search": "Chercher dans les disques",
+      "empty": "Aucun disque.",
+      "disk_id": "Id du disque",
+      "disk_devid": "Id de périphérique",
+      "disk_name": "Nom",
+      "disk_size": "Taille (Mo)",
+      "disk_group": "Groupe de disques",
+      "node": "Nœud",
+      "service": "Service"
     }
   }
 }
