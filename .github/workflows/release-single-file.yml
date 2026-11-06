@@ -1,0 +1,42 @@
+name: release single file
+
+# The application as one file, gzipped, for the servers that take it as a file,
+# as the OpenSVC oc3 template, which fetches it into its volume: each published
+# release gets it as an asset, index.html.gz, at
+#   https://github.com/opensvc/oc3-frontend/releases/download/<version>/index.html.gz
+#   https://github.com/opensvc/oc3-frontend/releases/latest/download/index.html.gz
+
+on:
+  release:
+    types: [ published ]
+
+permissions:
+  contents: write
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Build the single file
+        env:
+          VERSION: ${{ github.event.release.tag_name }}
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build:single
+
+      - name: Attach it to the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: gh release upload "$TAG" dist-single/index.html.gz --clobber

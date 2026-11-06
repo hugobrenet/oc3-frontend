@@ -1,11 +1,13 @@
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
+import { constants, gzipSync } from "node:zlib";
 import type { Plugin, Rollup, UserConfig } from "vite";
 
 /**
  * The build as one self-contained `index.html`, for `vite build --mode single`:
  * the script, the stylesheet and every asset (fonts, images, the favicon) inlined,
- * nothing else written.
+ * nothing else written but its gzip, `index.html.gz`, served as is by an nginx with
+ * gzip_static.
  *
  * Written here rather than imported: inlining a single script and a single
  * stylesheet into the page takes these lines.
@@ -84,6 +86,11 @@ export function singleFile(publicDir: string): { config: UserConfig; plugin: Plu
       const leftover = Object.keys(bundle).filter((name) => name !== "index.html");
       if (leftover.length > 0) this.error(`not inlined: ${leftover.join(", ")}`);
       html.source = page;
+      this.emitFile({
+        type: "asset",
+        fileName: "index.html.gz",
+        source: gzipSync(page, { level: constants.Z_BEST_COMPRESSION }),
+      });
     },
   };
   return { config, plugin };
