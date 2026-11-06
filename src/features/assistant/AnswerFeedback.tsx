@@ -1,112 +1,72 @@
-import { useId, useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useId, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { ThumbsDownIcon, ThumbsUpIcon } from "@/components/ui/icons";
 import {
-  AssistantFailure,
-  deleteFeedback,
-  setFeedback,
-  type AssistantFeedback,
-  type AssistantFeedbackReason,
-  type AssistantFeedbackRequest,
-} from "./use-assistant";
-
-/** The reasons an answer falls short, in the order the agent lists them. */
-const REASONS: AssistantFeedbackReason[] = [
-  "not_answered",
-  "missing_information",
-  "incorrect_or_outdated",
-  "hard_to_understand",
-  "action_not_done",
-];
-
-/** What the agent accepts as the expectation of the user. */
-const EXPECTED_MAX = 1000;
+  FEEDBACK_REASONS,
+  MAX_FEEDBACK_EXPECTED_CHARACTERS,
+  type FeedbackInput,
+  type FeedbackReason,
+} from "./assistant-client";
+import { errorText } from "./error-text";
+import type { Rating } from "./use-assistant-chat";
 
 /**
- * The feedback of the user on an answer of the assistant, under the last message
- * of its turn: helpful or not. A thumb down is sent at once, then the reasons and
- * what was expected may follow, sent as a second, complete feedback; pressing
- * the chosen thumb again withdraws the feedback. The agent keeps the feedback
+ * The feedback of the user on the answer of a turn, under it: helpful or not.
+ * A thumb down is sent at once, then the reasons and what was expected may
+ * follow, sent as a second, complete feedback, and edited later; pressing the
+ * chosen thumb again withdraws the feedback. The agent keeps the feedback
  * without the identity of the user.
  */
 export function AnswerFeedback({
-  conversationId,
-  turnId,
-  feedback,
+  rating,
+  onRate,
+  onUnrate,
 }: {
-  conversationId: string;
-  turnId: string;
-  feedback: AssistantFeedback | undefined;
+  rating: Rating | undefined;
+  onRate: (feedback: FeedbackInput) => Promise<boolean>;
+  onUnrate: () => Promise<boolean>;
 }) {
   const { t } = useTranslation();
-  const queryClient = useQueryClient();
   const id = useId();
-  // The rating on display: the stored one, then the last one sent from here.
-  const [rating, setRating] = useState<"up" | "down" | null>(feedback?.rating ?? null);
-  const [details, setDetails] = useState(false);
-  const [reasons, setReasons] = useState<AssistantFeedbackReason[]>(feedback?.reasons ?? []);
-  const [expected, setExpected] = useState(feedback?.expected ?? "");
-  const [sent, setSent] = useState<"rating" | "details" | "withdrawn" | null>(null);
+  const current = rating?.feedback ?? null;
+  const pending = rating?.pending === true;
+  const [form, setForm] = useState<{ reasons: FeedbackReason[]; expected: string } | null>(null);
+  // The agent counts Unicode characters, not UTF-16 units.
+  const expectedLength = form === null ? 0 : Array.from(form.expected.trim()).length;
+  const tooLong = expectedLength > MAX_FEEDBACK_EXPECTED_CHARACTERS;
 
-  const send = useMutation({
-    mutationFn: async (next: AssistantFeedbackRequest | null) => {
-      if (next === null) await deleteFeedback(conversationId, turnId);
-      else await setFeedback(conversationId, turnId, next);
-    },
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["assistant", "messages", conversationId] }),
-  });
+  const openForm = () => {
+    setForm({
+      reasons: current?.rating === "down" ? current.reasons : [],
+      expected: current?.rating === "down" ? current.expected : "",
+    });
+  };
 
-  function rate(next: "up" | "down") {
-    if (send.isPending) return;
-    if (rating === next) {
-      // The chosen thumb again: the feedback is withdrawn.
-      setRating(null);
-      setDetails(false);
-      setSent("withdrawn");
-      send.mutate(null, {
-        onError: () => {
-          setRating(next);
-        },
-      });
-      return;
-    }
-    const previous = rating;
-    setRating(next);
-    setDetails(next === "down");
-    if (next === "up") setReasons([]);
-    setSent("rating");
-    send.mutate(
-      { rating: next },
-      {
-        onError: () => {
-          setRating(previous);
-        },
-      },
-    );
+  function up() {
+    setForm(null);
+    void (current?.rating === "up" ? onUnrate() : onRate({ rating: "up" }));
   }
 
-  function sendDetails() {
-    setSent("details");
-    const text = expected.trim();
-    send.mutate(
-      {
-        rating: "down",
-        ...(reasons.length > 0 ? { reasons } : {}),
-        ...(text !== "" ? { expected: text } : {}),
-      },
-      {
-        onSuccess: () => {
-          setDetails(false);
-        },
-      },
-    );
+  function down() {
+    if (current?.rating === "down") {
+      // The chosen thumb again: the feedback is withdrawn.
+      setForm(null);
+      void onUnrate();
+      return;
+    }
+    openForm();
+    void onRate({ rating: "down" });
+  }
+
+  async function send(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (form === null || tooLong || pending) return;
+    if (await onRate({ rating: "down", reasons: form.reasons, expected: form.expected }))
+      setForm(null);
   }
 
   const thumb =
     "flex h-7 w-7 items-center justify-center rounded-(--radius-control) border border-line text-ink-muted hover:bg-surface-sunken hover:text-ink aria-pressed:border-accent aria-pressed:bg-accent-soft aria-pressed:text-ink disabled:opacity-60";
-  const error = send.error;
 
   return (
     <div className="flex flex-col gap-2">
@@ -116,12 +76,12 @@ export function AnswerFeedback({
         </span>
         <button
           type="button"
-          aria-pressed={rating === "up"}
-          disabled={send.isPending}
-          onClick={() => {
-            rate("up");
-          }}
-          title={rating === "up" ? t("assistant.feedback.withdraw") : t("assistant.feedback.up")}
+          aria-pressed={current?.rating === "up"}
+          disabled={pending}
+          onClick={up}
+          title={
+            current?.rating === "up" ? t("assistant.feedback.withdraw") : t("assistant.feedback.up")
+          }
           className={thumb}
         >
           <ThumbsUpIcon className="h-3.5 w-3.5" />
@@ -129,101 +89,129 @@ export function AnswerFeedback({
         </button>
         <button
           type="button"
-          aria-pressed={rating === "down"}
-          disabled={send.isPending}
-          onClick={() => {
-            rate("down");
-          }}
+          aria-pressed={current?.rating === "down"}
+          aria-expanded={form !== null}
+          disabled={pending}
+          onClick={down}
           title={
-            rating === "down" ? t("assistant.feedback.withdraw") : t("assistant.feedback.down")
+            current?.rating === "down"
+              ? t("assistant.feedback.withdraw")
+              : t("assistant.feedback.down")
           }
           className={thumb}
         >
           <ThumbsDownIcon className="h-3.5 w-3.5" />
           <span className="sr-only">{t("assistant.feedback.down")}</span>
         </button>
-        {rating === "down" && !details && (
+        {current?.rating === "down" && form === null && (
           <button
             type="button"
-            onClick={() => {
-              setDetails(true);
-            }}
-            className="text-accent underline-offset-2 hover:underline"
+            disabled={pending}
+            onClick={openForm}
+            className="text-accent underline-offset-2 hover:underline disabled:opacity-60"
           >
-            {t("assistant.feedback.tellMore")}
+            {current.reasons.length > 0 || current.expected !== ""
+              ? t("assistant.feedback.edit")
+              : t("assistant.feedback.tellMore")}
           </button>
         )}
         <span role="status" className="text-ink-muted">
-          {send.isSuccess && sent !== null && t(`assistant.feedback.sent.${sent}`)}
+          {pending
+            ? t("assistant.feedback.saving")
+            : current !== null && form === null
+              ? t("assistant.feedback.thanks")
+              : ""}
         </span>
       </div>
-      {error !== null && (
+      {rating !== undefined && rating.error !== null && (
         <p role="alert" className="text-state-down">
-          ■{" "}
-          {error instanceof AssistantFailure && error.code === "feedback_limit"
-            ? t("assistant.feedback.limit")
-            : error instanceof AssistantFailure && error.code === "conversation_expired"
-              ? t("assistant.feedback.expired")
-              : t("assistant.feedback.failed", { message: error.message })}
+          ■ {t("assistant.feedback.failed", { message: errorText(t, rating.error) })}
         </p>
       )}
-      {details && rating === "down" && (
-        <fieldset className="flex max-w-xl flex-col gap-2 rounded-(--radius-panel) border border-line p-3">
-          <legend className="px-1 font-medium">{t("assistant.feedback.why")}</legend>
-          {REASONS.map((reason) => (
-            <label key={reason} className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={reasons.includes(reason)}
-                onChange={(event) => {
-                  setReasons((previous) =>
-                    event.target.checked
-                      ? [...previous, reason]
-                      : previous.filter((r) => r !== reason),
-                  );
-                }}
-              />
-              {t(`assistant.feedback.reasons.${reason}`)}
-            </label>
-          ))}
+      {form !== null && (
+        <form
+          aria-label={t("assistant.feedback.details")}
+          onSubmit={(event) => {
+            void send(event);
+          }}
+          className="flex max-w-xl flex-col gap-2 rounded-(--radius-panel) border border-line p-3"
+        >
+          <fieldset className="flex flex-col gap-1">
+            <legend className="mb-1 font-medium">{t("assistant.feedback.why")}</legend>
+            {FEEDBACK_REASONS.map((reason) => (
+              <label key={reason} className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={form.reasons.includes(reason)}
+                  disabled={pending}
+                  onChange={(event) => {
+                    const checked = event.target.checked;
+                    setForm((previous) =>
+                      previous === null
+                        ? previous
+                        : {
+                            ...previous,
+                            reasons: checked
+                              ? [...previous.reasons, reason]
+                              : previous.reasons.filter((item) => item !== reason),
+                          },
+                    );
+                  }}
+                />
+                {t(`assistant.feedback.reasons.${reason}`)}
+              </label>
+            ))}
+          </fieldset>
           <label htmlFor={`${id}-expected`} className="mt-1 font-medium">
             {t("assistant.feedback.expected")}
           </label>
           <textarea
             id={`${id}-expected`}
-            value={expected}
-            maxLength={EXPECTED_MAX}
+            value={form.expected}
             rows={3}
-            onChange={(event) => {
-              setExpected(event.target.value);
-            }}
+            disabled={pending}
+            aria-invalid={tooLong || undefined}
             aria-describedby={`${id}-count`}
-            className="rounded-(--radius-control) border border-line bg-surface px-2 py-1"
+            onChange={(event) => {
+              const expected = event.target.value;
+              setForm((previous) => (previous === null ? previous : { ...previous, expected }));
+            }}
+            className="resize-y rounded-(--radius-control) border border-line bg-surface px-2 py-1"
           />
-          <span id={`${id}-count`} className="text-right text-ink-muted">
-            {t("assistant.feedback.count", { count: expected.length, max: EXPECTED_MAX })}
+          <span
+            id={`${id}-count`}
+            className={tooLong ? "text-state-down" : "text-right text-ink-muted"}
+          >
+            {tooLong
+              ? t("assistant.feedback.tooLong", { max: MAX_FEEDBACK_EXPECTED_CHARACTERS })
+              : t("assistant.feedback.count", {
+                  count: expectedLength,
+                  max: MAX_FEEDBACK_EXPECTED_CHARACTERS,
+                })}
           </span>
+          <p className="text-ink-muted">{t("assistant.feedback.privacy")}</p>
           <div className="flex items-center justify-end gap-2">
             <button
               type="button"
+              disabled={pending}
               onClick={() => {
-                setDetails(false);
+                setForm(null);
               }}
-              className="h-8 rounded-(--radius-control) border border-line px-3 text-ink hover:bg-surface-sunken"
+              className="h-8 rounded-(--radius-control) border border-line px-3 text-ink hover:bg-surface-sunken disabled:opacity-60"
             >
               {t("assistant.feedback.later")}
             </button>
             <button
-              type="button"
-              disabled={send.isPending || (reasons.length === 0 && expected.trim() === "")}
-              onClick={sendDetails}
+              type="submit"
+              disabled={
+                pending || tooLong || (form.reasons.length === 0 && form.expected.trim() === "")
+              }
               className="h-8 rounded-(--radius-control) bg-accent px-3 font-medium text-accent-ink disabled:opacity-60"
             >
               {t("assistant.feedback.send")}
             </button>
           </div>
-          <p className="text-ink-muted">{t("assistant.feedback.privacy")}</p>
-        </fieldset>
+        </form>
       )}
     </div>
   );

@@ -1,4 +1,4 @@
-import { Fragment, type ReactNode } from "react";
+import { createContext, Fragment, useContext, type ReactNode } from "react";
 
 /**
  * Markdown rendered as React elements, for text written by a language model: the
@@ -11,9 +11,42 @@ import { Fragment, type ReactNode } from "react";
  * markup. Raw HTML in the text shows as text. A link opens only with a web,
  * mail or in-app address, in a new tab. Text still streaming renders as it
  * comes: an unclosed code fence runs to the end.
+ *
+ * `renderCode` may render an inline code span otherwise, such as a name the page
+ * knows as a badge; it gives undefined to keep the span code. Neither a code block
+ * nor a code span within a link goes through it: a link holds no control.
  */
-export function Markdown({ text, className = "" }: { text: string; className?: string }) {
-  return <div className={`flex flex-col gap-2 text-ink ${className}`}>{blocks(text)}</div>;
+export function Markdown({
+  text,
+  className = "",
+  renderCode,
+}: {
+  text: string;
+  className?: string;
+  renderCode?: InlineCodeRenderer;
+}) {
+  return (
+    <CodeRenderer.Provider value={renderCode}>
+      <div className={`flex flex-col gap-2 text-ink ${className}`}>{blocks(text)}</div>
+    </CodeRenderer.Provider>
+  );
+}
+
+/** Renders the text of an inline code span, or gives undefined to keep it code. */
+export type InlineCodeRenderer = (code: string) => ReactNode | undefined;
+
+const CodeRenderer = createContext<InlineCodeRenderer | undefined>(undefined);
+
+/** An inline code span, as `renderCode` renders it, code otherwise. */
+function InlineCode({ code }: { code: string }) {
+  const render = useContext(CodeRenderer);
+  const rendered = render?.(code);
+  if (rendered !== undefined) return rendered;
+  return (
+    <code className="rounded-(--radius-control) bg-surface-sunken px-1 font-mono text-data break-words">
+      {code}
+    </code>
+  );
 }
 
 // --- Blocks ----------------------------------------------------------------------
@@ -327,14 +360,7 @@ function inline(text: string, key: string): ReactNode[] {
     if (escaped !== undefined) {
       out.push(escaped.slice(1));
     } else if (code !== undefined) {
-      out.push(
-        <code
-          key={k}
-          className="rounded-(--radius-control) bg-surface-sunken px-1 font-mono text-data break-words"
-        >
-          {code.replace(/^ (.*) $/, "$1")}
-        </code>,
-      );
+      out.push(<InlineCode key={k} code={code.replace(/^ (.*) $/, "$1")} />);
     } else if (linkUrl !== undefined || autolink !== undefined) {
       const href = safeHref(linkUrl ?? autolink ?? "");
       const label = linkText ?? autolink ?? "";
@@ -349,7 +375,7 @@ function inline(text: string, key: string): ReactNode[] {
             rel="noopener noreferrer"
             className="text-accent underline underline-offset-2 hover:no-underline"
           >
-            {inline(label, k)}
+            <CodeRenderer.Provider value={undefined}>{inline(label, k)}</CodeRenderer.Provider>
           </a>
         ),
       );

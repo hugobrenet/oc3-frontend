@@ -4241,10 +4241,43 @@
   },
   "assistant": {
     "title": "AI assistant",
-    "newConversation": "New conversation",
-    "conversation": "Conversation with the assistant",
     "name": "Assistant",
     "you": "You:",
+    "untitled": "New conversation",
+    "unavailable": {
+      "disabled": "The AI assistant is not configured on this collector.",
+      "password_sign_in": "Sign in with single sign-on to use the assistant: it acts with your single sign-on identity.",
+      "token_unavailable": "Your single sign-on session holds no access token for the assistant: sign out and sign in again.",
+      "impersonating": "The assistant cannot be used while impersonating another user."
+    },
+    "conversations": {
+      "title": "Conversations",
+      "new": "New conversation",
+      "show": "Show the conversations",
+      "hide": "Hide the conversations",
+      "loading": "Loading the conversations…",
+      "empty": "No conversation yet.",
+      "search": "Search the conversations",
+      "noMatch": "No conversation matches.",
+      "delete": "Delete the conversation {{title}}",
+      "deleteAll": "Delete all conversations",
+      "groups": {
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "week": "Previous 7 days",
+        "older": "Older"
+      }
+    },
+    "transcript": {
+      "start": "Ask about your estate",
+      "rename": "Rename the conversation",
+      "titleLabel": "Conversation title",
+      "log": "Conversation with the assistant",
+      "loadEarlier": "Load earlier messages",
+      "loadingEarlier": "Loading earlier messages…",
+      "loadingSaved": "Loading the saved messages…",
+      "reselect": "Select the conversation again, or start a new one, to go on."
+    },
     "empty": {
       "title": "Ask about your estate",
       "intro": "The assistant will answer from what you can see in the Collector: nodes, services, alerts, compliance and requests. It will never act without asking you first.",
@@ -4256,48 +4289,167 @@
       "silentNodes": "Which nodes have not reported in the last hour?",
       "compliance": "Which nodes fail their compliance checks?"
     },
-    "composer": {
-      "label": "Message to the assistant",
-      "placeholder": "Ask about nodes, services, alerts…",
-      "send": "Send",
-      "scope": "Answers use only what you are allowed to see. Actions always ask for your confirmation.",
-      "keys": "Enter to send · Shift+Enter for a new line",
-      "stop": "Stop"
+    "tips": {
+      "title": "Writing a good request",
+      "open": "Tips for writing a request",
+      "target": {
+        "lead": "Name the target:",
+        "text": "the exact name of the node or of the service, such as prod/svc/web, and its cluster when several hold the name."
+      },
+      "goal": {
+        "lead": "Say the goal, not only the action:",
+        "text": "\"why did the backups of prod/svc/db fail since Monday\" rather than \"check db\"."
+      },
+      "scope": {
+        "lead": "Give the scope:",
+        "text": "one node, one service, an application, or the whole estate."
+      },
+      "symptom": {
+        "lead": "For a diagnosis, describe the symptom:",
+        "text": "\"Why is node1 marked as not reporting?\""
+      },
+      "oneAction": {
+        "lead": "One action at a time.",
+        "text": "Before changing anything, the assistant asks for your confirmation: read the card before approving."
+      },
+      "limits": {
+        "lead": "The assistant sees only what your rights allow,",
+        "text": "and it can be wrong: its steps show what it read."
+      }
     },
-    "conversations": "Conversations",
-    "noConversation": "No conversation yet.",
-    "untitled": "New conversation",
-    "deleteConversation": "Delete the conversation {{title}}",
-    "thinking": "Thinking…",
-    "tools": "Tools used",
-    "toolRunning": "running",
-    "toolDone": "done",
-    "toolFailed": "failed",
-    "unavailable": {
-      "disabled": "The AI assistant is not configured on this collector.",
-      "password_sign_in": "Sign in with single sign-on to use the assistant: it acts with your single sign-on identity.",
-      "token_unavailable": "Your single sign-on session holds no access token for the assistant: sign out and sign in again.",
-      "impersonating": "The assistant cannot be used while impersonating another user."
+    "tools": {
+      "open": "What the assistant can do",
+      "title": "What the assistant can do",
+      "intro": "The tools this collector offers the assistant. What a tool may do for you depends on your rights, checked when it is called. Their descriptions come from the server, in English.",
+      "loading": "Reading the tools…",
+      "unavailable": "The agent could not read its tools. Try again later.",
+      "unlisted": "The assistant does not list its tools on this collector.",
+      "failed": "The tools could not be read.",
+      "filter": "Filter the tools",
+      "count_one": "{{count}} tool",
+      "count_other": "{{count}} tools",
+      "arguments": "Arguments",
+      "groups": {
+        "read": "Read",
+        "confirmed": "Act, after your confirmation",
+        "act": "Act"
+      }
     },
-    "errors": {
-      "token": "Your single sign-on session no longer holds an access token: sign out and sign in again.",
-      "unreachable": "The AI agent cannot be reached. Try again later.",
-      "stopped": "Stopped.",
-      "unknown": "The assistant could not answer.",
-      "cut": "The connection to the assistant was cut off: this answer is not kept. Ask again.",
-      "clientTools": "The assistant asked for actions of this interface, which it does not offer.",
-      "toolCallLimit": "The question needs more tool calls than the assistant runs in one answer: ask a narrower question.",
-      "timeout": "The assistant took too long to answer."
+    "message": {
+      "awaiting": "Waiting for your decision on the action below.",
+      "stopped": "Incomplete answer, stopped. It was not retried.",
+      "failed": "Incomplete answer, failed. It was not retried.",
+      "tokens": "Tokens: {{total}}"
     },
-    "confirmation": {
-      "label": "Action waiting for your decision",
-      "question": "The assistant wants to run: {{title}}. Approve?",
-      "destructive": "The assistant wants to run a destructive action: {{title}}. Approve?",
-      "approve": "Approve",
-      "reject": "Reject",
+    "notice": {
+      "stopped": "Stopped. The turn was not retried; the actions already run are not undone.",
+      "stopping": "Stopping…",
+      "partial": "The earlier messages of this conversation are not shown: select it again to read them."
+    },
+    "steps": {
+      "label": "Steps of the answer",
+      "summary_one": "{{count}} step · {{duration}}",
+      "summary_other": "{{count}} steps · {{duration}}",
+      "running": "Running · {{time}}",
+      "waiting": "Waiting for the agent…",
+      "model": "model {{duration}}",
+      "parallel": "in parallel",
+      "withChanges": "(with your changes)",
+      "arguments": "Arguments",
+      "argumentsOmitted": "Arguments too large to be kept in the history.",
+      "refusal": "Refused by the tool:",
+      "excerpt": "Result:",
+      "excerptTruncated": "Result, its first 4 KB:",
+      "count_one": "{{count}} step",
+      "count_other": "{{count}} steps",
+      "rejected_one": "{{count}} action rejected by you",
+      "rejected_other": "{{count}} actions rejected by you",
+      "status": {
+        "running": "running",
+        "pending": "waiting for your decision",
+        "completed": "done",
+        "failed": "refused by the tool",
+        "rejected": "rejected by you",
+        "interrupted": "interrupted"
+      },
+      "tool": {
+        "search_tools": "Search the tools: “{{query}}”",
+        "search_docs": "Search the documentation: “{{query}}”",
+        "search_code": "Search the code: “{{query}}”",
+        "read_resource": "Read the reference {{uri}}",
+        "load_skill": "Load the procedure “{{skill}}”"
+      }
+    },
+    "confirm": {
+      "region": "Action waiting for confirmation",
+      "destructive": "Destructive action to confirm",
+      "action": "Action to confirm",
+      "tool": "Tool:",
+      "arguments": "Arguments of the call",
       "noArguments": "No argument.",
-      "expires": "This request expires {{when}}.",
-      "expired": "This request has expired: the action did not run."
+      "form": "Arguments of the action",
+      "oneValuePerLine": "One value per line.",
+      "formErrors": {
+        "number": "A number is required.",
+        "json": "Valid JSON is required.",
+        "required": "A value is required."
+      },
+      "expires": "This request expires {{when}}. Nothing runs without your approval.",
+      "expired": "This request has expired: the action did not run.",
+      "withChanges": " The action will run with your changes.",
+      "edit": "Edit",
+      "discard": "Discard the changes",
+      "reject": "Reject",
+      "approve": "Approve",
+      "approveEdited": "Approve with my changes",
+      "recompute": "Recompute the preview",
+      "previewing": "Computing the preview…",
+      "previewStale": "The preview is of the arguments before your changes: recompute it.",
+      "previewOfEdit": "The preview is of your edited arguments.",
+      "previewError": "No preview: {{error}}",
+      "mayRefuse": "The call may still be refused when it runs: a validation, a conflict, a right.",
+      "queuedNote": "A message is queued: it will be sent after your decision.",
+      "changes": "Changes",
+      "key": "Key",
+      "current": "Current value",
+      "operation": "Operation",
+      "proposed": "Proposed value",
+      "computed": "The proposed values are computed by the MCP; what runs the operations is the authority.",
+      "notComputed": "not computed",
+      "hidden": "hidden",
+      "empty": "empty",
+      "ops": {
+        "=": "set to",
+        "+=": "append",
+        "-=": "remove",
+        "|=": "append if absent",
+        "^=": "toggle",
+        "insert": "insert",
+        "unset": "unset"
+      },
+      "notes": {
+        "not_set": "not set",
+        "empty_or_not_set": "empty or not set",
+        "secret": "secret: values not shown",
+        "applied_after_file": "applied after the configuration file",
+        "section_deleted_first": "its section is deleted first",
+        "current_too_long": "current value too long to compute the result",
+        "after_uncomputed": "after an operation the MCP does not compute",
+        "not_in_list": "the value is not in the list: nothing changes",
+        "already_in_list": "the value is already in the list: nothing changes",
+        "empty_index": "an empty value at an index removes nothing",
+        "index_past_words": "the index is past the words of the value: the call is refused or fails"
+      },
+      "deleted_one": "Deletes the section {{section}} and its {{count}} key:",
+      "deleted_other": "Deletes the section {{section}} and its {{count}} keys:",
+      "deletedEmpty": "Deletes the section {{section}}, which holds no key read.",
+      "deletedSecrets_one": "and {{count}} secret key, not named.",
+      "deletedSecrets_other": "and {{count}} secret keys, not named.",
+      "content": "File written",
+      "contentTruncated": "The file is cut to keep the preview bounded.",
+      "readAt": "Current values read at {{time}}: the configured values, not evaluated; they may change before the call runs.",
+      "secrets_one": "{{count}} change on a secret key: its values are not shown.",
+      "secrets_other": "{{count}} changes on secret keys: their values are not shown."
     },
     "feedback": {
       "question": "Was this answer helpful?",
@@ -4305,7 +4457,11 @@
       "down": "Not helpful",
       "withdraw": "Withdraw the feedback",
       "tellMore": "Tell us more",
-      "why": "What went wrong?",
+      "edit": "Edit the details",
+      "saving": "Saving the feedback…",
+      "thanks": "Thanks for your feedback.",
+      "details": "Feedback details",
+      "why": "What went wrong? (optional)",
       "reasons": {
         "not_answered": "It does not answer the question",
         "missing_information": "Information is missing",
@@ -4313,19 +4469,82 @@
         "hard_to_understand": "It is hard to understand",
         "action_not_done": "The expected action was not done"
       },
-      "expected": "What did you expect?",
+      "expected": "What did you expect? (optional)",
       "count": "{{count}} / {{max}}",
+      "tooLong": "At most {{max}} characters.",
       "later": "Not now",
       "send": "Send",
       "privacy": "The feedback and a copy of this exchange are kept for review, without your identity.",
-      "sent": {
-        "rating": "Thanks for your feedback.",
-        "details": "Thanks, the details are sent.",
-        "withdrawn": "Feedback withdrawn."
+      "failed": "The feedback could not be saved: {{message}}"
+    },
+    "composer": {
+      "label": "Message to the assistant",
+      "placeholder": "Ask about nodes, services, alerts…",
+      "send": "Send",
+      "queue": "Queue",
+      "stop": "Stop",
+      "scope": "Answers use only what you are allowed to see. Actions always ask for your confirmation.",
+      "keys": "Enter to send · Shift+Enter for a new line",
+      "tooLarge": "The message must not exceed 32 KiB.",
+      "queuedHint": "The answer is running: your message will be sent once it ends.",
+      "queuedDuringConfirmation": "Your message will be sent after your decision; it does not answer the confirmation."
+    },
+    "queue": {
+      "label": "Queued message",
+      "edit": "Edit",
+      "remove": "Remove",
+      "resend": "Send again",
+      "announce": "Message queued: {{text}}"
+    },
+    "dialog": {
+      "deleteTitle": "Delete the conversation",
+      "deleteText": "Delete \"{{title}}\" and its saved context? This cannot be undone.",
+      "deleteAllTitle": "Delete all conversations",
+      "deleteAllText": "Delete all your conversations ({{count}} loaded) and their saved context? This cannot be undone.",
+      "confirmDelete": "Confirm the deletion",
+      "replaceTitle": "Replace the queued message",
+      "replaceText": "A message is already queued. Replace it with the one you typed?",
+      "replace": "Replace"
+    },
+    "errors": {
+      "unknown": "The request to the assistant failed. It was not retried.",
+      "refused": "The assistant refused the request.",
+      "codes": {
+        "assistant_disabled": "The AI assistant is not configured on this collector.",
+        "assistant_token_unavailable": "Your single sign-on session no longer holds an access token: sign out and sign in again.",
+        "assistant_forbidden": "The assistant cannot be used while impersonating another user.",
+        "assistant_unreachable": "The AI agent cannot be reached. Try again later.",
+        "network_error": "The collector cannot be reached. Check your connection.",
+        "invalid_response": "The assistant answered in a way this page does not read.",
+        "stream_interrupted": "The connection to the assistant was cut off: this answer is not kept. It was not retried.",
+        "stream_limit": "The answer exceeds the size this page reads.",
+        "request_timeout": "The assistant did not answer in time. It was not retried.",
+        "tool_name_conflict": "A tool of this page is named as a tool of the assistant. It was not retried.",
+        "tool_call_limit": "The question needs more tool calls than the assistant runs in one answer: ask a narrower question.",
+        "turn_failed": "The assistant could not answer. It was not retried.",
+        "agent_outdated": "The AI agent is too old for this page: it does not serve AG-UI runs.",
+        "conversation_quota": "Your conversation quota is reached: delete conversations, or wait for them to expire.",
+        "conversation_limit": "The assistant holds as many conversations as it can for now. Try again later.",
+        "confirmation_not_pending": "This action no longer waits for a decision.",
+        "confirmation_expired": "The confirmation request expired. The action was not run.",
+        "invalid_edited_arguments": "The agent refused the edited arguments. Check the form: the action still waits.",
+        "invalid_title": "A title of 1 to 80 characters is required.",
+        "feedback_invalid": "The feedback is invalid.",
+        "feedback_gone": "This answer can no longer be rated.",
+        "feedback_limit": "The assistant takes no more feedback for now.",
+        "tools_unavailable": "The agent could not read its tools. Try again later.",
+        "tools_unlisted": "The assistant does not list its tools on this collector."
       },
-      "limit": "The assistant takes no more feedback for now.",
-      "expired": "This conversation has expired: its answers can no longer be rated.",
-      "failed": "The feedback could not be sent: {{message}}"
+      "status": {
+        "401": "Your session no longer authenticates you to the assistant: sign in again.",
+        "403": "Access to the assistant is denied.",
+        "404": "Conversation not found.",
+        "409": "The conversation is busy, or the conversation limit is reached.",
+        "410": "This conversation has expired.",
+        "413": "The request or a stored message exceeds the allowed size.",
+        "429": "The assistant is busy. Try again later.",
+        "503": "The assistant is temporarily unavailable."
+      }
     }
   },
   "checks": {

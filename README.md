@@ -113,6 +113,8 @@ Variables go in `.env` (never committed; `.env.example` is the template).
 | `npm run preview`   | Serve the production build locally                 |
 | `npm run typecheck` | Type check only                                    |
 | `npm run lint`      | ESLint                                             |
+| `npm test`          | Unit tests (Vitest, jsdom), in watch mode          |
+| `npm run test:ci`   | Unit tests, once                                   |
 | `npm run format`    | Prettier, with Tailwind class sorting              |
 | `npm run gen:api`   | Regenerate the API types from the oc3 OpenAPI spec |
 
