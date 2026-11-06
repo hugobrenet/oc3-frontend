@@ -232,10 +232,14 @@ export function MetricsPage() {
         metricId={form === null ? search.sel : undefined}
         label={selected?.metric_name ?? ""}
         onClose={() => {
-          update({ sel: undefined });
+          update({ sel: undefined, tab: undefined });
         }}
         onEdit={() => {
           setForm("edit");
+        }}
+        tab={search.tab}
+        onTabChange={(tab) => {
+          update({ tab });
         }}
       />
 

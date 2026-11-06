@@ -1,10 +1,13 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
+import type { components } from "@/lib/api/schema";
 import { api } from "@/lib/api/client";
 import { problemText } from "@/lib/api/problem";
 import { SlideOver } from "@/components/ui/SlideOver";
 import { ObjectIcon } from "@/components/opensvc/ObjectIcon";
+
+type ReportRow = components["schemas"]["ReportRow"];
 
 const INPUT = "h-8 w-full rounded-(--radius-control) border border-line bg-surface px-2";
 
@@ -14,13 +17,19 @@ const INPUT = "h-8 w-full rounded-(--radius-control) border border-line bg-surfa
  * afterwards; here both may come at once. The server checks that the name is free
  * and that the definition is valid YAML; its refusals are shown as they are, a
  * missing ReportsManager privilege included.
+ *
+ * Given a report, the same form edits its name and its definition, for whoever is
+ * responsible for it: the new definition is recorded in its history.
  */
 export function ReportCreatePanel({
   open,
+  report,
   onClose,
   onCreated,
 }: {
   open: boolean;
+  /** Report to edit; absent, the form creates one. */
+  report?: ReportRow | null;
   onClose: () => void;
   onCreated?: (id: number | undefined) => void;
 }) {
@@ -29,23 +38,31 @@ export function ReportCreatePanel({
   const [name, setName] = useState("");
   const [definition, setDefinition] = useState("");
 
-  // Every opening starts from an empty form.
+  const editing = report !== undefined && report !== null;
+
+  // Every opening starts again from the report to edit, or from an empty form.
   useEffect(() => {
     if (!open) return;
-    setName("");
-    setDefinition("");
-  }, [open]);
+    setName(report?.report_name ?? "");
+    setDefinition(report?.report_yaml ?? "");
+  }, [open, report]);
 
   const create = useMutation({
     mutationFn: async () => {
-      const { data, error } = await api.POST("/reports", {
-        body: { report_name: name.trim(), report_yaml: definition },
-      });
+      const body = { report_name: name.trim(), report_yaml: definition };
+      const { data, error } =
+        editing && report.id !== undefined
+          ? await api.POST("/reports/{report_id}", {
+              params: { path: { report_id: String(report.id) } },
+              body,
+            })
+          : await api.POST("/reports", { body });
       if (error !== undefined) throw new Error(problemText(error));
       return Array.isArray(data.data) ? data.data[0]?.id : undefined;
     },
     onSuccess: async (id) => {
       await queryClient.invalidateQueries({ queryKey: ["reports"] });
+      if (editing) await queryClient.invalidateQueries({ queryKey: ["report", String(report.id)] });
       onCreated?.(id);
       onClose();
     },
@@ -60,13 +77,13 @@ export function ReportCreatePanel({
     <SlideOver
       open={open}
       size="wide"
-      title={t("reports.form.title")}
+      title={editing ? t("reportAdmin.editTitle.report") : t("reports.form.title")}
       onClose={onClose}
       closeLabel={t("detail.close")}
       resizeLabel={t("detail.resize")}
       leading={<ObjectIcon kind="report" />}
     >
-      <p className="mb-3 text-ink-muted">{t("reports.form.intro")}</p>
+      {!editing && <p className="mb-3 text-ink-muted">{t("reports.form.intro")}</p>}
 
       <form onSubmit={onSubmit}>
         <div className="mb-3">

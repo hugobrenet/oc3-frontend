@@ -301,6 +301,7 @@ export type TeamRole = "responsibles" | "publications";
 /** The responsible and publication teams of an object, each added and removed in place. */
 export function TeamsPart({
   teams,
+  roles = ["responsibles", "publications"],
   groups,
   editable,
   busy,
@@ -308,6 +309,8 @@ export function TeamsPart({
   onRemove,
 }: {
   teams: Record<TeamRole, string[]>;
+  /** The lists shown, both by default: an object without responsibles shows its publications only. */
+  roles?: readonly TeamRole[];
   /** The groups that can be added, privilege groups left out. */
   groups: CompGroup[];
   editable: boolean;
@@ -321,8 +324,8 @@ export function TeamsPart({
   const idOf = (team: string) => groups.find((g) => g.role === team)?.id;
   return (
     <EditorPart title={t("compEditor.teams")}>
-      <div className="grid gap-3 sm:grid-cols-2">
-        {(["responsibles", "publications"] as const).map((role) => {
+      <div className={roles.length > 1 ? "grid gap-3 sm:grid-cols-2" : "grid gap-3"}>
+        {roles.map((role) => {
           const list = t(`compEditor.${role}`);
           const own = teams[role];
           return (

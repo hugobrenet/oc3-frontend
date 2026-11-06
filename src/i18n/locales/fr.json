@@ -5361,5 +5361,53 @@
       "yes": "oui",
       "no": "non"
     }
+  },
+  "reportAdmin": {
+    "edit": "Modifier",
+    "export": "Exporter",
+    "exporting": "Export…",
+    "exportHint": "Télécharger le rapport avec les graphiques et les métriques qu'il affiche, pour l'importer dans un autre collecteur",
+    "editTitle": {
+      "report": "Modifier le rapport",
+      "chart": "Modifier le graphique"
+    },
+    "tabs": {
+      "chart": "Onglets du graphique",
+      "metric": "Onglets de la métrique"
+    },
+    "deleteQuestion": {
+      "report": "Supprimer le rapport {{name}}, avec ses publications et ses responsables ?",
+      "chart": "Supprimer le graphique {{name}}, avec ses publications et ses responsables ? Les rapports qui l'affichent le perdent.",
+      "metric": "Supprimer la métrique {{name}}, avec ses publications et ses valeurs historisées ? Les graphiques et rapports qui l'affichent la perdent."
+    },
+    "teamsReadOnly": {
+      "report": "Seul un ReportsManager responsable du rapport modifie ses équipes.",
+      "chart": "Seul un ReportsManager responsable du graphique modifie ses équipes.",
+      "metric": "Seul un Manager modifie les équipes d'une métrique."
+    },
+    "revisions": {
+      "tab": "Révisions",
+      "description": "Modifications de sa définition",
+      "empty": "Aucune révision enregistrée pour l'instant : l'historique commence à la prochaine modification.",
+      "current": "version actuelle",
+      "change": "Voir la modification",
+      "compare": "Comparer avec la version actuelle",
+      "restore": "Restaurer cette version",
+      "restoreQuestion": "Restaurer la définition telle qu'elle était en {{version}} ? Une nouvelle révision : l'historique les garde toutes.",
+      "restoreConfirm": "Restaurer",
+      "restoring": "Restauration…",
+      "same": "Aucune modification de la définition.",
+      "since": "Modifications de {{version}} à la version actuelle :"
+    },
+    "import": {
+      "open": "Importer",
+      "title": "Importer des rapports",
+      "intro": "Un rapport exporté d'un collecteur, avec ses graphiques et ses métriques. Ceux dont le nom existe déjà sont gardés tels quels ; les autres sont créés, publiés à votre équipe principale, qui en devient responsable. Créer une métrique demande le privilège Manager.",
+      "file": "Fichier d'export",
+      "text": "Ou son contenu",
+      "invalid": "JSON invalide : {{message}}",
+      "run": "Importer",
+      "running": "Import…"
+    }
   }
 }

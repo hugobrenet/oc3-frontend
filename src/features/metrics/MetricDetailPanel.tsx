@@ -1,8 +1,14 @@
 import { useTranslation } from "react-i18next";
 import type { components } from "@/lib/api/schema";
-import { DetailPanel, type DetailGroup } from "@/components/opensvc/DetailPanel";
+import { DetailContent, type DetailGroup } from "@/components/opensvc/DetailPanel";
 import { FlagSwitch } from "@/components/opensvc/FlagSwitch";
-import { PencilIcon } from "@/components/ui/icons";
+import { RelatedTabsPanel } from "@/components/opensvc/RelatedTabsPanel";
+import type { RelatedTab } from "@/components/opensvc/related-tabs";
+import { HistoryIcon } from "@/components/ui/icons";
+import { ReportObjectActions } from "@/features/reports/ReportObjectActions";
+import { ReportObjectRevisions } from "@/features/reports/ReportObjectRevisions";
+import { ReportObjectTeams } from "@/features/reports/ReportObjectTeams";
+import { useObjectRevisions } from "@/features/reports/report-admin";
 import { formatDateTime } from "@/lib/format";
 import { useMetric } from "./use-metric";
 
@@ -65,44 +71,77 @@ const GROUPS: DetailGroup<MetricRow>[] = [
   },
 ];
 
-/** A metric, read-only, with the button that opens its edit form. */
+/** The revisions of the metric request. */
+const METRIC_TABS: RelatedTab[] = [
+  {
+    key: "revisions",
+    labelKey: "reportAdmin.revisions.tab",
+    descriptionKey: "reportAdmin.revisions.description",
+    icon: <HistoryIcon className="h-3.5 w-3.5 text-icon-metric" />,
+    useSummary: (id) => ({ count: useObjectRevisions("metric", id).data?.length }),
+    render: (id) => <ReportObjectRevisions kind="metric" id={id} />,
+  },
+];
+
+/**
+ * A metric: its request and its columns, the groups it is published to, its
+ * actions (edit, delete: a Manager's), then the revisions of its request. The open
+ * tab lives in the URL (`tab`), held by the view.
+ */
 export function MetricDetailPanel({
   metricId,
   label,
   onClose,
   onEdit,
+  tab,
+  onTabChange,
 }: {
   metricId: string | undefined;
   label: string;
   onClose: () => void;
   onEdit: () => void;
+  tab: string | undefined;
+  onTabChange: (tab: string | undefined) => void;
 }) {
   const { t } = useTranslation();
   const { data: metric, isPending, isError, error } = useMetric(metricId);
+  const open = metricId !== undefined;
 
   return (
-    <DetailPanel
-      kind="metric"
-      open={metricId !== undefined}
-      recordId={metricId}
+    <RelatedTabsPanel
+      open={open}
       title={metric?.metric_name ?? (label === "" ? t("metrics.detail.title") : label)}
+      kind="metric"
       onClose={onClose}
-      groups={GROUPS}
-      row={metric}
-      labelPrefix="metrics.fields"
-      groupPrefix="metrics.detail.groups"
-      isPending={isPending}
-      errorMessage={isError ? error.message : null}
-      actions={
-        <button
-          type="button"
-          onClick={onEdit}
-          className="flex h-8 items-center gap-1.5 rounded-(--radius-control) border border-line px-3 text-ink hover:bg-surface-sunken"
-        >
-          <PencilIcon />
-          {t("metrics.form.edit")}
-        </button>
-      }
-    />
+      objectId={metricId}
+      tabs={METRIC_TABS}
+      tab={tab}
+      onTabChange={onTabChange}
+      propertiesFamily="state"
+      label={t("reportAdmin.tabs.metric")}
+    >
+      <DetailContent
+        groups={GROUPS}
+        row={metric}
+        labelPrefix="metrics.fields"
+        groupPrefix="metrics.detail.groups"
+        isPending={open && isPending}
+        errorMessage={isError ? error.message : null}
+        actions={
+          metricId === undefined ? undefined : (
+            <div className="flex flex-col gap-3">
+              <ReportObjectTeams kind="metric" id={metricId} />
+              <ReportObjectActions
+                kind="metric"
+                id={metricId}
+                name={metric?.metric_name ?? label}
+                onEdit={onEdit}
+                onDeleted={onClose}
+              />
+            </div>
+          )
+        }
+      />
+    </RelatedTabsPanel>
   );
 }

@@ -5361,5 +5361,53 @@
       "yes": "yes",
       "no": "no"
     }
+  },
+  "reportAdmin": {
+    "edit": "Edit",
+    "export": "Export",
+    "exporting": "Exporting…",
+    "exportHint": "Download the report with the charts and the metrics it shows, to import it into another collector",
+    "editTitle": {
+      "report": "Edit the report",
+      "chart": "Edit the chart"
+    },
+    "tabs": {
+      "chart": "Chart tabs",
+      "metric": "Metric tabs"
+    },
+    "deleteQuestion": {
+      "report": "Delete the report {{name}}, with its publications and responsibles?",
+      "chart": "Delete the chart {{name}}, with its publications and responsibles? The reports showing it lose it.",
+      "metric": "Delete the metric {{name}}, with its publications and its historized values? The charts and reports showing it lose it."
+    },
+    "teamsReadOnly": {
+      "report": "Only a ReportsManager responsible for the report changes its teams.",
+      "chart": "Only a ReportsManager responsible for the chart changes its teams.",
+      "metric": "Only a Manager changes the teams of a metric."
+    },
+    "revisions": {
+      "tab": "Revisions",
+      "description": "Changes of its definition",
+      "empty": "No revision recorded yet: the history starts at the next change.",
+      "current": "current version",
+      "change": "Show the change",
+      "compare": "Compare with the current version",
+      "restore": "Restore this version",
+      "restoreQuestion": "Restore the definition as it was in {{version}}? A new revision: the history keeps every one.",
+      "restoreConfirm": "Restore",
+      "restoring": "Restoring…",
+      "same": "No change to the definition.",
+      "since": "Changes from {{version}} to the current version:"
+    },
+    "import": {
+      "open": "Import",
+      "title": "Import reports",
+      "intro": "A report exported from a collector, with its charts and metrics. Those of a name already used are kept as they are; the others are created, published to your primary team, which is made responsible for them. Creating a metric requires the Manager privilege.",
+      "file": "Export file",
+      "text": "Or its content",
+      "invalid": "Not valid JSON: {{message}}",
+      "run": "Import",
+      "running": "Importing…"
+    }
   }
 }

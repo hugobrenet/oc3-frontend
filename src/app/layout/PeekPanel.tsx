@@ -191,6 +191,8 @@ export function PeekPanel() {
           <MetricDetailPanel
             metricId={id}
             label={label}
+            tab={tab}
+            onTabChange={onTabChange}
             onClose={close}
             // Editing takes the room of the Metrics view, where the record opens again.
             onEdit={() => {
@@ -201,7 +203,19 @@ export function PeekPanel() {
       case "cluster":
         return <ClusterDetailPanel clusterId={id} label={label} onClose={close} />;
       case "chart":
-        return <ChartDetailPanel chartId={id} label={label} onClose={close} />;
+        return (
+          <ChartDetailPanel
+            chartId={id}
+            label={label}
+            tab={tab}
+            onTabChange={onTabChange}
+            onClose={close}
+            // Editing takes the room of the Charts view, where the record opens again.
+            onEdit={() => {
+              void navigate({ to: "/charts", search: { sel: id } });
+            }}
+          />
+        );
       case "report":
         return (
           <ReportDetailPanel
@@ -210,6 +224,10 @@ export function PeekPanel() {
             tab={tab}
             onTabChange={onTabChange}
             onClose={close}
+            // Editing takes the room of the Reports view, where the record opens again.
+            onEdit={() => {
+              void navigate({ to: "/reports", search: { sel: id } });
+            }}
           />
         );
       case "moduleset":
