@@ -814,6 +814,8 @@
     },
     "filterColumns": "Filtrer les colonnes",
     "resetColumns": "Revenir aux colonnes par défaut",
+    "reorderHint": "Glisser les colonnes cochées, ici ou par leur en-tête, pour les réordonner ; Alt+Haut/Bas au clavier.",
+    "dragHeader": "Glisser pour déplacer la colonne",
     "selected": "{{count}} sélectionnée",
     "selected_other": "{{count}} sélectionnées",
     "clearSelection": "Effacer",

@@ -814,6 +814,8 @@
     },
     "filterColumns": "Filter columns",
     "resetColumns": "Reset to default columns",
+    "reorderHint": "Drag the ticked columns, here or by their header, to reorder them; Alt+Up/Down on the keyboard.",
+    "dragHeader": "Drag to move the column",
     "selected": "{{count}} selected",
     "clearSelection": "Clear",
     "selectAll": "Select every row on this page",
