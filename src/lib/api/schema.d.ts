@@ -11392,6 +11392,18 @@ export interface components {
       ok: boolean;
       svc_id?: string;
     };
+    /**
+     * @description The failed targets (failed, refused, timed out or cancelled) a step goes
+     *     on with: it succeeds, the run going on with the next step, while they
+     *     are fewer than value, a number of targets (unit count) or a percentage
+     *     of the targets of the step (unit percent, 1 to 100). The step fails, its
+     *     waiting targets not run, as soon as they reach it.
+     */
+    OrchestrationFailureThreshold: {
+      /** @enum {string} */
+      unit: "count" | "percent";
+      value: number;
+    };
     OrchestrationInput: {
       description?: string;
       name: string;
@@ -11554,11 +11566,13 @@ export interface components {
      *     an instance, applies to instances only. pace says how many targets run at
      *     a time: all, one (one after the other) or batch (batch_size at a time).
      *     timeout, in seconds, fails a target whose action has not finished by
-     *     then; 0 means no limit.
+     *     then; 0 means no limit. failure_threshold lets the run go on past
+     *     failed targets: without it, the first target failing fails the step.
      */
     OrchestrationStep: {
       action: string;
       batch_size?: number;
+      failure_threshold?: components["schemas"]["OrchestrationFailureThreshold"];
       kind: components["schemas"]["OrchestrationTargetKind"];
       name: string;
       /** @enum {string} */

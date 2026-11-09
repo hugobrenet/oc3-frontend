@@ -14,6 +14,7 @@ import { BUTTON, CARD, INPUT } from "./ui";
 
 type Mode = OrchestrationStep["targets"]["mode"];
 type Pace = OrchestrationStep["pace"];
+type FailureUnit = NonNullable<OrchestrationStep["failure_threshold"]>["unit"];
 
 /**
  * A choice among a few options shown at once, as the side menu's views but of any
@@ -413,6 +414,45 @@ export function StepEditor({
             className={`${INPUT} w-16 tabular-nums`}
           />
           <span className="text-ink-muted">{t("orchestrations.step.timeoutHint")}</span>
+        </Field>
+
+        <Field label={t("orchestrations.step.failureThreshold")} htmlFor={`${id}-threshold`}>
+          <input
+            id={`${id}-threshold`}
+            type="number"
+            min={0}
+            max={step.failure_threshold?.unit === "percent" ? 100 : undefined}
+            value={step.failure_threshold?.value ?? 0}
+            onChange={(event) => {
+              const unit = step.failure_threshold?.unit ?? "count";
+              const raw = Math.max(0, Math.floor(Number(event.target.value)));
+              const value = unit === "percent" ? Math.min(100, raw) : raw;
+              set({ failure_threshold: value === 0 ? undefined : { value, unit } });
+            }}
+            className={`${INPUT} w-16 tabular-nums`}
+          />
+          <Choice<FailureUnit>
+            label={t("orchestrations.step.failureUnit")}
+            value={step.failure_threshold?.unit ?? "count"}
+            options={[
+              { value: "count", label: t("orchestrations.step.failureUnits.count") },
+              { value: "percent", label: t("orchestrations.step.failureUnits.percent") },
+            ]}
+            onChange={(unit) => {
+              // A unit chosen before a value starts from a usual one.
+              const current = step.failure_threshold?.value;
+              const value =
+                current === undefined
+                  ? unit === "percent"
+                    ? 10
+                    : 1
+                  : unit === "percent"
+                    ? Math.min(100, current)
+                    : current;
+              set({ failure_threshold: { value, unit } });
+            }}
+          />
+          <span className="text-ink-muted">{t("orchestrations.step.failureThresholdHint")}</span>
         </Field>
       </div>
 

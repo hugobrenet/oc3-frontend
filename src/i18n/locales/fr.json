@@ -4681,7 +4681,14 @@
       },
       "batchUnit": "à la fois",
       "timeout": "Délai",
-      "timeoutHint": "minutes ; 0 pour aucun. Une cible encore en cours fait alors échouer l'étape."
+      "timeoutHint": "minutes ; 0 pour aucun. Une cible encore en cours fait alors échouer l'étape.",
+      "failureThreshold": "Erreurs",
+      "failureUnit": "Unité du seuil d'erreurs",
+      "failureUnits": {
+        "count": "cibles",
+        "percent": "%"
+      },
+      "failureThresholdHint": "l'étape passe à la suivante tant que moins de cibles échouent ; 0 : la première erreur la fait échouer."
     },
     "check": {
       "title": "Étape {{n}} · cibles maintenant",
@@ -4764,7 +4771,13 @@
       "cancelQuestion": "Annuler définitivement cette exécution ?",
       "cancelRunningDetails": "Elle s'arrête comme avec Arrêter, et ne peut plus être reprise ni continuée : les actions encore en file sont annulées, celles qu'un agent mène déjà se terminent et leurs résultats sont gardés.",
       "cancelDetails": "Elle ne peut plus être reprise ni continuée. Pour relancer le workflow, démarrez une nouvelle exécution.",
-      "cancelledAt": "Annulée à l'étape {{n}} :"
+      "cancelledAt": "Annulée à l'étape {{n}} :",
+      "threshold": {
+        "count_one": "moins de {{count}} erreur",
+        "count_other": "moins de {{count}} erreurs",
+        "percent_one": "moins de {{count}} % d'erreurs",
+        "percent_other": "moins de {{count}} % d'erreurs"
+      }
     },
     "columns": {
       "name": "Nom",

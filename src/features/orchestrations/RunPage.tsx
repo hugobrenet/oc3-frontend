@@ -296,6 +296,10 @@ export function RunPage() {
                 <span className="text-ink-muted">
                   {plan?.name === "" || plan?.name === undefined ? "" : `${plan.action} · `}
                   {plan === undefined ? "" : t(`orchestrations.step.paces.${plan.pace}`)}
+                  {plan?.failure_threshold !== undefined &&
+                    ` · ${t(`orchestrations.run.threshold.${plan.failure_threshold.unit}`, {
+                      count: plan.failure_threshold.value,
+                    })}`}
                 </span>
                 {COUNT_ORDER.flatMap((status) => {
                   const n = step.counts[status] ?? 0;

@@ -4681,7 +4681,14 @@
       },
       "batchUnit": "at a time",
       "timeout": "Time limit",
-      "timeoutHint": "minutes; 0 for none. A target still running then fails the step."
+      "timeoutHint": "minutes; 0 for none. A target still running then fails the step.",
+      "failureThreshold": "Failures",
+      "failureUnit": "Unit of the failure threshold",
+      "failureUnits": {
+        "count": "targets",
+        "percent": "%"
+      },
+      "failureThresholdHint": "the step goes on to the next one while fewer of its targets fail; 0: the first failure fails it."
     },
     "check": {
       "title": "Step {{n}} · targets now",
@@ -4764,7 +4771,13 @@
       "cancelQuestion": "Cancel this run for good?",
       "cancelRunningDetails": "It stops as with Stop, and can no longer be resumed nor continued: the actions still waiting in the queue are cancelled, those an agent already runs finish and their results are kept.",
       "cancelDetails": "It can no longer be resumed nor continued. To run the workflow again, start a new run.",
-      "cancelledAt": "Cancelled at step {{n}}:"
+      "cancelledAt": "Cancelled at step {{n}}:",
+      "threshold": {
+        "count_one": "fewer than {{count}} failure",
+        "count_other": "fewer than {{count}} failures",
+        "percent_one": "fewer than {{count}}% failures",
+        "percent_other": "fewer than {{count}}% failures"
+      }
     },
     "columns": {
       "name": "Name",
