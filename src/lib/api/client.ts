@@ -18,7 +18,12 @@ import { sessionRefused, stopImpersonating } from "@/lib/session";
 /** The path the API is served under, the SPA's own origin proxying it. */
 export const API_BASE = "/api";
 
-export const api = createClient<paths>({ baseUrl: API_BASE });
+// The global fetch is looked up at each request rather than captured at load: a
+// test that stubs it reaches this client as it reaches `apiGetDynamic`.
+export const api = createClient<paths>({
+  baseUrl: API_BASE,
+  fetch: (request) => globalThis.fetch(request),
+});
 
 /**
  * Header the server requires on the requests of a cookie session that change
@@ -72,11 +77,13 @@ export function isApiPath(path: string): boolean {
  * definition fetches from any collector endpoint: the typed client needs the path
  * at compile time. Same credentials and same handling of a refused session as
  * `api`. Repeated query keys carry a list. A path that is not a plain API
- * path (isApiPath) is refused before any request.
+ * path (isApiPath) is refused before any request. `signal` stops the request, for a
+ * reader that goes away before the answer.
  */
 export async function apiGetDynamic(
   path: string,
   query: Record<string, string | string[]>,
+  signal?: AbortSignal,
 ): Promise<DynamicResponse> {
   if (!isApiPath(path)) throw new Error(`invalid API path: ${path}`);
   const params = new URLSearchParams();
@@ -89,7 +96,7 @@ export async function apiGetDynamic(
   const impersonate = impersonationHeader();
   if (impersonate !== null) headers.set(IMPERSONATE_HEADER, impersonate);
   const qs = params.toString();
-  const response = await fetch(`/api${path}${qs === "" ? "" : `?${qs}`}`, { headers });
+  const response = await fetch(`/api${path}${qs === "" ? "" : `?${qs}`}`, { headers, signal });
   if (response.status === 401) sessionRefused();
   if (response.headers.has(IMPERSONATION_REFUSED_HEADER)) stopImpersonating();
   const text = await response.text();

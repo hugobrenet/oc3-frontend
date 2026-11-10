@@ -350,7 +350,7 @@ const filtersetsRoute = createRoute({
   validateSearch: parseListSearch,
 });
 
-// The conversation with the AI assistant, not connected yet.
+// The conversation with the AI assistant, which oc3 relays to the agent.
 const assistantRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/ai",

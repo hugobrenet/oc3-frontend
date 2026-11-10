@@ -4281,10 +4281,42 @@
   },
   "assistant": {
     "title": "Assistant IA",
-    "newConversation": "Nouvelle conversation",
-    "conversation": "Conversation avec l'assistant",
     "name": "Assistant",
     "you": "Vous :",
+    "untitled": "Nouvelle conversation",
+    "unavailable": {
+      "disabled": "L'assistant IA n'est pas configuré sur ce collector.",
+      "password_sign_in": "Connectez-vous par authentification unique pour utiliser l'assistant : il agit avec votre identité d'authentification unique.",
+      "token_unavailable": "Votre session d'authentification unique ne détient aucun jeton d'accès pour l'assistant : déconnectez-vous puis reconnectez-vous.",
+      "impersonating": "L'assistant n'est pas utilisable pendant l'usurpation d'un autre utilisateur."
+    },
+    "conversations": {
+      "title": "Conversations",
+      "new": "Nouvelle conversation",
+      "show": "Afficher les conversations",
+      "hide": "Masquer les conversations",
+      "loading": "Chargement des conversations…",
+      "empty": "Aucune conversation pour l'instant.",
+      "search": "Rechercher une conversation",
+      "noMatch": "Aucune conversation ne correspond.",
+      "delete": "Supprimer la conversation {{title}}",
+      "groups": {
+        "today": "Aujourd'hui",
+        "yesterday": "Hier",
+        "week": "7 derniers jours",
+        "older": "Plus ancien"
+      }
+    },
+    "transcript": {
+      "start": "Interrogez votre parc",
+      "rename": "Renommer la conversation",
+      "titleLabel": "Titre de la conversation",
+      "log": "Conversation avec l'assistant",
+      "loadEarlier": "Charger les messages précédents",
+      "loadingEarlier": "Chargement des messages précédents…",
+      "loadingSaved": "Chargement des messages enregistrés…",
+      "reselect": "Sélectionnez à nouveau la conversation, ou démarrez-en une nouvelle, pour continuer."
+    },
     "empty": {
       "title": "Interrogez votre parc",
       "intro": "L'assistant répondra à partir de ce que vous pouvez voir dans le Collector : nœuds, services, alertes, conformité et demandes. Il n'agira jamais sans vous le demander d'abord.",
@@ -4296,48 +4328,168 @@
       "silentNodes": "Quels nœuds n'ont rien remonté depuis une heure ?",
       "compliance": "Quels nœuds échouent à leurs contrôles de conformité ?"
     },
-    "composer": {
-      "label": "Message à l'assistant",
-      "placeholder": "Posez une question sur les nœuds, services, alertes…",
-      "send": "Envoyer",
-      "scope": "Les réponses n'utilisent que ce que vous avez le droit de voir. Les actions demandent toujours votre confirmation.",
-      "keys": "Entrée pour envoyer · Maj+Entrée pour une nouvelle ligne",
-      "stop": "Arrêter"
+    "tips": {
+      "title": "Bien formuler sa demande",
+      "open": "Conseils pour formuler une demande",
+      "target": {
+        "lead": "Nommez la cible :",
+        "text": "le nom exact du nœud ou du service, comme prod/svc/web, et son cluster quand plusieurs portent ce nom."
+      },
+      "goal": {
+        "lead": "Dites le but, pas seulement l'action :",
+        "text": "« pourquoi les sauvegardes de prod/svc/db échouent depuis lundi » plutôt que « vérifie db »."
+      },
+      "scope": {
+        "lead": "Précisez la portée :",
+        "text": "un nœud, un service, une application ou tout le parc."
+      },
+      "symptom": {
+        "lead": "Pour un diagnostic, décrivez le symptôme :",
+        "text": "« Pourquoi node1 est-il marqué comme ne remontant plus ? »"
+      },
+      "oneAction": {
+        "lead": "Une action à la fois.",
+        "text": "Avant de modifier quoi que ce soit, l'assistant demande votre confirmation : relisez la carte avant d'approuver."
+      },
+      "limits": {
+        "lead": "L'assistant ne voit que ce que vos droits permettent,",
+        "text": "et il peut se tromper : ses étapes montrent ce qu'il a lu."
+      }
     },
-    "conversations": "Conversations",
-    "noConversation": "Aucune conversation pour l'instant.",
-    "untitled": "Nouvelle conversation",
-    "deleteConversation": "Supprimer la conversation {{title}}",
-    "thinking": "Réflexion…",
-    "tools": "Outils utilisés",
-    "toolRunning": "en cours",
-    "toolDone": "terminé",
-    "toolFailed": "en échec",
-    "unavailable": {
-      "disabled": "L'assistant IA n'est pas configuré sur ce collector.",
-      "password_sign_in": "Connectez-vous par authentification unique pour utiliser l'assistant : il agit avec votre identité d'authentification unique.",
-      "token_unavailable": "Votre session d'authentification unique ne détient aucun jeton d'accès pour l'assistant : déconnectez-vous puis reconnectez-vous.",
-      "impersonating": "L'assistant n'est pas utilisable pendant l'usurpation d'un autre utilisateur."
+    "tools": {
+      "open": "Ce que l'assistant sait faire",
+      "title": "Ce que l'assistant sait faire",
+      "intro": "Les outils que ce collector offre à l'assistant. Ce qu'un outil peut faire pour vous dépend de vos droits, vérifiés à l'appel. Leurs descriptions viennent du serveur, en anglais.",
+      "loading": "Lecture des outils…",
+      "unavailable": "L'agent n'a pas pu lire ses outils. Réessayez plus tard.",
+      "unlisted": "L'assistant ne liste pas ses outils sur ce collector.",
+      "failed": "Les outils n'ont pas pu être lus.",
+      "filter": "Filtrer les outils",
+      "count_one": "{{count}} outil",
+      "count_other": "{{count}} outils",
+      "arguments": "Arguments",
+      "groups": {
+        "read": "Lire",
+        "confirmed": "Agir, après votre confirmation",
+        "act": "Agir"
+      }
     },
-    "errors": {
-      "token": "Votre session d'authentification unique ne détient plus de jeton d'accès : déconnectez-vous puis reconnectez-vous.",
-      "unreachable": "L'agent IA est injoignable. Réessayez plus tard.",
-      "stopped": "Arrêté.",
-      "unknown": "L'assistant n'a pas pu répondre.",
-      "cut": "La connexion à l'assistant a été coupée : cette réponse n'est pas conservée. Reposez la question.",
-      "clientTools": "L'assistant a demandé des actions de cette interface, qui n'en propose pas.",
-      "toolCallLimit": "La question demande plus d'appels d'outils que l'assistant n'en fait pour une réponse : posez une question plus précise.",
-      "timeout": "L'assistant a mis trop de temps à répondre."
+    "message": {
+      "you": "Vous",
+      "awaiting": "En attente de votre décision sur l'action ci-dessous.",
+      "stopped": "Réponse incomplète, arrêtée. Elle n'a pas été relancée.",
+      "failed": "Réponse incomplète, en échec. Elle n'a pas été relancée.",
+      "tokens": "Jetons : {{total}}"
     },
-    "confirmation": {
-      "label": "Action en attente de votre décision",
-      "question": "L'assistant veut exécuter : {{title}}. Approuver ?",
-      "destructive": "L'assistant veut exécuter une action destructrice : {{title}}. Approuver ?",
-      "approve": "Approuver",
-      "reject": "Refuser",
+    "notice": {
+      "stopped": "Arrêté. Le tour n'a pas été relancé ; les actions déjà exécutées ne sont pas annulées.",
+      "stopping": "Arrêt en cours…",
+      "partial": "Les messages plus anciens de cette conversation ne sont pas affichés : sélectionnez-la à nouveau pour les lire."
+    },
+    "steps": {
+      "label": "Étapes de la réponse",
+      "summary_one": "{{count}} étape · {{duration}}",
+      "summary_other": "{{count}} étapes · {{duration}}",
+      "running": "En cours · {{time}}",
+      "waiting": "En attente de l'agent…",
+      "model": "modèle {{duration}}",
+      "parallel": "en parallèle",
+      "withChanges": "(avec vos modifications)",
+      "arguments": "Arguments",
+      "argumentsOmitted": "Arguments trop volumineux pour être conservés dans l'historique.",
+      "refusal": "Refusé par l'outil :",
+      "excerpt": "Résultat :",
+      "excerptTruncated": "Résultat, ses 4 premiers Ko :",
+      "count_one": "{{count}} étape",
+      "count_other": "{{count}} étapes",
+      "rejected_one": "{{count}} action refusée par vous",
+      "rejected_other": "{{count}} actions refusées par vous",
+      "status": {
+        "running": "en cours",
+        "pending": "en attente de votre décision",
+        "completed": "terminée",
+        "failed": "refusée par l'outil",
+        "rejected": "refusée par vous",
+        "interrupted": "interrompue"
+      },
+      "tool": {
+        "search_tools": "Recherche d'outils : « {{query}} »",
+        "search_docs": "Recherche dans la documentation : « {{query}} »",
+        "search_code": "Recherche dans le code : « {{query}} »",
+        "read_resource": "Lecture de la référence {{uri}}",
+        "load_skill": "Chargement de la procédure « {{skill}} »"
+      }
+    },
+    "confirm": {
+      "region": "Action en attente de confirmation",
+      "destructive": "Action destructrice à confirmer",
+      "action": "Action à confirmer",
+      "tool": "Outil :",
+      "arguments": "Arguments de l'appel",
       "noArguments": "Aucun argument.",
-      "expires": "Cette demande expire {{when}}.",
-      "expired": "Cette demande a expiré : l'action n'a pas été exécutée."
+      "form": "Arguments de l'action",
+      "oneValuePerLine": "Une valeur par ligne.",
+      "formErrors": {
+        "number": "Un nombre est attendu.",
+        "json": "Un JSON valide est attendu.",
+        "required": "Une valeur est attendue."
+      },
+      "expires": "Cette demande expire {{when}}. Rien ne s'exécute sans votre approbation.",
+      "expired": "Cette demande a expiré : l'action n'a pas été exécutée.",
+      "withChanges": " L'action s'exécutera avec vos modifications.",
+      "edit": "Modifier",
+      "discard": "Annuler les modifications",
+      "reject": "Refuser",
+      "approve": "Approuver",
+      "approveEdited": "Approuver avec mes modifications",
+      "recompute": "Recalculer l'aperçu",
+      "previewing": "Calcul de l'aperçu…",
+      "previewStale": "L'aperçu vaut pour les arguments d'avant vos modifications : recalculez-le.",
+      "previewOfEdit": "L'aperçu vaut pour vos arguments modifiés.",
+      "previewError": "Aperçu indisponible : {{error}}",
+      "mayRefuse": "L'appel peut encore être refusé à l'exécution : une validation, un conflit, un droit.",
+      "queuedNote": "Un message est en file : il partira après votre décision.",
+      "changes": "Changements",
+      "key": "Clé",
+      "current": "Valeur actuelle",
+      "operation": "Opération",
+      "proposed": "Valeur proposée",
+      "computed": "Les valeurs proposées sont calculées par le MCP ; ce qui exécute les opérations fait foi.",
+      "notComputed": "non calculée",
+      "hidden": "masquée",
+      "empty": "vide",
+      "ops": {
+        "=": "affecte",
+        "+=": "ajoute",
+        "-=": "retire",
+        "|=": "ajoute si absente",
+        "^=": "bascule",
+        "insert": "insère",
+        "unset": "retire la clé"
+      },
+      "notes": {
+        "not_set": "non définie",
+        "empty_or_not_set": "vide ou non définie",
+        "secret": "secret : valeurs non affichées",
+        "applied_after_file": "appliqué après le fichier de configuration",
+        "section_deleted_first": "sa section est d'abord supprimée",
+        "current_too_long": "valeur actuelle trop longue pour calculer le résultat",
+        "after_uncomputed": "après une opération que le MCP ne calcule pas",
+        "not_in_list": "la valeur n'est pas dans la liste : rien ne change",
+        "already_in_list": "la valeur est déjà dans la liste : rien ne change",
+        "empty_index": "une valeur vide à un index ne retire rien",
+        "index_past_words": "l'index dépasse les mots de la valeur : l'appel est refusé ou échoue"
+      },
+      "deleted_one": "Supprime la section {{section}} et sa clé :",
+      "deleted_other": "Supprime la section {{section}} et ses {{count}} clés :",
+      "deletedEmpty": "Supprime la section {{section}}, qui ne contient aucune clé lue.",
+      "deletedSecrets_one": "et {{count}} clé secrète, non nommée.",
+      "deletedSecrets_other": "et {{count}} clés secrètes, non nommées.",
+      "content": "Fichier écrit",
+      "contentTruncated": "Le fichier est tronqué pour garder l'aperçu borné.",
+      "readAt": "Valeurs actuelles lues à {{time}} : les valeurs configurées, non évaluées ; elles peuvent changer avant l'exécution.",
+      "secrets_one": "{{count}} changement sur une clé secrète : ses valeurs ne sont pas affichées.",
+      "secrets_other": "{{count}} changements sur des clés secrètes : leurs valeurs ne sont pas affichées."
     },
     "feedback": {
       "question": "Cette réponse vous a-t-elle aidé ?",
@@ -4345,7 +4497,11 @@
       "down": "Pas utile",
       "withdraw": "Retirer l'avis",
       "tellMore": "En dire plus",
-      "why": "Qu'est-ce qui n'allait pas ?",
+      "edit": "Modifier les précisions",
+      "saving": "Enregistrement de l'avis…",
+      "thanks": "Merci pour votre avis.",
+      "details": "Précisions de l'avis",
+      "why": "Qu'est-ce qui n'allait pas ? (facultatif)",
       "reasons": {
         "not_answered": "Elle ne répond pas à la question",
         "missing_information": "Des informations manquent",
@@ -4353,19 +4509,80 @@
         "hard_to_understand": "Elle est difficile à comprendre",
         "action_not_done": "L'action attendue n'a pas été faite"
       },
-      "expected": "Qu'attendiez-vous ?",
+      "expected": "Qu'attendiez-vous ? (facultatif)",
       "count": "{{count}} / {{max}}",
+      "tooLong": "{{max}} caractères au plus.",
       "later": "Plus tard",
       "send": "Envoyer",
       "privacy": "L'avis et une copie de cet échange sont conservés pour analyse, sans votre identité.",
-      "sent": {
-        "rating": "Merci pour votre avis.",
-        "details": "Merci, les précisions sont envoyées.",
-        "withdrawn": "Avis retiré."
+      "failed": "L'avis n'a pas pu être enregistré : {{message}}"
+    },
+    "composer": {
+      "label": "Message à l'assistant",
+      "placeholder": "Posez une question sur les nœuds, services, alertes…",
+      "send": "Envoyer",
+      "queue": "Mettre en file",
+      "stop": "Arrêter",
+      "scope": "Les réponses n'utilisent que ce que vous avez le droit de voir. Les actions demandent toujours votre confirmation.",
+      "keys": "Entrée pour envoyer · Maj+Entrée pour une nouvelle ligne",
+      "tooLarge": "Le message ne doit pas dépasser 32 Kio.",
+      "queuedHint": "La réponse est en cours : votre message partira à la fin.",
+      "queuedDuringConfirmation": "Votre message partira après votre décision ; il ne répond pas à la confirmation."
+    },
+    "queue": {
+      "label": "Message en file",
+      "edit": "Modifier",
+      "remove": "Retirer",
+      "resend": "Renvoyer",
+      "announce": "Message en file : {{text}}"
+    },
+    "dialog": {
+      "deleteTitle": "Supprimer la conversation",
+      "deleteText": "Supprimer « {{title}} » et son contexte enregistré ? C'est irréversible.",
+      "confirmDelete": "Confirmer la suppression",
+      "replaceTitle": "Remplacer le message en file",
+      "replaceText": "Un message est déjà en file. Le remplacer par celui que vous avez tapé ?",
+      "replace": "Remplacer"
+    },
+    "errors": {
+      "unknown": "La demande à l'assistant a échoué. Elle n'a pas été relancée.",
+      "refused": "L'assistant a refusé la demande.",
+      "codes": {
+        "assistant_disabled": "L'assistant IA n'est pas configuré sur ce collector.",
+        "assistant_token_unavailable": "Votre session d'authentification unique ne détient plus de jeton d'accès : déconnectez-vous puis reconnectez-vous.",
+        "assistant_forbidden": "L'assistant n'est pas utilisable pendant l'usurpation d'un autre utilisateur.",
+        "assistant_unreachable": "L'agent IA est injoignable. Réessayez plus tard.",
+        "network_error": "Le collector est injoignable. Vérifiez votre connexion.",
+        "invalid_response": "L'assistant a répondu d'une façon que cette page ne lit pas.",
+        "stream_interrupted": "La connexion à l'assistant a été coupée : cette réponse n'est pas conservée. Elle n'a pas été relancée.",
+        "stream_limit": "La réponse dépasse la taille que cette page lit.",
+        "request_timeout": "L'assistant n'a pas répondu à temps. Il n'a pas été relancé.",
+        "tool_name_conflict": "Un outil de cette page porte le nom d'un outil de l'assistant. Il n'a pas été relancé.",
+        "tool_call_limit": "La question demande plus d'appels d'outils que l'assistant n'en fait pour une réponse : posez une question plus précise.",
+        "turn_failed": "L'assistant n'a pas pu répondre. Il n'a pas été relancé.",
+        "agent_outdated": "L'agent IA est trop ancien pour cette page : il ne sert pas les exécutions AG-UI.",
+        "conversation_quota": "Votre quota de conversations est atteint : supprimez des conversations, ou attendez qu'elles expirent.",
+        "conversation_limit": "L'assistant détient autant de conversations qu'il le peut pour l'instant. Réessayez plus tard.",
+        "confirmation_not_pending": "Cette action n'attend plus de décision.",
+        "confirmation_expired": "La demande de confirmation a expiré. L'action n'a pas été exécutée.",
+        "invalid_edited_arguments": "L'agent a refusé les arguments modifiés. Vérifiez le formulaire : l'action attend toujours.",
+        "invalid_title": "Un titre de 1 à 80 caractères est attendu.",
+        "feedback_invalid": "L'avis est invalide.",
+        "feedback_gone": "Cette réponse ne peut plus être évaluée.",
+        "feedback_limit": "L'assistant ne prend plus d'avis pour le moment.",
+        "tools_unavailable": "L'agent n'a pas pu lire ses outils. Réessayez plus tard.",
+        "tools_unlisted": "L'assistant ne liste pas ses outils sur ce collector."
       },
-      "limit": "L'assistant ne prend plus d'avis pour le moment.",
-      "expired": "Cette conversation a expiré : ses réponses ne peuvent plus être notées.",
-      "failed": "L'avis n'a pas pu être envoyé : {{message}}"
+      "status": {
+        "401": "Votre session ne vous authentifie plus auprès de l'assistant : reconnectez-vous.",
+        "403": "L'accès à l'assistant est refusé.",
+        "404": "Conversation introuvable.",
+        "409": "La conversation est occupée, ou la limite de conversations est atteinte.",
+        "410": "Cette conversation a expiré.",
+        "413": "La demande ou un message enregistré dépasse la taille permise.",
+        "429": "L'assistant est occupé. Réessayez plus tard.",
+        "503": "L'assistant est momentanément indisponible."
+      }
     }
   },
   "checks": {

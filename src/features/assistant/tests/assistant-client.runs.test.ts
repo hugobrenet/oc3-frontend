@@ -1,0 +1,743 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  createAssistantClient,
+  type AssistantClient,
+  type RunEvent,
+  type RunInput,
+} from "../assistant-client";
+import {
+  GOLDEN_THREAD,
+  aguiFrame,
+  goldenResponse,
+  goldenStream,
+  runFinished,
+  runStarted,
+  streamResponse,
+} from "./agui-fixtures";
+
+const prompt = (text: string, promptId: string): RunInput => ({ prompt: text, promptId });
+
+let client: AssistantClient;
+let fetchMock: ReturnType<typeof vi.fn<typeof fetch>>;
+
+beforeEach(() => {
+  client = createAssistantClient({ newId: () => "run-1" });
+  fetchMock = vi.fn<typeof fetch>();
+  vi.stubGlobal("fetch", fetchMock);
+});
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
+const request = () => fetchMock.mock.calls[0]?.[0] as Request;
+const sent = async () => (await request().clone().json()) as Record<string, unknown>;
+const eventsOf = (onEvent: ReturnType<typeof vi.fn<(event: RunEvent) => void>>) =>
+  onEvent.mock.calls.map(([event]) => event);
+const types = (onEvent: ReturnType<typeof vi.fn<(event: RunEvent) => void>>) =>
+  eventsOf(onEvent).map((event) => event.type);
+
+describe("replaying the streams of the agent", () => {
+  it("posts a RunAgentInput on the runs route and streams the answers and tools of a turn", async () => {
+    fetchMock.mockResolvedValue(goldenResponse("text_and_tools"));
+    const onEvent = vi.fn<(event: RunEvent) => void>();
+    const result = await client.run(GOLDEN_THREAD, prompt("How many nodes?", "u-1"), { onEvent });
+    expect(result).toEqual({
+      type: "RUN_FINISHED",
+      outcome: "success",
+      turnId: "turn-1",
+      tokens: 370,
+      startedAt: 1760000000000,
+      endedAt: 1760000000000,
+    });
+    expect(new URL(request().url).pathname).toBe(
+      "/api/assistant/conversations/conversation-id/runs",
+    );
+    expect(request().method).toBe("POST");
+    expect(request().headers.get("Accept")).toBe("text/event-stream");
+    expect(request().headers.get("Content-Type")).toBe("application/json");
+    expect(await sent()).toMatchObject(goldenStream("text_and_tools").request);
+    expect(types(onEvent)).toEqual([
+      "RUN_STARTED",
+      "TEXT_MESSAGE_START",
+      "TEXT_MESSAGE_CONTENT",
+      "TEXT_MESSAGE_CONTENT",
+      "TOOL_CALL_START",
+      "TOOL_CALL_END",
+      "TOOL_CALL_RESULT",
+      "TOOL_CALL_START",
+      "TOOL_CALL_END",
+      "TOOL_CALL_RESULT",
+      "TEXT_MESSAGE_START",
+      "TEXT_MESSAGE_CONTENT",
+    ]);
+    const events = eventsOf(onEvent);
+    expect(events[7]).toEqual({
+      type: "TOOL_CALL_START",
+      toolCallId: "call-1",
+      toolCallName: "list_nodes",
+      parentMessageId: "turn-1:2",
+      at: 1760000000000,
+    });
+    // The steps: the arguments of a call at its end, and of its result what
+    // the page keeps.
+    expect(events[8]).toEqual({ type: "TOOL_CALL_END", toolCallId: "call-1", arguments: {} });
+    expect(events[9]).toMatchObject({
+      type: "TOOL_CALL_RESULT",
+      toolCallId: "call-1",
+      rejected: false,
+      structured: true,
+      refusal: "",
+      at: 1760000000000,
+    });
+    expect(events[11]).toEqual({
+      type: "TEXT_MESSAGE_CONTENT",
+      messageId: "turn-1:4",
+      delta: "There are two nodes: **n1** and **n2**.",
+    });
+  });
+
+  it("ends a run on the confirmation of a call, its arguments those the run streamed", async () => {
+    fetchMock.mockResolvedValue(goldenResponse("confirmation"));
+    const onEvent = vi.fn<(event: RunEvent) => void>();
+    const result = await client.run(GOLDEN_THREAD, prompt("Start web with /bin/true", "u-c"), {
+      onEvent,
+    });
+    expect(result).toMatchObject({
+      type: "RUN_FINISHED",
+      outcome: "interrupt",
+      turnId: "turn-c",
+      tokens: 340,
+      confirmation: {
+        id: "confirmation-1",
+        turnId: "turn-c",
+        tool: { name: "update_object_config", title: "Update object config", destructive: true },
+        arguments: { path: "web", yaml: "app#1:\n  start: /bin/true\n" },
+        argumentTypes: { yaml: "application/yaml" },
+        editable: true,
+        inputSchema: {
+          type: "object",
+          properties: {
+            path: { type: "string", description: "The path of the object." },
+            yaml: {
+              type: "string",
+              contentMediaType: "application/yaml",
+              description: "The configuration to apply.",
+            },
+            wait: { type: "boolean", description: "Wait until every live node has it." },
+          },
+          required: ["path", "yaml"],
+          additionalProperties: false,
+        },
+        expiresAt: "2026-10-09T17:45:00Z",
+      },
+    });
+    expect(types(onEvent)).toEqual([
+      "RUN_STARTED",
+      "TEXT_MESSAGE_START",
+      "TEXT_MESSAGE_CONTENT",
+      "TOOL_CALL_START",
+      "TOOL_CALL_END",
+    ]);
+  });
+
+  it.each([
+    ["resume_approved", true, false, 415],
+    ["resume_rejected", false, true, null],
+  ] as const)(
+    "answers a confirmation with a resume (%s)",
+    async (name, approved, rejected, tokens) => {
+      fetchMock.mockResolvedValue(goldenResponse(name));
+      const onEvent = vi.fn<(event: RunEvent) => void>();
+      const held = [
+        { id: "u-c", role: "user" as const },
+        { id: "turn-c:2", role: "assistant" as const },
+      ];
+      const result = await client.run(
+        GOLDEN_THREAD,
+        { held, resume: { interruptId: "confirmation-1", approved } },
+        { onEvent },
+      );
+      expect(result).toMatchObject({
+        type: "RUN_FINISHED",
+        outcome: "success",
+        turnId: "turn-c",
+        tokens,
+      });
+      expect(await sent()).toMatchObject(goldenStream(name).request);
+      expect(eventsOf(onEvent)[1]).toMatchObject({
+        type: "TOOL_CALL_RESULT",
+        toolCallId: "call-7",
+        rejected,
+      });
+    },
+  );
+
+  it("approves a call with the arguments the user edited", async () => {
+    fetchMock.mockResolvedValue(goldenResponse("resume_edited"));
+    const onEvent = vi.fn<(event: RunEvent) => void>();
+    const editedArgs = { path: "web", yaml: "app#1:\n  start: /bin/false\n" };
+    const result = await client.run(
+      GOLDEN_THREAD,
+      {
+        held: [
+          { id: "u-c", role: "user" },
+          { id: "turn-c:2", role: "assistant" },
+        ],
+        resume: { interruptId: "confirmation-1", approved: true, editedArgs },
+      },
+      { onEvent },
+    );
+    expect(await sent()).toMatchObject(goldenStream("resume_edited").request);
+    expect(result).toMatchObject({ outcome: "success", turnId: "turn-c" });
+    expect(eventsOf(onEvent)[1]).toMatchObject({
+      type: "TOOL_CALL_RESULT",
+      toolCallId: "call-7",
+      rejected: false,
+    });
+  });
+
+  it("asks the preview again for edited arguments, the call waiting again", async () => {
+    fetchMock.mockResolvedValue(goldenResponse("resume_preview"));
+    const editedArgs = { path: "api", yaml: "app#1:\n  start: /bin/true\n" };
+    const result = await client.run(GOLDEN_THREAD, {
+      held: [
+        { id: "u-c", role: "user" },
+        { id: "turn-c:2", role: "assistant" },
+      ],
+      resume: {
+        interruptId: "confirmation-1",
+        preview: true,
+        editedArgs,
+        pending: {
+          name: "update_object_config",
+          arguments: { path: "web", yaml: "app#1:\n  start: /bin/true\n" },
+        },
+      },
+    });
+    expect(await sent()).toMatchObject(goldenStream("resume_preview").request);
+    expect(result).toMatchObject({
+      outcome: "interrupt",
+      confirmation: {
+        id: "confirmation-2",
+        arguments: { path: "web" },
+        previewArguments: editedArgs,
+        preview: { summary: { text: "Update api" } },
+      },
+    });
+  });
+
+  it("explains an edit the agent refuses by its code, never its message", async () => {
+    fetchMock.mockResolvedValue(goldenResponse("invalid_edited_arguments"));
+    const error = await client
+      .run(GOLDEN_THREAD, {
+        resume: { interruptId: "confirmation-1", approved: true, editedArgs: { path: "web" } },
+      })
+      .catch((error: unknown) => error);
+    expect(error).toMatchObject({ code: "invalid_edited_arguments", status: 400 });
+    expect((error as Error).message).not.toContain("missing properties");
+  });
+
+  it("gives the thread of a client out of phase before the run", async () => {
+    fetchMock.mockResolvedValue(goldenResponse("snapshot"));
+    const onEvent = vi.fn<(event: RunEvent) => void>();
+    await client.run(GOLDEN_THREAD, prompt("Any service?", "u-2"), { onEvent });
+    expect(eventsOf(onEvent)[1]).toMatchObject({
+      type: "MESSAGES_SNAPSHOT",
+      omittedTurns: 0,
+      messages: [
+        { id: "u-1", role: "user", content: "How many nodes?" },
+        {
+          id: "turn-1:2",
+          role: "assistant",
+          content: "",
+          toolCalls: [{ id: "call-1", name: "list_nodes", arguments: {} }],
+        },
+        {
+          id: "call-1-result",
+          role: "tool",
+          toolCallId: "call-1",
+          rejected: false,
+          structured: true,
+        },
+        { id: "turn-1:4", role: "assistant", content: "Two nodes.", toolCalls: [] },
+        { id: "turn-2:1", role: "user", content: "Any service?" },
+      ],
+    });
+  });
+
+  it("tells the turns a snapshot left out", async () => {
+    fetchMock.mockResolvedValue(
+      streamResponse([
+        aguiFrame(runStarted) +
+          aguiFrame({
+            type: "MESSAGES_SNAPSHOT",
+            messages: [],
+            metadata: { "opensvc.truncated": { omittedTurns: 3 } },
+          }) +
+          aguiFrame(runFinished()),
+      ]),
+    );
+    const onEvent = vi.fn<(event: RunEvent) => void>();
+    await client.run(GOLDEN_THREAD, prompt("hello", "u-1"), { onEvent });
+    expect(eventsOf(onEvent)[1]).toEqual({
+      type: "MESSAGES_SNAPSHOT",
+      messages: [],
+      omittedTurns: 3,
+    });
+  });
+
+  it.each(["request_timeout", "tool_call_limit", "tool_name_conflict"])(
+    "explains the run error %s by its code, never the message of the agent",
+    async (code) => {
+      const failure = { type: "RUN_ERROR", timestamp: 1760000000000, message: "secret", code };
+      fetchMock.mockResolvedValue(streamResponse([aguiFrame(runStarted) + aguiFrame(failure)]));
+      const error = await client
+        .run(GOLDEN_THREAD, prompt("Check everything", "u-l"))
+        .catch((error: unknown) => error);
+      expect(error).toMatchObject({ code });
+      expect((error as Error).message).not.toContain("secret");
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  it("reports another run error as a failed turn", async () => {
+    fetchMock.mockResolvedValue(goldenResponse("agent_failed"));
+    await expect(client.run(GOLDEN_THREAD, prompt("Hello", "u-f"))).rejects.toMatchObject({
+      code: "turn_failed",
+    });
+  });
+
+  it("explains a confirmation that no longer waits by its code", async () => {
+    fetchMock.mockResolvedValue(goldenResponse("confirmation_not_pending"));
+    await expect(
+      client.run(GOLDEN_THREAD, { resume: { interruptId: "confirmation-0", approved: true } }),
+    ).rejects.toMatchObject({ code: "confirmation_not_pending", status: 409 });
+  });
+
+  it("reports a busy conversation by its status", async () => {
+    fetchMock.mockResolvedValue(goldenResponse("conversation_busy"));
+    const error = await client
+      .run(GOLDEN_THREAD, prompt("Hello", "u-b"))
+      .catch((error: unknown) => error);
+    expect(error).toMatchObject({ code: "http_error", status: 409 });
+    expect((error as Error).message).not.toContain("active turn");
+  });
+});
+
+describe("the refusals of a run", () => {
+  it("explains an expired confirmation by its code", async () => {
+    fetchMock.mockResolvedValue(
+      Response.json(
+        { error: { code: "confirmation_expired", message: "secret upstream" } },
+        { status: 410 },
+      ),
+    );
+    await expect(
+      client.run(GOLDEN_THREAD, { resume: { interruptId: "confirmation-1", approved: false } }),
+    ).rejects.toMatchObject({ code: "confirmation_expired", status: 410 });
+  });
+
+  it("tells an agent without the runs route from a conversation not found, or a relay off", async () => {
+    fetchMock
+      .mockResolvedValueOnce(
+        new Response("404 page not found\n", {
+          status: 404,
+          headers: { "Content-Type": "text/plain" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        Response.json({ error: { code: "conversation_not_found", message: "x" } }, { status: 404 }),
+      )
+      .mockResolvedValueOnce(
+        Response.json({ error: { code: "assistant_disabled", message: "x" } }, { status: 404 }),
+      );
+    await expect(client.run(GOLDEN_THREAD, prompt("Hello", "u-1"))).rejects.toMatchObject({
+      code: "agent_outdated",
+    });
+    await expect(client.run(GOLDEN_THREAD, prompt("Hello", "u-1"))).rejects.toMatchObject({
+      code: "http_error",
+      status: 404,
+    });
+    await expect(client.run(GOLDEN_THREAD, prompt("Hello", "u-1"))).rejects.toMatchObject({
+      code: "assistant_disabled",
+    });
+  });
+
+  it.each([
+    "thread_mismatch",
+    "invalid_run_id",
+    "invalid_decision",
+    "unsupported_protocol_version",
+    "toString",
+  ])("reports the program error %s generically", async (code) => {
+    fetchMock.mockResolvedValue(
+      Response.json({ error: { code, message: "secret upstream" } }, { status: 400 }),
+    );
+    await expect(client.run(GOLDEN_THREAD, prompt("Hello", "u-1"))).rejects.toMatchObject({
+      code: "http_error",
+      status: 400,
+    });
+  });
+
+  it("sends the held messages by their IDs only, then the prompt", async () => {
+    fetchMock.mockResolvedValue(goldenResponse("text_and_tools"));
+    await client.run(GOLDEN_THREAD, {
+      prompt: "How many nodes?",
+      promptId: "u-9",
+      held: [
+        { id: "u-1", role: "user", text: "not sent" } as { id: string; role: "user" },
+        { id: "turn-1:4", role: "assistant" },
+      ],
+    });
+    expect(await sent()).toEqual({
+      threadId: GOLDEN_THREAD,
+      runId: "run-1",
+      protocolVersion: "1.0",
+      messages: [
+        { id: "u-1", role: "user" },
+        { id: "turn-1:4", role: "assistant" },
+        { id: "u-9", role: "user", content: "How many nodes?" },
+      ],
+      tools: [],
+      context: [],
+      state: {},
+      forwardedProps: {},
+    });
+  });
+
+  it.each([
+    [prompt("", "u-1"), "invalid_prompt"],
+    [prompt(" ", "u-1"), "invalid_prompt"],
+    [prompt("é".repeat(16385), "u-1"), "invalid_prompt"],
+    [prompt("hello", "has space"), "invalid_run"],
+    [prompt("hello", ""), "invalid_run"],
+    [{ ...prompt("hello", "u-1"), held: [{ id: "u 0", role: "user" }] }, "invalid_run"],
+    [{ ...prompt("hello", "u-1"), held: [{ id: "u-0", role: "tool" }] }, "invalid_run"],
+    [{ resume: { interruptId: "bad id", approved: true } }, "invalid_confirmation"],
+    [{ resume: { interruptId: "confirmation-1", approved: "yes" } }, "invalid_confirmation"],
+    [
+      { resume: { interruptId: "confirmation-1", approved: false, editedArgs: { path: "web" } } },
+      "invalid_confirmation",
+    ],
+    [
+      { resume: { interruptId: "confirmation-1", approved: true, editedArgs: ["web"] } },
+      "invalid_confirmation",
+    ],
+    [
+      { resume: { interruptId: "confirmation-1", approved: true, editedArgs: "web" } },
+      "invalid_confirmation",
+    ],
+  ])("refuses an invalid run before any request", (input, code) => {
+    expect(() => client.run(GOLDEN_THREAD, input as RunInput)).toThrow(code);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+// The interrupt of the golden confirmation, from its RUN_FINISHED.
+function goldenInterrupt(): Record<string, unknown> {
+  const finished = goldenStream("confirmation")
+    .body.split("\n\n")
+    .map((frame) => frame.replace(/^data: /, ""))
+    .filter((data) => data !== "")
+    .map((data) => JSON.parse(data) as Record<string, unknown>)
+    .find((event) => event.type === "RUN_FINISHED") as {
+    outcome: { interrupts: Record<string, unknown>[] };
+  };
+  return finished.outcome.interrupts[0] ?? {};
+}
+
+describe("the grammar of the stream", () => {
+  const run = (chunks: (string | Uint8Array)[]) => {
+    fetchMock.mockResolvedValue(streamResponse(chunks));
+    return client.run(GOLDEN_THREAD, prompt("hello", "u-1"));
+  };
+  const text = [
+    { type: "TEXT_MESSAGE_START", messageId: "turn-1:2", role: "assistant" },
+    { type: "TEXT_MESSAGE_CONTENT", messageId: "turn-1:2", delta: "Hi" },
+    { type: "TEXT_MESSAGE_END", messageId: "turn-1:2" },
+  ];
+
+  it.each([
+    ["invalid JSON", ["data: {not json}\n\n"]],
+    ["RUN_FINISHED without RUN_STARTED", [aguiFrame(runFinished())]],
+    [
+      "the start of another run",
+      [aguiFrame({ ...runStarted, runId: "run-2" }), aguiFrame(runFinished())],
+    ],
+    [
+      "two terminal events",
+      [aguiFrame(runStarted), aguiFrame(runFinished()), aguiFrame(runFinished())],
+    ],
+    [
+      "an event after the end",
+      [aguiFrame(runStarted), aguiFrame(runFinished()), aguiFrame(text[0])],
+    ],
+    [
+      "content outside a message",
+      [aguiFrame(runStarted), aguiFrame(text[1]), aguiFrame(runFinished())],
+    ],
+    ["a message left open", [aguiFrame(runStarted), aguiFrame(text[0]), aguiFrame(runFinished())]],
+    [
+      "arguments of an unknown call",
+      [
+        aguiFrame(runStarted),
+        aguiFrame({ type: "TOOL_CALL_ARGS", toolCallId: "call-1", delta: "{}" }),
+        aguiFrame(runFinished()),
+      ],
+    ],
+    [
+      "an interrupt on a call the run did not make",
+      [
+        aguiFrame(runStarted),
+        aguiFrame(
+          runFinished({
+            result: undefined,
+            outcome: {
+              type: "interrupt",
+              interrupts: [{ ...goldenInterrupt(), toolCallId: "call-9" }],
+            },
+          }),
+        ),
+      ],
+    ],
+    [
+      "calls waiting on tools the page did not offer",
+      [
+        aguiFrame(runStarted),
+        aguiFrame(runFinished({ outcome: { type: "success", pendingToolCallIds: ["ui-1"] } })),
+      ],
+    ],
+    [
+      "an invalid turn ID",
+      [aguiFrame(runStarted), aguiFrame(runFinished({ result: { turnId: "../turn" } }))],
+    ],
+    [
+      "an invalid usage",
+      [aguiFrame(runStarted), aguiFrame(runFinished({ usage: [{ totalTokens: -1 }] }))],
+    ],
+    // The schemas of AG-UI check each event before the order of the protocol.
+    [
+      "a tool call without its name",
+      [
+        aguiFrame(runStarted),
+        aguiFrame({ type: "TOOL_CALL_START", toolCallId: "call-1" }),
+        aguiFrame(runFinished()),
+      ],
+    ],
+    [
+      "a cancelled run, which no turn ends with",
+      [aguiFrame(runStarted), aguiFrame(runFinished({ outcome: { type: "cancelled" } }))],
+    ],
+  ])("refuses %s", async (_name, chunks) => {
+    await expect(run(chunks)).rejects.toMatchObject({ code: "invalid_response" });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("refuses a stream that ends before its terminal event, without retrying", async () => {
+    await expect(run([aguiFrame(runStarted), ...text.map(aguiFrame)])).rejects.toMatchObject({
+      code: "stream_interrupted",
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("ignores the event names, IDs and retries a relay adds, as SSE has a consumer do", async () => {
+    const onEvent = vi.fn<(event: RunEvent) => void>();
+    fetchMock.mockResolvedValue(
+      streamResponse([
+        "retry: 1000\n\n",
+        `event: message\nid: 1\n${aguiFrame(runStarted)}`,
+        "event: ping\n\n",
+        `id: 2\n${aguiFrame(runFinished())}`,
+      ]),
+    );
+    await expect(
+      client.run(GOLDEN_THREAD, prompt("hello", "u-1"), { onEvent }),
+    ).resolves.toMatchObject({ turnId: "turn-1" });
+    expect(types(onEvent)).toEqual(["RUN_STARTED"]);
+  });
+
+  it("reads the text parts of a content, and does not show a text of another role", async () => {
+    const onEvent = vi.fn<(event: RunEvent) => void>();
+    fetchMock.mockResolvedValue(
+      streamResponse([
+        aguiFrame(runStarted),
+        aguiFrame({
+          type: "MESSAGES_SNAPSHOT",
+          messages: [
+            {
+              id: "u-1",
+              role: "user",
+              content: [
+                { type: "text", text: "Look" },
+                { type: "image", source: { type: "url", value: "https://example.com/x.png" } },
+                { type: "text", text: "here" },
+              ],
+            },
+          ],
+        }),
+        aguiFrame({ type: "TEXT_MESSAGE_START", messageId: "dev-1", role: "developer" }),
+        aguiFrame({ type: "TEXT_MESSAGE_CONTENT", messageId: "dev-1", delta: "hidden" }),
+        aguiFrame({ type: "TEXT_MESSAGE_END", messageId: "dev-1" }),
+        aguiFrame({
+          type: "TOOL_CALL_RESULT",
+          messageId: "call-7-result",
+          toolCallId: "call-7",
+          content: [{ type: "text", text: '{"rejected":true}' }],
+        }),
+        aguiFrame(runFinished()),
+      ]),
+    );
+    await client.run(GOLDEN_THREAD, prompt("hello", "u-1"), { onEvent });
+    const events = eventsOf(onEvent).slice(1);
+    expect(events).toHaveLength(2);
+    expect(events[0]).toEqual({
+      type: "MESSAGES_SNAPSHOT",
+      omittedTurns: 0,
+      messages: [{ id: "u-1", role: "user", content: "Look\nhere" }],
+    });
+    expect(events[1]).toMatchObject({
+      type: "TOOL_CALL_RESULT",
+      toolCallId: "call-7",
+      rejected: true,
+    });
+  });
+
+  it("ignores the notes for the developer and the events AG-UI added since", async () => {
+    const onEvent = vi.fn<(event: RunEvent) => void>();
+    fetchMock.mockResolvedValue(
+      streamResponse([
+        aguiFrame(runStarted),
+        aguiFrame({ type: "CUSTOM", name: "opensvc.warning", value: { message: "newer client" } }),
+        aguiFrame({ type: "STEP_STARTED", stepName: "x" }),
+        aguiFrame({ type: "SOMETHING_NEWER", detail: 1 }),
+        aguiFrame(runFinished()),
+      ]),
+    );
+    await client.run(GOLDEN_THREAD, prompt("hello", "u-1"), { onEvent });
+    expect(types(onEvent)).toEqual(["RUN_STARTED"]);
+  });
+
+  it("handles split UTF-8, CRLF, comments and multiline data", async () => {
+    const input =
+      ": keepalive\r\n" +
+      aguiFrame(runStarted).replaceAll("\n", "\r\n") +
+      aguiFrame(text[0]).replaceAll("\n", "\r\n") +
+      'data: {"type":"TEXT_MESSAGE_CONTENT",\r\ndata: "messageId":"turn-1:2","delta":"reçu 😀"}\r\n\r\n' +
+      aguiFrame(text[2]) +
+      aguiFrame(runFinished()).replaceAll("\n", "\r");
+    const onEvent = vi.fn<(event: RunEvent) => void>();
+    fetchMock.mockResolvedValue(
+      streamResponse(Array.from(new TextEncoder().encode(input), (byte) => new Uint8Array([byte]))),
+    );
+    await client.run(GOLDEN_THREAD, prompt("hello", "u-1"), { onEvent });
+    expect(eventsOf(onEvent)[2]).toMatchObject({ delta: "reçu 😀" });
+    expect(types(onEvent)).toEqual(["RUN_STARTED", "TEXT_MESSAGE_START", "TEXT_MESSAGE_CONTENT"]);
+  });
+
+  it("refuses an oversized stream", async () => {
+    await expect(run([new Uint8Array(16 * 1024 * 1024 + 1)])).rejects.toMatchObject({
+      code: "stream_limit",
+    });
+  });
+
+  it("says a failure of the reader by its code, without retrying the run", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        new ReadableStream({
+          start(controller) {
+            controller.error(new Error("secret reader failure"));
+          },
+        }),
+        { headers: { "Content-Type": "text/event-stream" } },
+      ),
+    );
+    const error = await client
+      .run(GOLDEN_THREAD, prompt("hello", "u-1"))
+      .catch((error: unknown) => error);
+    expect(error).toMatchObject({ code: "stream_interrupted" });
+    expect((error as Error).message).not.toContain("secret");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("delivers no event already read once the run is stopped", async () => {
+    fetchMock.mockResolvedValue(
+      streamResponse([
+        aguiFrame(runStarted) + text.map(aguiFrame).join("") + aguiFrame(runFinished()),
+      ]),
+    );
+    const controller = new AbortController();
+    const onEvent = vi.fn<(event: RunEvent) => void>(() => {
+      controller.abort();
+    });
+    await expect(
+      client.run(GOLDEN_THREAD, prompt("hello", "u-1"), { onEvent, signal: controller.signal }),
+    ).rejects.toMatchObject({ name: "AbortError" });
+    expect(onEvent).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(["application/json", "text/html", null])(
+    "closes an open body that is no SSE before refusing it (%s)",
+    async (contentType) => {
+      const cancel = vi.fn();
+      const body = new ReadableStream({
+        start(controller) {
+          controller.enqueue(new TextEncoder().encode("unexpected body"));
+        },
+        cancel,
+      });
+      fetchMock.mockResolvedValue(
+        new Response(body, {
+          headers: contentType !== null ? { "Content-Type": contentType } : {},
+        }),
+      );
+      await expect(client.run(GOLDEN_THREAD, prompt("hello", "u-1"))).rejects.toMatchObject({
+        code: "invalid_response",
+      });
+      expect(cancel).toHaveBeenCalledTimes(1);
+      expect(body.locked).toBe(false);
+    },
+  );
+
+  it("keeps the error of the protocol when closing a body that is no SSE fails", async () => {
+    const body = new ReadableStream({
+      cancel() {
+        throw new Error("secret cleanup failure");
+      },
+    });
+    fetchMock.mockResolvedValue(new Response(body, { headers: { "Content-Type": "text/html" } }));
+    const error = await client
+      .run(GOLDEN_THREAD, prompt("hello", "u-1"))
+      .catch((error: unknown) => error);
+    expect(error).toMatchObject({ code: "invalid_response" });
+    expect((error as Error).message).not.toContain("secret");
+  });
+
+  it("refuses a response without a body", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(null, { headers: { "Content-Type": "text/event-stream" } }),
+    );
+    await expect(client.run(GOLDEN_THREAD, prompt("hello", "u-1"))).rejects.toMatchObject({
+      code: "invalid_response",
+    });
+  });
+
+  it("stops a stream open with the signal of the caller", async () => {
+    const cancel = vi.fn();
+    const body = new ReadableStream({ cancel });
+    fetchMock.mockResolvedValue(
+      new Response(body, { headers: { "Content-Type": "text/event-stream" } }),
+    );
+    const controller = new AbortController();
+    const pending = client.run(GOLDEN_THREAD, prompt("hello", "u-1"), {
+      signal: controller.signal,
+    });
+    const assertion = expect(pending).rejects.toMatchObject({ name: "AbortError" });
+    await vi.waitFor(() => {
+      expect(body.locked).toBe(true);
+    });
+    controller.abort();
+    await assertion;
+    expect(cancel).toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+});
