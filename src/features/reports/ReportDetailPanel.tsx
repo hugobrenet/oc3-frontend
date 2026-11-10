@@ -3,9 +3,13 @@ import type { components } from "@/lib/api/schema";
 import { DetailContent, type DetailGroup } from "@/components/opensvc/DetailPanel";
 import { RelatedTabsPanel } from "@/components/opensvc/RelatedTabsPanel";
 import type { RelatedTab } from "@/components/opensvc/related-tabs";
-import { PieChartIcon } from "@/components/ui/icons";
+import { HistoryIcon, PieChartIcon } from "@/components/ui/icons";
 import { YamlCode } from "@/components/ui/YamlCode";
+import { ReportObjectActions } from "./ReportObjectActions";
+import { ReportObjectRevisions } from "./ReportObjectRevisions";
+import { ReportObjectTeams } from "./ReportObjectTeams";
 import { ReportPreview } from "./ReportPreview";
+import { useObjectRevisions } from "./report-admin";
 import { useReport } from "./use-report";
 
 type ReportRow = components["schemas"]["ReportRow"];
@@ -39,7 +43,7 @@ const GROUPS: DetailGroup<ReportRow>[] = [
   },
 ];
 
-/** The report rendered as its readers see it, in a tab of its own. */
+/** The report rendered as its readers see it, then the revisions of its definition. */
 const REPORT_TABS: RelatedTab[] = [
   {
     key: "preview",
@@ -49,22 +53,34 @@ const REPORT_TABS: RelatedTab[] = [
     useSummary: () => ({ count: undefined }),
     render: (id) => <ReportPreview reportId={id} />,
   },
+  {
+    key: "revisions",
+    labelKey: "reportAdmin.revisions.tab",
+    descriptionKey: "reportAdmin.revisions.description",
+    icon: <HistoryIcon className="h-3.5 w-3.5 text-icon-metric" />,
+    useSummary: (id) => ({ count: useObjectRevisions("report", id).data?.length }),
+    render: (id) => <ReportObjectRevisions kind="report" id={id} />,
+  },
 ];
 
 /**
- * A report: its name and its YAML definition, then a tab previewing it rendered.
- * The open tab lives in the URL (`tab`), held by the view.
+ * A report: its name and its YAML definition, the groups it is published to and
+ * those responsible for it, its actions (edit, export, delete), then its tabs: its
+ * preview, rendered, and the revisions of its definition. The open tab lives in the
+ * URL (`tab`), held by the view.
  */
 export function ReportDetailPanel({
   reportId,
   label,
   onClose,
+  onEdit,
   tab,
   onTabChange,
 }: {
   reportId: string | undefined;
   label: string;
   onClose: () => void;
+  onEdit: () => void;
   tab: string | undefined;
   onTabChange: (tab: string | undefined) => void;
 }) {
@@ -92,6 +108,20 @@ export function ReportDetailPanel({
         groupPrefix="reports.detail.groups"
         isPending={open && isPending}
         errorMessage={isError ? error.message : null}
+        actions={
+          reportId === undefined ? undefined : (
+            <div className="flex flex-col gap-3">
+              <ReportObjectTeams kind="report" id={reportId} />
+              <ReportObjectActions
+                kind="report"
+                id={reportId}
+                name={report?.report_name ?? label}
+                onEdit={onEdit}
+                onDeleted={onClose}
+              />
+            </div>
+          )
+        }
       />
     </RelatedTabsPanel>
   );

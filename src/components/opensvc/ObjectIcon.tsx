@@ -1,4 +1,5 @@
 import {
+  BellIcon,
   AlertTriangleIcon,
   DashboardIcon,
   AsteriskIcon,
@@ -47,6 +48,7 @@ export type ObjectKind =
   | "action"
   | "network"
   | "disk"
+  | "array"
   | "save"
   | "app"
   | "tag"
@@ -78,6 +80,7 @@ export type ObjectKind =
   | "fieldConstraint"
   | "compAttachment"
   | "formConnector"
+  | "notification"
   | "orchestration";
 
 /**
@@ -106,6 +109,8 @@ const KINDS: Record<ObjectKind, { Icon: typeof ServerIcon; className: string }> 
   orchestration: { Icon: ListChecksIcon, className: "text-icon-service" },
   network: { Icon: NetworkIcon, className: "text-icon-network" },
   disk: { Icon: DatabaseIcon, className: "text-icon-disk" },
+  // A storage array: the disks it serves, in their tint.
+  array: { Icon: DatabaseIcon, className: "text-icon-disk" },
   save: { Icon: ArchiveIcon, className: "text-icon-disk" },
   app: { Icon: AsteriskIcon, className: "text-icon-app" },
   // The collector's dark cyan label (`tag16`); the Tags menu entry and view show a pair.
@@ -164,6 +169,8 @@ const KINDS: Record<ObjectKind, { Icon: typeof ServerIcon; className: string }> 
   compAttachment: { Icon: LinkIcon, className: "text-icon-compliance" },
   // A link in the tint of the forms: the external APIs they call.
   formConnector: { Icon: LinkIcon, className: "text-icon-form" },
+  // The tint of the alerts it sends.
+  notification: { Icon: BellIcon, className: "text-icon-dashboard" },
 };
 
 export function ObjectIcon({ kind, className }: { kind: ObjectKind; className?: string }) {

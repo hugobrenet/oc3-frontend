@@ -40,7 +40,8 @@ export interface paths {
      *     switch, abort, clear, freeze and thaw on a service; the same, and restart,
      *     takeover, syncall, syncnodes, syncdrp, enable, disable, compliance_check
      *     and compliance_fix (CompExec privilege, on every module attached to the
-     *     service) on an instance or on its resources; pushasset, pushdisks, pushpkg, pushpatch, pushstats,
+     *     service) on an instance or on its resources, and "freeze --slaves" and
+     *     "thaw --slaves" on the encapsulated slaves of an instance; pushasset, pushdisks, pushpkg, pushpatch, pushstats,
      *     checks, sysreport, updatecomp, updatepkg, scanscsi,
      *     reboot, schedule_reboot, unschedule_reboot, shutdown, drain,
      *     compliance_check, compliance_fix (on every module attached to the node),
@@ -90,6 +91,201 @@ export interface paths {
      *     and a change notification is emitted.
      */
     delete: operations["DeleteAction"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/agent/compliance/data": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description What the agent of the calling node needs for a compliance run: the
+     *     modulesets and the resolved rulesets of the node, or of one of its objects
+     *     with path, and the relations of the modulesets. The ruleset osvc_collector
+     *     holds the ruleset_md5 the logs of the run refer to.
+     */
+    get: operations["GetAgentComplianceData"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/agent/compliance/logs": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * @description Record the module results of a compliance run of the calling node, or of
+     *     one of its objects with path. A check also updates the compliance status.
+     */
+    post: operations["PostAgentComplianceLogs"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/agent/compliance/modulesets": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** @description The names of the modulesets the calling node may attach, sorted. */
+    get: operations["GetAgentComplianceModulesets"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/agent/compliance/modulesets/{name}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * @description Attach a moduleset to the calling node, or to one of its objects with path.
+     *     A moduleset already attached is no error.
+     */
+    post: operations["PostAgentComplianceModuleset"];
+    /**
+     * @description Detach a moduleset from the calling node, or from one of its objects with
+     *     path. The name all detaches every moduleset. A moduleset not attached is no
+     *     error.
+     */
+    delete: operations["DeleteAgentComplianceModuleset"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/agent/compliance/rulesets": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** @description The names of the rulesets the calling node may attach, sorted. */
+    get: operations["GetAgentComplianceRulesets"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/agent/compliance/rulesets/{name}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * @description Attach a ruleset to the calling node, or to one of its objects with path.
+     *     A ruleset already attached is no error.
+     */
+    post: operations["PostAgentComplianceRuleset"];
+    /**
+     * @description Detach a ruleset from the calling node, or from one of its objects with
+     *     path. The name all detaches every ruleset. A ruleset not attached is no
+     *     error.
+     */
+    delete: operations["DeleteAgentComplianceRuleset"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/agent/tags": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description The names of the tags, lowercased and sorted, for the agent of the
+     *     calling node.
+     */
+    get: operations["GetAgentTags"];
+    put?: never;
+    /**
+     * @description Create a tag for the agent of the calling node. A tag of the name with
+     *     the same data and exclusion, or with none given, exists already: 200.
+     *     With another data or exclusion: 409.
+     */
+    post: operations["PostAgentTags"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/agent/tags/attached": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description The tags attached to the calling node, or to one of its objects with
+     *     path, sorted by name.
+     */
+    get: operations["GetAgentTagsAttached"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/agent/tags/{name}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * @description Attach the tag to the calling node, or to one of its objects with path,
+     *     or update the data of its attachment.
+     */
+    post: operations["PostAgentTag"];
+    /**
+     * @description Detach the tag from the calling node, or from one of its objects with
+     *     path.
+     */
+    delete: operations["DeleteAgentTag"];
     options?: never;
     head?: never;
     patch?: never;
@@ -466,6 +662,27 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/arrays/{array_id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** @description Show a storage array, given by its name or its id. */
+    get: operations["GetArray"];
+    put?: never;
+    /**
+     * @description Change the comment of a storage array, the property the agents do not
+     *     feed. Requires the StorageManager privilege. Logged (array.change).
+     */
+    post: operations["PostArray"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/arrays/{array_id}/diskgroups": {
     parameters: {
       query?: never;
@@ -481,6 +698,26 @@ export interface paths {
      *     sorted and grouped on.
      */
     get: operations["GetArrayDiskgroups"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/arrays/{array_id}/diskgroups/{dg_id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description Show a disk group of a storage array, by its id or its name. The array 0
+     *     looks for it in all the arrays.
+     */
+    get: operations["GetArrayDiskgroup"];
     put?: never;
     post?: never;
     delete?: never;
@@ -510,7 +747,11 @@ export interface paths {
      *     the sum of its quotas.
      */
     post: operations["PostArrayDiskgroupQuotas"];
-    delete?: never;
+    /**
+     * @description Same as DELETE /arrays/{array_id}/diskgroups/{dg_id}/quotas/{quota_id},
+     *     the quotas given by the id key of the body: one entry or a list.
+     */
+    delete: operations["DeleteArrayDiskgroupQuotas"];
     options?: never;
     head?: never;
     patch?: never;
@@ -523,7 +764,12 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    get?: never;
+    /**
+     * @description Show a quota of a disk group, as GET /arrays/{array_id}/diskgroups/{dg_id}/quotas
+     *     lists them: a user who is not a Manager or a StorageManager sees those of
+     *     the applications their groups are responsible for.
+     */
+    get: operations["GetArrayDiskgroupQuota"];
     put?: never;
     /**
      * @description Change a quota: its size, or the application code it is for. Requires
@@ -562,6 +808,97 @@ export interface paths {
      *     their groups are responsible for.
      */
     get: operations["GetArrayDisks"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/arrays/{array_id}/proxies": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description List the proxies of a storage array: the nodes whose agent inventories it.
+     *     The columns of the node read as nodes.<column>.
+     */
+    get: operations["GetArrayProxies"];
+    put?: never;
+    /**
+     * @description Same as POST /arrays/{array_id}/proxies/{node_id}, the nodes given by the
+     *     node_id key of the body: one entry or a list.
+     */
+    post: operations["PostArrayProxies"];
+    /**
+     * @description Same as DELETE /arrays/{array_id}/proxies/{node_id}, the nodes given by
+     *     the node_id key of the body: one entry or a list.
+     */
+    delete: operations["DeleteArrayProxies"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/arrays/{array_id}/proxies/{node_id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * @description Set a node, by its id or its name, as a proxy of the storage array.
+     *     Requires the StorageManager privilege. Logged (storage.array.proxy.add).
+     *     A proxy already set answers with an info message.
+     */
+    post: operations["PostArrayProxy"];
+    /**
+     * @description Unset a node as a proxy of the storage array: the id of a node deleted
+     *     since is accepted. Requires the StorageManager privilege. Logged
+     *     (storage.array.proxy.del). A proxy already unset answers with an info message.
+     */
+    delete: operations["DeleteArrayProxy"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/arrays/{array_id}/targets": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** @description List the target ports of a storage array. */
+    get: operations["GetArrayTargets"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/arrays_diskgroups": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description List the disk groups of all the storage arrays, their sizes in MB, the
+     *     columns of their array reachable as stor_array.<column>.
+     */
+    get: operations["GetArraysDiskgroups"];
     put?: never;
     post?: never;
     delete?: never;
@@ -999,7 +1336,11 @@ export interface paths {
      *     Requires the ReportsManager or Manager privilege, as for the reports.
      */
     post: operations["PostCharts"];
-    delete?: never;
+    /**
+     * @description Same as DELETE /charts/{chart_id}, the ids given by the id key of the body:
+     *     one entry or a list.
+     */
+    delete: operations["DeleteCharts"];
     options?: never;
     head?: never;
     patch?: never;
@@ -1015,7 +1356,207 @@ export interface paths {
     /** @description Display a chart, if the caller may see it (see GET /charts). */
     get: operations["GetChart"];
     put?: never;
+    /**
+     * @description Change the name or the definition of a chart, logged (chart.change); a new
+     *     definition is recorded in its history. Requires the ReportsManager privilege and responsibility for the chart.
+     */
+    post: operations["PostChart"];
+    /**
+     * @description Delete a chart, with its publications and responsibles,
+     *     logged (chart.del). Its history is kept. Requires the ReportsManager privilege and responsibility for the chart.
+     */
+    delete: operations["DeleteChart"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/charts/{chart_id}/am_i_responsible": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description Tell whether the caller may change the chart, as {"data": true} or
+     *     {"data": false}: the ReportsManager privilege and responsibility for the chart.
+     */
+    get: operations["GetChartAmIResponsible"];
+    put?: never;
     post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/charts/{chart_id}/diff/{cid}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description Show the change made by a revision, or the differences between cid and
+     *     other when set, as git prints them: empty when the chart is not published
+     *     to the caller.
+     */
+    get: operations["GetChartDiff"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/charts/{chart_id}/publications": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description List the groups the chart is published to. Requires the chart to be
+     *     published to the caller, unless a manager.
+     */
+    get: operations["GetChartPublications"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/charts/{chart_id}/publications/{group_id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * @description Publish the chart to a group, logged (chart.publication.add). A non-manager chooses among
+     *     their own groups; privilege groups are refused. Requires the ReportsManager privilege and responsibility for the chart.
+     *     An existing link answers with an info message.
+     */
+    post: operations["PostChartPublication"];
+    /**
+     * @description Unpublish the chart from a group, logged (chart.publication.delete). Requires the ReportsManager privilege and responsibility for the chart.
+     *     A missing link answers with an info message.
+     */
+    delete: operations["DeleteChartPublication"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/charts/{chart_id}/responsibles": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description List the groups the chart is the responsibility of. Requires the chart to be
+     *     published to the caller, unless a manager.
+     */
+    get: operations["GetChartResponsibles"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/charts/{chart_id}/responsibles/{group_id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * @description Make a group responsible for the chart, logged (chart.responsible.add). A non-manager chooses among
+     *     their own groups; privilege groups are refused. Requires the ReportsManager privilege and responsibility for the chart.
+     *     An existing link answers with an info message.
+     */
+    post: operations["PostChartResponsible"];
+    /**
+     * @description Remove a responsible group from the chart, logged (chart.responsible.delete). Requires the ReportsManager privilege and responsibility for the chart.
+     *     A missing link answers with an info message.
+     */
+    delete: operations["DeleteChartResponsible"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/charts/{chart_id}/revisions": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description List the revisions of the chart definition, from its git history, the
+     *     newest first, 300 at most: an empty list when the chart is not published
+     *     to the caller.
+     */
+    get: operations["GetChartRevisions"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/charts/{chart_id}/revisions/{cid}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description Show the chart definition at a revision: empty when the revision holds
+     *     none, or when the chart is not published to the caller.
+     */
+    get: operations["GetChartRevision"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/charts/{chart_id}/rollback/{cid}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * @description Restore the chart definition of a revision, recorded as a new revision
+     *     and logged (chart.rollback). Requires the ReportsManager privilege and responsibility for the chart.
+     */
+    post: operations["PostChartRollback"];
     delete?: never;
     options?: never;
     head?: never;
@@ -1041,6 +1582,54 @@ export interface paths {
     put?: never;
     post?: never;
     delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/charts_publications": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * @description Same as POST /charts/{chart_id}/publications/{group_id}, the chart_id and
+     *     group_id keys given in the body: one entry or a list.
+     */
+    post: operations["PostChartsPublications"];
+    /**
+     * @description Same as DELETE /charts/{chart_id}/publications/{group_id}, the chart_id and
+     *     group_id keys given in the body: one entry or a list.
+     */
+    delete: operations["DeleteChartsPublications"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/charts_responsibles": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * @description Same as POST /charts/{chart_id}/responsibles/{group_id}, the chart_id and
+     *     group_id keys given in the body: one entry or a list.
+     */
+    post: operations["PostChartsResponsibles"];
+    /**
+     * @description Same as DELETE /charts/{chart_id}/responsibles/{group_id}, the chart_id and
+     *     group_id keys given in the body: one entry or a list.
+     */
+    delete: operations["DeleteChartsResponsibles"];
     options?: never;
     head?: never;
     patch?: never;
@@ -4216,7 +4805,11 @@ export interface paths {
      *     Manager privilege.
      */
     post: operations["PostMetrics"];
-    delete?: never;
+    /**
+     * @description Same as DELETE /metrics/{metric_id}, the ids given by the id key of the body:
+     *     one entry or a list.
+     */
+    delete: operations["DeleteMetrics"];
     options?: never;
     head?: never;
     patch?: never;
@@ -4237,6 +4830,157 @@ export interface paths {
      *     `metric_col_instance_index` clears it. Requires the Manager privilege.
      */
     post: operations["PostMetric"];
+    /**
+     * @description Delete a metric, with its publications, and its historized series,
+     *     logged (metric.del). Its history is kept. Requires the Manager privilege.
+     */
+    delete: operations["DeleteMetric"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/metrics/{metric_id}/am_i_responsible": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description Tell whether the caller may change the metric, as {"data": true} or
+     *     {"data": false}: the Manager privilege.
+     */
+    get: operations["GetMetricAmIResponsible"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/metrics/{metric_id}/diff/{cid}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description Show the change made by a revision, or the differences between cid and
+     *     other when set, as git prints them: empty when the metric is not published
+     *     to the caller.
+     */
+    get: operations["GetMetricDiff"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/metrics/{metric_id}/publications": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description List the groups the metric is published to. Requires the metric to be
+     *     published to the caller, unless a manager.
+     */
+    get: operations["GetMetricPublications"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/metrics/{metric_id}/publications/{group_id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * @description Publish the metric to a group, logged (metric.publication.add). A non-manager chooses among
+     *     their own groups; privilege groups are refused. Requires the Manager privilege.
+     *     An existing link answers with an info message.
+     */
+    post: operations["PostMetricPublication"];
+    /**
+     * @description Unpublish the metric from a group, logged (metric.publication.delete). Requires the Manager privilege.
+     *     A missing link answers with an info message.
+     */
+    delete: operations["DeleteMetricPublication"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/metrics/{metric_id}/revisions": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description List the revisions of the metric definition, from its git history, the
+     *     newest first, 300 at most: an empty list when the metric is not published
+     *     to the caller.
+     */
+    get: operations["GetMetricRevisions"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/metrics/{metric_id}/revisions/{cid}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description Show the metric definition at a revision: empty when the revision holds
+     *     none, or when the metric is not published to the caller.
+     */
+    get: operations["GetMetricRevision"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/metrics/{metric_id}/rollback/{cid}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * @description Restore the metric definition of a revision, recorded as a new revision
+     *     and logged (metric.rollback). Requires the Manager privilege.
+     */
+    post: operations["PostMetricRollback"];
     delete?: never;
     options?: never;
     head?: never;
@@ -4262,6 +5006,30 @@ export interface paths {
     put?: never;
     post?: never;
     delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/metrics_publications": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * @description Same as POST /metrics/{metric_id}/publications/{group_id}, the metric_id and
+     *     group_id keys given in the body: one entry or a list.
+     */
+    post: operations["PostMetricsPublications"];
+    /**
+     * @description Same as DELETE /metrics/{metric_id}/publications/{group_id}, the metric_id and
+     *     group_id keys given in the body: one entry or a list.
+     */
+    delete: operations["DeleteMetricsPublications"];
     options?: never;
     head?: never;
     patch?: never;
@@ -5109,6 +5877,139 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/notifications/channels": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description The channels of the alert notifications: the mail lists and the Slack,
+     *     Mattermost, Teams and generic webhooks the subscriptions send to. Their
+     *     secrets (the webhook url, the signing secret) are never returned, only
+     *     whether each one is set. For the Managers and the AlertsManagers.
+     */
+    get: operations["GetNotificationChannels"];
+    put?: never;
+    /**
+     * @description Create a channel. Its secrets are sealed with the safe master key
+     *     (safe.keys_file): without one, a webhook channel is refused. For the
+     *     Managers and the AlertsManagers.
+     */
+    post: operations["PostNotificationChannels"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/notifications/channels/{channel_id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations["GetNotificationChannel"];
+    /**
+     * @description Replace a channel. A secret given replaces the one set, null removes it,
+     *     absent keeps it. For the Managers and the AlertsManagers.
+     */
+    put: operations["PutNotificationChannel"];
+    post?: never;
+    /** @description Delete a channel and its subscriptions. For the Managers and the AlertsManagers. */
+    delete: operations["DeleteNotificationChannel"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/notifications/channels/{channel_id}/test": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * @description Send a test message to the channel, at once, whether it is enabled or not:
+     *     a sample alert, recorded nowhere. The answer tells whether the channel
+     *     accepted it. For the Managers and the AlertsManagers.
+     */
+    post: operations["PostNotificationChannelTest"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/notifications/deliveries": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description The notifications sent, being sent or failed: an alert and its recipient,
+     *     a subscription (channel and group) or the mail address of a user, as the
+     *     other lists: props, column filters, sort, pagination and value statistics.
+     *     Kept as long as the alert is in the dashboard, two days more for the
+     *     subscriptions announcing the resolutions. For the Managers and the
+     *     AlertsManagers.
+     */
+    get: operations["GetNotificationDeliveries"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/notifications/subscriptions": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description The subscriptions of the groups to the channels: the alerts of a group,
+     *     those of the apps it is responsible for or all of them, from a severity,
+     *     sent to a channel. For the Managers and the AlertsManagers.
+     */
+    get: operations["GetNotificationSubscriptions"];
+    put?: never;
+    /** @description Create a subscription. For the Managers and the AlertsManagers. */
+    post: operations["PostNotificationSubscriptions"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/notifications/subscriptions/{subscription_id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /** @description Replace a subscription. For the Managers and the AlertsManagers. */
+    put: operations["PutNotificationSubscription"];
+    post?: never;
+    /** @description Delete a subscription. For the Managers and the AlertsManagers. */
+    delete: operations["DeleteNotificationSubscription"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/obsolescence/refresh": {
     parameters: {
       query?: never;
@@ -5285,6 +6186,32 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/orchestration_runs/{run_id}/cancel": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description ID of the orchestration run */
+        run_id: components["parameters"]["inPathOrchestrationRunId"];
+      };
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * @description Cancel a run, for good: a running run stops as with POST
+     *     /orchestration_runs/{run_id}/stop, a failed or stopped run ends there.
+     *     A cancelled run neither resumes nor goes on past its step. An action an
+     *     agent already runs goes on and its result is recorded. 409 when the run
+     *     is neither running, failed nor stopped. Manager only.
+     */
+    post: operations["PostOrchestrationRunCancel"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/orchestration_runs/{run_id}/continue": {
     parameters: {
       query?: never;
@@ -5358,32 +6285,6 @@ export interface paths {
      *     recorded. 409 when the run is not running. Manager only.
      */
     post: operations["PostOrchestrationRunStop"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/orchestration_runs/{run_id}/cancel": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description ID of the orchestration run */
-        run_id: components["parameters"]["inPathOrchestrationRunId"];
-      };
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * @description Cancel a run, for good: a running run stops as with POST
-     *     /orchestration_runs/{run_id}/stop, a failed or stopped run ends there.
-     *     A cancelled run neither resumes nor goes on past its step. An action an
-     *     agent already runs goes on and its result is recorded. 409 when the run
-     *     is neither running, failed nor stopped. Manager only.
-     */
-    post: operations["PostOrchestrationRunCancel"];
     delete?: never;
     options?: never;
     head?: never;
@@ -5638,6 +6539,33 @@ export interface paths {
      *     Requires the ReportsManager or Manager privilege.
      */
     post: operations["PostReports"];
+    /**
+     * @description Same as DELETE /reports/{report_id}, the ids given by the id key of the body:
+     *     one entry or a list.
+     */
+    delete: operations["DeleteReports"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/reports/import": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * @description Create the metrics, the charts and the reports of an export (GET
+     *     /reports/{report_id}/export), each published to the primary team of the
+     *     caller, also made responsible for it. An object of an existing name is kept
+     *     and used as it is. Requires the ReportsManager privilege, and the Manager
+     *     privilege to create a metric. Answers what was done and what was not.
+     */
+    post: operations["PostReportsImport"];
     delete?: never;
     options?: never;
     head?: never;
@@ -5653,6 +6581,34 @@ export interface paths {
     };
     /** @description Display a report, if the caller may see it (see GET /reports). */
     get: operations["GetReport"];
+    put?: never;
+    /**
+     * @description Change the name or the definition of a report, logged (report.change); a new
+     *     definition is recorded in its history. Requires the ReportsManager privilege and responsibility for the report.
+     */
+    post: operations["PostReport"];
+    /**
+     * @description Delete a report, with its publications and responsibles,
+     *     logged (report.del). Its history is kept. Requires the ReportsManager privilege and responsibility for the report.
+     */
+    delete: operations["DeleteReport"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/reports/{report_id}/am_i_responsible": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description Tell whether the caller may change the report, as {"data": true} or
+     *     {"data": false}: the ReportsManager privilege and responsibility for the report.
+     */
+    get: operations["GetReportAmIResponsible"];
     put?: never;
     post?: never;
     delete?: never;
@@ -5677,6 +6633,247 @@ export interface paths {
     put?: never;
     post?: never;
     delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/reports/{report_id}/diff/{cid}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description Show the change made by a revision, or the differences between cid and
+     *     other when set, as git prints them: empty when the report is not published
+     *     to the caller.
+     */
+    get: operations["GetReportDiff"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/reports/{report_id}/export": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description Export the report with the charts and the metrics it shows, the ids replaced
+     *     by the names, in the format POST /reports/import reads. Requires the report
+     *     to be published to the caller, unless a manager.
+     */
+    get: operations["GetReportExport"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/reports/{report_id}/publications": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description List the groups the report is published to. Requires the report to be
+     *     published to the caller, unless a manager.
+     */
+    get: operations["GetReportPublications"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/reports/{report_id}/publications/{group_id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * @description Publish the report to a group, logged (report.publication.add). A non-manager chooses among
+     *     their own groups; privilege groups are refused. Requires the ReportsManager privilege and responsibility for the report.
+     *     An existing link answers with an info message.
+     */
+    post: operations["PostReportPublication"];
+    /**
+     * @description Unpublish the report from a group, logged (report.publication.delete). Requires the ReportsManager privilege and responsibility for the report.
+     *     A missing link answers with an info message.
+     */
+    delete: operations["DeleteReportPublication"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/reports/{report_id}/responsibles": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description List the groups the report is the responsibility of. Requires the report to be
+     *     published to the caller, unless a manager.
+     */
+    get: operations["GetReportResponsibles"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/reports/{report_id}/responsibles/{group_id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * @description Make a group responsible for the report, logged (report.responsible.add). A non-manager chooses among
+     *     their own groups; privilege groups are refused. Requires the ReportsManager privilege and responsibility for the report.
+     *     An existing link answers with an info message.
+     */
+    post: operations["PostReportResponsible"];
+    /**
+     * @description Remove a responsible group from the report, logged (report.responsible.delete). Requires the ReportsManager privilege and responsibility for the report.
+     *     A missing link answers with an info message.
+     */
+    delete: operations["DeleteReportResponsible"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/reports/{report_id}/revisions": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description List the revisions of the report definition, from its git history, the
+     *     newest first, 300 at most: an empty list when the report is not published
+     *     to the caller.
+     */
+    get: operations["GetReportRevisions"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/reports/{report_id}/revisions/{cid}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description Show the report definition at a revision: empty when the revision holds
+     *     none, or when the report is not published to the caller.
+     */
+    get: operations["GetReportRevision"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/reports/{report_id}/rollback/{cid}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * @description Restore the report definition of a revision, recorded as a new revision
+     *     and logged (report.rollback). Requires the ReportsManager privilege and responsibility for the report.
+     */
+    post: operations["PostReportRollback"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/reports_publications": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * @description Same as POST /reports/{report_id}/publications/{group_id}, the report_id and
+     *     group_id keys given in the body: one entry or a list.
+     */
+    post: operations["PostReportsPublications"];
+    /**
+     * @description Same as DELETE /reports/{report_id}/publications/{group_id}, the report_id and
+     *     group_id keys given in the body: one entry or a list.
+     */
+    delete: operations["DeleteReportsPublications"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/reports_responsibles": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * @description Same as POST /reports/{report_id}/responsibles/{group_id}, the report_id and
+     *     group_id keys given in the body: one entry or a list.
+     */
+    post: operations["PostReportsResponsibles"];
+    /**
+     * @description Same as DELETE /reports/{report_id}/responsibles/{group_id}, the report_id and
+     *     group_id keys given in the body: one entry or a list.
+     */
+    delete: operations["DeleteReportsResponsibles"];
     options?: never;
     head?: never;
     patch?: never;
@@ -5745,6 +6942,31 @@ export interface paths {
      *     made the responsibility of the caller's default group. Logged.
      */
     post: operations["PostSafeFile"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/safe/secrets": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description The secrets sealed with the safe master key apart from the safe files: those
+     *     of the form connectors and of the notification channels, stored encrypted in
+     *     their own rows. Their values are never returned: only what holds them and
+     *     the master key they are wrapped with, to see what depends on a key before
+     *     removing it (oc3 safe rewrap wraps them with the active key). A Manager sees
+     *     them all, an AlertsManager the notification channels, a FormsManager the
+     *     form connectors.
+     */
+    get: operations["GetSafeSecrets"];
+    put?: never;
+    post?: never;
     delete?: never;
     options?: never;
     head?: never;
@@ -7162,6 +8384,32 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/users/self/notifications": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description The settings of the alert notifications of the signed-in user: whether
+     *     the new alerts of the apps their groups are responsible for are mailed to
+     *     them, from which level, after which delay, on which periods of the week.
+     */
+    get: operations["GetUserSelfNotifications"];
+    /**
+     * @description Change the settings of the alert notifications of the signed-in user.
+     *     Not while impersonating. The periods are kept in the user preferences,
+     *     as notifications_periods.
+     */
+    put: operations["PutUserSelfNotifications"];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/users/self/password": {
     parameters: {
       query?: never;
@@ -7181,35 +8429,6 @@ export interface paths {
      *     when password sign-in is disabled (server.auth.basic_users false).
      */
     post: operations["PostUserSelfPassword"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/users/{user_id}/password": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * @description Set the password of another user, without the current one, as an
-     *     administrator resets it. Requires the UserManager privilege (or Manager);
-     *     the password of a Manager is set by a Manager only. One's own password is
-     *     changed by POST /users/self/password, which asks for the current one (409
-     *     here). Refused with 403 while impersonating, and when password sign-in is
-     *     disabled (server.auth.basic_users false): the password would sign nobody
-     *     in. Refused with 409 for an account linked to an OpenID Connect identity
-     *     (oidc_linked): its password, second factor and deactivation are the
-     *     identity provider's. The new password must be at least 12 characters long;
-     *     it is stored as a web2py hash, accepted by both collectors. The change is
-     *     logged, without the password.
-     */
-    post: operations["PostUserPassword"];
     delete?: never;
     options?: never;
     head?: never;
@@ -7376,6 +8595,35 @@ export interface paths {
     get: operations["GetUserNodes"];
     put?: never;
     post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/users/{user_id}/password": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * @description Set the password of another user, without the current one, as an
+     *     administrator resets it. Requires the UserManager privilege (or Manager);
+     *     the password of a Manager is set by a Manager only. One's own password is
+     *     changed by POST /users/self/password, which asks for the current one (409
+     *     here). Refused with 403 while impersonating, and when password sign-in is
+     *     disabled (server.auth.basic_users false): the password would sign nobody
+     *     in. Refused with 409 for an account linked to an OpenID Connect identity
+     *     (oidc_linked): its password, second factor and deactivation are the
+     *     identity provider's. The new password must be at least 12 characters long;
+     *     it is stored as a web2py hash, accepted by both collectors. The change is
+     *     logged, without the password.
+     */
+    post: operations["PostUserPassword"];
     delete?: never;
     options?: never;
     head?: never;
@@ -7615,6 +8863,28 @@ export interface components {
           };
       meta?: components["schemas"]["ListMeta"];
     };
+    ArrayProxyListResponse: {
+      data:
+        | components["schemas"]["ArrayProxyRow"][]
+        | {
+            [key: string]: {
+              [key: string]: number;
+            };
+          };
+      meta?: components["schemas"]["ListMeta"];
+    };
+    /**
+     * @description A node inventorying a storage array. Every property is optional: the
+     *     props query parameter selects them; the columns of the node read as
+     *     nodes.<column>.
+     */
+    ArrayProxyRow: {
+      array_id?: string;
+      id?: number;
+      node_id?: string;
+    } & {
+      [key: string]: unknown;
+    };
     /**
      * @description A storage array. Every property is optional: the props query parameter
      *     selects them. array_cache is in MB.
@@ -7628,6 +8898,26 @@ export interface components {
       array_name?: string;
       array_updated?: string;
       id?: number;
+    };
+    ArrayTargetListResponse: {
+      data:
+        | components["schemas"]["ArrayTargetRow"][]
+        | {
+            [key: string]: {
+              [key: string]: number;
+            };
+          };
+      meta?: components["schemas"]["ListMeta"];
+    };
+    /**
+     * @description A target port of a storage array. Every property is optional: the props
+     *     query parameter selects them.
+     */
+    ArrayTargetRow: {
+      array_id?: string;
+      array_tgtid?: string;
+      id?: number;
+      updated?: string;
     };
     /** @description The AG-UI AgentCapabilities of the agent. */
     AssistantCapabilities: {
@@ -8286,6 +9576,13 @@ export interface components {
       ruleset_name?: string | null;
       /** @description "T": attached to the encapsulated part of the service */
       slave?: string | null;
+    };
+    ComplianceAgentLog: {
+      action: string;
+      log: string;
+      module: string;
+      rset_md5?: string;
+      status: number;
     };
     ComplianceAttachmentOutcome: {
       /** @description Its message, or why the pair was refused */
@@ -9808,6 +11105,189 @@ export interface components {
     NodeStatsResponse: {
       data: components["schemas"]["NodeStatSeries"][];
     };
+    /**
+     * @description A destination of the alert notifications. email sends to the addresses;
+     *     slack and mattermost post to an incoming webhook; teams posts an Adaptive
+     *     Card to a Workflows webhook ("When a Teams webhook request is received");
+     *     webhook posts a JSON document (version 1), signed with the secret when
+     *     set: X-OC3-Signature is "sha256=" and the hex of the HMAC-SHA256 of
+     *     X-OC3-Timestamp, a dot and the body.
+     */
+    NotificationChannel: {
+      /** @description The mail addresses of an email channel. */
+      addresses: string[];
+      created: string;
+      description: string;
+      enabled: boolean;
+      /** @description The picture a Slack or a Mattermost message shows, when the webhook lets the sender choose it. */
+      icon_url?: string;
+      /** Format: int64 */
+      id: number;
+      name: string;
+      /** @description The private networks the webhook host may resolve to, as CIDR prefixes; the public addresses are always allowed. */
+      networks: string[];
+      /** @description Whether each secret is set; their values are never returned. */
+      secrets: {
+        secret: boolean;
+        url: boolean;
+      };
+      type: components["schemas"]["NotificationChannelType"];
+      updated: string;
+      updated_by: string;
+      /** @description The name a Slack or a Mattermost message shows, when the webhook lets the sender choose it. */
+      username?: string;
+    };
+    NotificationChannelInput: {
+      /** @description The mail addresses of an email channel, one at least. */
+      addresses?: string[];
+      description?: string;
+      /** @description true when absent. */
+      enabled?: boolean;
+      icon_url?: string;
+      /** @description 1 to 64 letters, digits, ".", "_" or "-". */
+      name: string;
+      networks?: string[];
+      /**
+       * @description url, the webhook url (https), required by the webhook types; secret,
+       *     the key signing the generic webhooks. A value replaces the secret set,
+       *     null removes it, absent keeps it.
+       */
+      secrets?: {
+        secret?: string | null;
+        url?: string | null;
+      };
+      type: components["schemas"]["NotificationChannelType"];
+      username?: string;
+    };
+    NotificationChannelTestResult: {
+      duration_ms: number;
+      /** @description Why the channel did not accept the message. */
+      error?: string;
+      ok: boolean;
+    };
+    /** @enum {string} */
+    NotificationChannelType: "email" | "slack" | "mattermost" | "teams" | "webhook";
+    NotificationDeliveryListResponse: {
+      data:
+        | components["schemas"]["NotificationDeliveryRow"][]
+        | {
+            [key: string]: {
+              [key: string]: number;
+            };
+          };
+      meta?: components["schemas"]["ListMeta"];
+    };
+    /**
+     * @description A notification of an alert to a recipient. Every property is optional: the
+     *     props query parameter selects which the server returns.
+     */
+    NotificationDeliveryRow: {
+      alert_id?: number;
+      alert_message?: string;
+      alert_object?: string;
+      /** @description Whether the alert is still in the dashboard. */
+      alert_present?: boolean;
+      alert_severity?: number | null;
+      alert_type?: string;
+      attempts?: number;
+      channel_name?: string;
+      created?: string;
+      group_role?: string;
+      id?: number;
+      last_error?: string;
+      /** @description When a failed delivery is tried again. */
+      next_try?: string | null;
+      /** @description subscription:<id>, or email:user:<id>. */
+      recipient?: string;
+      /** @description subscription, or user (the personal mails). */
+      recipient_kind?: string;
+      /** @description The channel and the group of the subscription, or the mail address of the user. */
+      recipient_label?: string;
+      /** @description pending, sent or failed. */
+      state?: string;
+      updated?: string;
+    };
+    NotificationPeriod: {
+      /** @description HH:MM, for custom. */
+      begin?: string;
+      /** @description HH:MM, for custom; before begin, the period spans midnight. */
+      end?: string;
+      /** @enum {string} */
+      period: "always" | "never" | "custom";
+    };
+    NotificationSubscription: {
+      /** Format: int64 */
+      channel_id: number;
+      channel_name: string;
+      created: string;
+      /** @description The age in minutes an alert reaches before it is sent. */
+      delay_min: number;
+      enabled: boolean;
+      /** @description Only the alerts of these environments (dash_env, PRD, DEV...); empty for all. */
+      envs: string[];
+      /** @description Only the alerts of the nodes and services of this filterset; a filterset selecting nothing lets no alert through. */
+      filterset_id?: number | null;
+      /** Format: int64 */
+      group_id: number;
+      group_role: string;
+      /** Format: int64 */
+      id: number;
+      /** @description The lowest severity sent, 0 notice, 1 warning, 2 error, 3 critical, 4 alert. */
+      min_severity: number;
+      /** @description Announce the alerts sent once they are gone from the dashboard. */
+      notify_resolved: boolean;
+      /**
+       * @description The periods of the week the subscription sends on, by day (mon to sun):
+       *     always, never, or custom from begin to end, "HH:MM", local time of the
+       *     collector; a day left out is always. Empty for always.
+       */
+      periods: {
+        [key: string]: components["schemas"]["NotificationPeriod"];
+      };
+      scope: components["schemas"]["NotificationSubscriptionScope"];
+      /** @description Not the alerts of these types. */
+      types_exclude: string[];
+      /** @description Only the alerts of these types (dash_type); empty for all. */
+      types_include: string[];
+      updated: string;
+      updated_by: string;
+    };
+    NotificationSubscriptionInput: {
+      /** Format: int64 */
+      channel_id: number;
+      /** @description 0 to 1440, 0 when absent. */
+      delay_min?: number;
+      /** @description true when absent. */
+      enabled?: boolean;
+      /** @description Only the alerts of these environments (dash_env, PRD, DEV...); empty for all. */
+      envs?: string[];
+      /** @description Only the alerts of the nodes and services of this filterset; a filterset selecting nothing lets no alert through. */
+      filterset_id?: number | null;
+      /** Format: int64 */
+      group_id: number;
+      /** @description 0 to 4, 1 (warning) when absent. */
+      min_severity?: number;
+      /** @description Announce the alerts sent once they are gone from the dashboard. */
+      notify_resolved?: boolean;
+      /**
+       * @description The periods of the week the subscription sends on, by day (mon to sun):
+       *     always, never, or custom from begin to end, "HH:MM", local time of the
+       *     collector; a day left out is always. Empty for always.
+       */
+      periods?: {
+        [key: string]: components["schemas"]["NotificationPeriod"];
+      };
+      scope?: components["schemas"]["NotificationSubscriptionScope"];
+      /** @description Not the alerts of these types. */
+      types_exclude?: string[];
+      /** @description Only the alerts of these types (dash_type); empty for all. */
+      types_include?: string[];
+    };
+    /**
+     * @description responsible, the alerts of the apps the group is responsible for; all, every alert.
+     * @enum {string}
+     */
+    NotificationSubscriptionScope: "responsible" | "all";
     ObsolescenceSettingListResponse: {
       data:
         | components["schemas"]["ObsolescenceSettingRow"][]
@@ -9911,6 +11391,18 @@ export interface components {
       node_id?: string;
       ok: boolean;
       svc_id?: string;
+    };
+    /**
+     * @description The failed targets (failed, refused, timed out or cancelled) a step goes
+     *     on with: it succeeds, the run going on with the next step, while they
+     *     are fewer than value, a number of targets (unit count) or a percentage
+     *     of the targets of the step (unit percent, 1 to 100). The step fails, its
+     *     waiting targets not run, as soon as they reach it.
+     */
+    OrchestrationFailureThreshold: {
+      /** @enum {string} */
+      unit: "count" | "percent";
+      value: number;
     };
     OrchestrationInput: {
       description?: string;
@@ -10074,11 +11566,13 @@ export interface components {
      *     an instance, applies to instances only. pace says how many targets run at
      *     a time: all, one (one after the other) or batch (batch_size at a time).
      *     timeout, in seconds, fails a target whose action has not finished by
-     *     then; 0 means no limit.
+     *     then; 0 means no limit. failure_threshold lets the run go on past
+     *     failed targets: without it, the first target failing fails the step.
      */
     OrchestrationStep: {
       action: string;
       batch_size?: number;
+      failure_threshold?: components["schemas"]["OrchestrationFailureThreshold"];
       kind: components["schemas"]["OrchestrationTargetKind"];
       name: string;
       /** @enum {string} */
@@ -10220,6 +11714,37 @@ export interface components {
       id?: number;
       quota?: number;
       quota_used?: number;
+    };
+    /**
+     * @description Reports with the charts and the metrics they show, the ids replaced by the
+     *     names: report_name and chart_name entries in the definitions, metric_name
+     *     entries in the chart definitions and the report sections.
+     */
+    ReportExport: {
+      charts?: {
+        chart_definition?: {
+          [key: string]: unknown;
+        };
+        chart_name: string;
+      }[];
+      metrics?: {
+        metric_col_instance_index?: number | null;
+        metric_col_instance_label?: string;
+        metric_col_value_index?: number | null;
+        metric_historize?: string;
+        metric_name: string;
+        metric_sql?: string;
+      }[];
+      reports?: {
+        report_definition?: {
+          [key: string]: unknown;
+        };
+        report_name: string;
+      }[];
+    };
+    ReportImportResponse: {
+      error: string[];
+      info: string[];
     };
     ReportListResponse: {
       data:
@@ -10472,6 +11997,25 @@ export interface components {
     };
     SafeInfoResponse: {
       info: string;
+    };
+    SafeSecret: {
+      /** Format: int64 */
+      id: number;
+      /** @description Whether it is the active key; else oc3 safe rewrap wraps them with it. */
+      key_active: boolean;
+      /** @description The master key the secrets are wrapped with. */
+      key_id: string;
+      /** @description Whether the server has the key; the secrets do not open without it. */
+      key_known: boolean;
+      /** @enum {string} */
+      kind: "form_connector" | "notification_channel";
+      name: string;
+      updated: string;
+    };
+    SafeSecretsResponse: {
+      /** @description The active master key, absent without safe.keys_file. */
+      active_key_id?: string;
+      data: components["schemas"]["SafeSecret"][];
     };
     SanTopology: {
       links: components["schemas"]["SanTopologyLink"][];
@@ -10992,6 +12536,22 @@ export interface components {
     SysreportTreeResponse: {
       data: components["schemas"]["SysreportEntry"][];
     };
+    TagAgentAttach: {
+      /** @description The data of the attachment. */
+      attach_data?: string;
+    };
+    TagAgentAttachment: {
+      tag_attach_data: string;
+      tag_data: string;
+      tag_name: string;
+    };
+    TagAgentCreate: {
+      /** @description The data of the tag. */
+      data?: string;
+      /** @description A regular expression of the tags this one may not be attached with. */
+      exclude?: string;
+      name: string;
+    };
     UserListResponse: {
       data:
         | components["schemas"]["UserRow"][]
@@ -11001,6 +12561,30 @@ export interface components {
             };
           };
       meta?: components["schemas"]["ListMeta"];
+    };
+    /** @enum {string} */
+    UserNotificationLevel: "debug" | "info" | "warning" | "error" | "critical";
+    UserNotifications: {
+      /** @description The address the alerts are mailed to. */
+      email: string;
+      email_log_level: components["schemas"]["UserNotificationLevel"];
+      email_notifications: boolean;
+      /** @description Minutes an alert waits before it is mailed. */
+      email_notifications_delay: number;
+      /** @description Whether the collector sends the notifications by mail (notifications.enable and an SMTP server). */
+      mail_enabled: boolean;
+      periods: {
+        [key: string]: components["schemas"]["NotificationPeriod"];
+      };
+    };
+    UserNotificationsInput: {
+      email_log_level: components["schemas"]["UserNotificationLevel"];
+      email_notifications: boolean;
+      /** @description 0 to 1440. */
+      email_notifications_delay: number;
+      periods?: {
+        [key: string]: components["schemas"]["NotificationPeriod"];
+      };
     };
     /**
      * @description The stored preferences, as saved by POST /users/{user_id}/prefs. The
@@ -11254,18 +12838,46 @@ export interface components {
         "application/json": components["schemas"]["Problem"];
       };
     };
+    /** @description What was done. */
+    ComplianceAgentInfo: {
+      headers: {
+        [name: string]: unknown;
+      };
+      content: {
+        "application/json": {
+          info: string;
+        };
+      };
+    };
+    /** @description What was done. */
+    TagAgentInfo: {
+      headers: {
+        [name: string]: unknown;
+      };
+      content: {
+        "application/json": {
+          info: string;
+        };
+      };
+    };
   };
   parameters: {
+    /** @description The name of the moduleset or ruleset. */
+    inPathComplianceAgentName: string;
     /** @description ID of the moduleset */
     inPathMsetId: string;
     /** @description ID of the node */
     inPathNodeId: string;
+    inPathNotificationChannelId: number;
+    inPathNotificationSubscriptionId: number;
     /** @description ID of the orchestration */
     inPathOrchestrationId: number;
     /** @description ID of the orchestration run */
     inPathOrchestrationRunId: number;
     /** @description ID of the ruleset */
     inPathRsetId: string;
+    /** @description The object of the node, as namespace/kind/name. Default the node. */
+    inQueryAgentPath: string;
     /**
      * @description Column filter, repeatable; several filters combine with AND. Each value is
      *     `prop:expr`, `prop` being a property of the list (joined ones included, as
@@ -11549,6 +13161,323 @@ export interface operations {
       };
       401: components["responses"]["401"];
       403: components["responses"]["403"];
+      500: components["responses"]["500"];
+    };
+  };
+  GetAgentComplianceData: {
+    parameters: {
+      query?: {
+        /** @description The object of the node, as namespace/kind/name. Default the node. */
+        path?: components["parameters"]["inQueryAgentPath"];
+        /** @description Use these modulesets rather than the attached ones. */
+        moduleset?: string[];
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description The data of the run. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": Record<string, never>;
+        };
+      };
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  PostAgentComplianceLogs: {
+    parameters: {
+      query?: {
+        /** @description The object of the node, as namespace/kind/name. Default the node. */
+        path?: components["parameters"]["inQueryAgentPath"];
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ComplianceAgentLog"][];
+      };
+    };
+    responses: {
+      202: components["responses"]["ComplianceAgentInfo"];
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  GetAgentComplianceModulesets: {
+    parameters: {
+      query?: {
+        /** @description A sql LIKE pattern on the name. Default %. */
+        pattern?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description The names. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": string[];
+        };
+      };
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      500: components["responses"]["500"];
+    };
+  };
+  PostAgentComplianceModuleset: {
+    parameters: {
+      query?: {
+        /** @description The object of the node, as namespace/kind/name. Default the node. */
+        path?: components["parameters"]["inQueryAgentPath"];
+      };
+      header?: never;
+      path: {
+        /** @description The name of the moduleset or ruleset. */
+        name: components["parameters"]["inPathComplianceAgentName"];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: components["responses"]["ComplianceAgentInfo"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  DeleteAgentComplianceModuleset: {
+    parameters: {
+      query?: {
+        /** @description The object of the node, as namespace/kind/name. Default the node. */
+        path?: components["parameters"]["inQueryAgentPath"];
+      };
+      header?: never;
+      path: {
+        /** @description The name of the moduleset or ruleset. */
+        name: components["parameters"]["inPathComplianceAgentName"];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: components["responses"]["ComplianceAgentInfo"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  GetAgentComplianceRulesets: {
+    parameters: {
+      query?: {
+        /** @description A sql LIKE pattern on the name. Default %. */
+        pattern?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description The names. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": string[];
+        };
+      };
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      500: components["responses"]["500"];
+    };
+  };
+  PostAgentComplianceRuleset: {
+    parameters: {
+      query?: {
+        /** @description The object of the node, as namespace/kind/name. Default the node. */
+        path?: components["parameters"]["inQueryAgentPath"];
+      };
+      header?: never;
+      path: {
+        /** @description The name of the moduleset or ruleset. */
+        name: components["parameters"]["inPathComplianceAgentName"];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: components["responses"]["ComplianceAgentInfo"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  DeleteAgentComplianceRuleset: {
+    parameters: {
+      query?: {
+        /** @description The object of the node, as namespace/kind/name. Default the node. */
+        path?: components["parameters"]["inQueryAgentPath"];
+      };
+      header?: never;
+      path: {
+        /** @description The name of the moduleset or ruleset. */
+        name: components["parameters"]["inPathComplianceAgentName"];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: components["responses"]["ComplianceAgentInfo"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  GetAgentTags: {
+    parameters: {
+      query?: {
+        /** @description A text the names contain. Default all the tags. */
+        pattern?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description The names. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": string[];
+        };
+      };
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      500: components["responses"]["500"];
+    };
+  };
+  PostAgentTags: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["TagAgentCreate"];
+      };
+    };
+    responses: {
+      200: components["responses"]["TagAgentInfo"];
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      409: components["responses"]["409"];
+      500: components["responses"]["500"];
+    };
+  };
+  GetAgentTagsAttached: {
+    parameters: {
+      query?: {
+        /** @description The object of the node, as namespace/kind/name. Default the node. */
+        path?: components["parameters"]["inQueryAgentPath"];
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description The tags attached. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["TagAgentAttachment"][];
+        };
+      };
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  PostAgentTag: {
+    parameters: {
+      query?: {
+        /** @description The object of the node, as namespace/kind/name. Default the node. */
+        path?: components["parameters"]["inQueryAgentPath"];
+      };
+      header?: never;
+      path: {
+        /** @description The tag name. */
+        name: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: {
+      content: {
+        "application/json": components["schemas"]["TagAgentAttach"];
+      };
+    };
+    responses: {
+      200: components["responses"]["TagAgentInfo"];
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      409: components["responses"]["409"];
+      500: components["responses"]["500"];
+    };
+  };
+  DeleteAgentTag: {
+    parameters: {
+      query?: {
+        /** @description The object of the node, as namespace/kind/name. Default the node. */
+        path?: components["parameters"]["inQueryAgentPath"];
+      };
+      header?: never;
+      path: {
+        /** @description The tag name. */
+        name: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: components["responses"]["TagAgentInfo"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
       500: components["responses"]["500"];
     };
   };
@@ -12860,6 +14789,71 @@ export interface operations {
       500: components["responses"]["500"];
     };
   };
+  GetArray: {
+    parameters: {
+      query?: {
+        /** @description A list of properties to include in each data dictionnary. */
+        props?: components["parameters"]["inQueryProps"];
+      };
+      header?: never;
+      path: {
+        /** @description Storage array name or id */
+        array_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ArrayListResponse"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  PostArray: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Storage array name or id */
+        array_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": {
+          /** @description Free text about the array, 255 characters at most. */
+          array_comment?: string;
+        };
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ArrayListResponse"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
   GetArrayDiskgroups: {
     parameters: {
       query?: {
@@ -12919,6 +14913,38 @@ export interface operations {
       path: {
         /** @description Array name or record id */
         array_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["DiskGroupListResponse"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  GetArrayDiskgroup: {
+    parameters: {
+      query?: {
+        /** @description A list of properties to include in each data dictionnary. */
+        props?: components["parameters"]["inQueryProps"];
+      };
+      header?: never;
+      path: {
+        /** @description Storage array name or id, 0 for any */
+        array_id: string;
+        /** @description Disk group id or name */
+        dg_id: string;
       };
       cookie?: never;
     };
@@ -13048,6 +15074,80 @@ export interface operations {
       400: components["responses"]["400"];
       401: components["responses"]["401"];
       403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  DeleteArrayDiskgroupQuotas: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Storage array id or name */
+        array_id: string;
+        /** @description Disk group id */
+        dg_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json":
+          | {
+              [key: string]: unknown;
+            }
+          | {
+              [key: string]: unknown;
+            }[];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": Record<string, never>;
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  GetArrayDiskgroupQuota: {
+    parameters: {
+      query?: {
+        /** @description A list of properties to include in each data dictionnary. */
+        props?: components["parameters"]["inQueryProps"];
+      };
+      header?: never;
+      path: {
+        /** @description Storage array id or name */
+        array_id: string;
+        /** @description Disk group id */
+        dg_id: number;
+        /** @description Quota id */
+        quota_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["QuotaListResponse"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
       404: components["responses"]["404"];
       500: components["responses"]["500"];
     };
@@ -13196,6 +15296,375 @@ export interface operations {
       400: components["responses"]["400"];
       401: components["responses"]["401"];
       404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  GetArrayProxies: {
+    parameters: {
+      query?: {
+        /** @description A list of properties to include in each data dictionnary. */
+        props?: components["parameters"]["inQueryProps"];
+        /** @description The maximum number of entries to return. 0 means no limit. */
+        limit?: components["parameters"]["inQueryLimit"];
+        /** @description Skip the first entries of the data cursor. */
+        offset?: components["parameters"]["inQueryOffset"];
+        /**
+         * @description Include metadata in the response. Enabled by default. Use false or 0 to omit
+         *     the meta field. The metadata of a list carries its total number of rows
+         *     without pagination (total), as well as the rows returned (count), the offset
+         *     and the limit.
+         */
+        meta?: components["parameters"]["inQueryMeta"];
+        /**
+         * @description With "1" or "true", the response counts the distinct values of each
+         *     selected property instead of listing the rows: `data` maps each property
+         *     to an object of value → number of rows ("empty" for a null or blank
+         *     value), over the whole selection (access control, filters and session
+         *     filterset applied, `offset` ignored). `limit`, when given, caps the
+         *     number of values returned per property, the most frequent first; without
+         *     it every value is returned. `meta.total` is the number of rows,
+         *     `meta.distinct` the number of distinct values of each property, and
+         *     `meta.other` the number of rows whose value was left out by the limit.
+         *     A count taking longer than 5 seconds is refused with a 400, asking to
+         *     narrow the selection.
+         */
+        stats?: components["parameters"]["inQueryStats"];
+        /** @description Comma-separated list of properties to sort by. Prefix a property with - for descending order (e.g. orderby=nodename,-app). */
+        orderby?: components["parameters"]["inQueryOrderby"];
+        /** @description Comma-separated list of properties to group the result by (e.g. groupby=app,svcname). */
+        groupby?: components["parameters"]["inQueryGroupby"];
+        /**
+         * @description Column filter, repeatable; several filters combine with AND. Each value is
+         *     `prop:expr`, `prop` being a property of the list (joined ones included, as
+         *     for orderby) and `expr` one of:
+         *       - text: case-insensitive match anywhere in the value;
+         *       - `~regex`: regular expression (RE2 syntax), case-insensitive;
+         *       - `in:a,b,c`: one of the listed values;
+         *       - `eq:v`, `ne:v`: equal, not equal;
+         *       - `gt:v`, `gte:v`, `lt:v`, `lte:v`: comparisons, for numbers and dates;
+         *         a date may be relative to now, `-` then a duration in weeks, days,
+         *         hours, minutes and seconds: `lt:-15m` keeps the dates older than 15
+         *         minutes, `gte:-1d12h` those of the last day and a half;
+         *       - `empty`: no value;
+         *       - `!expr`: the inverse of any of the above, that is the rows `expr` leaves
+         *         out, those without a value included: `!dev`, `!~^dev`, `!in:a,b`,
+         *         `!empty` (any value).
+         *     An unknown property, a property without a column, or an invalid regular
+         *     expression is answered with 400.
+         */
+        filter?: components["parameters"]["inQueryFilter"];
+      };
+      header?: never;
+      path: {
+        /** @description Storage array name or id */
+        array_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ArrayProxyListResponse"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  PostArrayProxies: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Storage array name or id */
+        array_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json":
+          | {
+              [key: string]: unknown;
+            }
+          | {
+              [key: string]: unknown;
+            }[];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": Record<string, never>;
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  DeleteArrayProxies: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Storage array name or id */
+        array_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json":
+          | {
+              [key: string]: unknown;
+            }
+          | {
+              [key: string]: unknown;
+            }[];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": Record<string, never>;
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  PostArrayProxy: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Storage array name or id */
+        array_id: string;
+        /** @description Node id or name */
+        node_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["InfoResponse"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  DeleteArrayProxy: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Storage array name or id */
+        array_id: string;
+        /** @description Node id or name */
+        node_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["InfoResponse"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  GetArrayTargets: {
+    parameters: {
+      query?: {
+        /** @description A list of properties to include in each data dictionnary. */
+        props?: components["parameters"]["inQueryProps"];
+        /** @description The maximum number of entries to return. 0 means no limit. */
+        limit?: components["parameters"]["inQueryLimit"];
+        /** @description Skip the first entries of the data cursor. */
+        offset?: components["parameters"]["inQueryOffset"];
+        /**
+         * @description Include metadata in the response. Enabled by default. Use false or 0 to omit
+         *     the meta field. The metadata of a list carries its total number of rows
+         *     without pagination (total), as well as the rows returned (count), the offset
+         *     and the limit.
+         */
+        meta?: components["parameters"]["inQueryMeta"];
+        /**
+         * @description With "1" or "true", the response counts the distinct values of each
+         *     selected property instead of listing the rows: `data` maps each property
+         *     to an object of value → number of rows ("empty" for a null or blank
+         *     value), over the whole selection (access control, filters and session
+         *     filterset applied, `offset` ignored). `limit`, when given, caps the
+         *     number of values returned per property, the most frequent first; without
+         *     it every value is returned. `meta.total` is the number of rows,
+         *     `meta.distinct` the number of distinct values of each property, and
+         *     `meta.other` the number of rows whose value was left out by the limit.
+         *     A count taking longer than 5 seconds is refused with a 400, asking to
+         *     narrow the selection.
+         */
+        stats?: components["parameters"]["inQueryStats"];
+        /** @description Comma-separated list of properties to sort by. Prefix a property with - for descending order (e.g. orderby=nodename,-app). */
+        orderby?: components["parameters"]["inQueryOrderby"];
+        /** @description Comma-separated list of properties to group the result by (e.g. groupby=app,svcname). */
+        groupby?: components["parameters"]["inQueryGroupby"];
+        /**
+         * @description Column filter, repeatable; several filters combine with AND. Each value is
+         *     `prop:expr`, `prop` being a property of the list (joined ones included, as
+         *     for orderby) and `expr` one of:
+         *       - text: case-insensitive match anywhere in the value;
+         *       - `~regex`: regular expression (RE2 syntax), case-insensitive;
+         *       - `in:a,b,c`: one of the listed values;
+         *       - `eq:v`, `ne:v`: equal, not equal;
+         *       - `gt:v`, `gte:v`, `lt:v`, `lte:v`: comparisons, for numbers and dates;
+         *         a date may be relative to now, `-` then a duration in weeks, days,
+         *         hours, minutes and seconds: `lt:-15m` keeps the dates older than 15
+         *         minutes, `gte:-1d12h` those of the last day and a half;
+         *       - `empty`: no value;
+         *       - `!expr`: the inverse of any of the above, that is the rows `expr` leaves
+         *         out, those without a value included: `!dev`, `!~^dev`, `!in:a,b`,
+         *         `!empty` (any value).
+         *     An unknown property, a property without a column, or an invalid regular
+         *     expression is answered with 400.
+         */
+        filter?: components["parameters"]["inQueryFilter"];
+      };
+      header?: never;
+      path: {
+        /** @description Storage array name or id */
+        array_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ArrayTargetListResponse"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  GetArraysDiskgroups: {
+    parameters: {
+      query?: {
+        /** @description A list of properties to include in each data dictionnary. */
+        props?: components["parameters"]["inQueryProps"];
+        /** @description The maximum number of entries to return. 0 means no limit. */
+        limit?: components["parameters"]["inQueryLimit"];
+        /** @description Skip the first entries of the data cursor. */
+        offset?: components["parameters"]["inQueryOffset"];
+        /**
+         * @description Include metadata in the response. Enabled by default. Use false or 0 to omit
+         *     the meta field. The metadata of a list carries its total number of rows
+         *     without pagination (total), as well as the rows returned (count), the offset
+         *     and the limit.
+         */
+        meta?: components["parameters"]["inQueryMeta"];
+        /**
+         * @description With "1" or "true", the response counts the distinct values of each
+         *     selected property instead of listing the rows: `data` maps each property
+         *     to an object of value → number of rows ("empty" for a null or blank
+         *     value), over the whole selection (access control, filters and session
+         *     filterset applied, `offset` ignored). `limit`, when given, caps the
+         *     number of values returned per property, the most frequent first; without
+         *     it every value is returned. `meta.total` is the number of rows,
+         *     `meta.distinct` the number of distinct values of each property, and
+         *     `meta.other` the number of rows whose value was left out by the limit.
+         *     A count taking longer than 5 seconds is refused with a 400, asking to
+         *     narrow the selection.
+         */
+        stats?: components["parameters"]["inQueryStats"];
+        /** @description Comma-separated list of properties to sort by. Prefix a property with - for descending order (e.g. orderby=nodename,-app). */
+        orderby?: components["parameters"]["inQueryOrderby"];
+        /** @description Comma-separated list of properties to group the result by (e.g. groupby=app,svcname). */
+        groupby?: components["parameters"]["inQueryGroupby"];
+        /**
+         * @description Column filter, repeatable; several filters combine with AND. Each value is
+         *     `prop:expr`, `prop` being a property of the list (joined ones included, as
+         *     for orderby) and `expr` one of:
+         *       - text: case-insensitive match anywhere in the value;
+         *       - `~regex`: regular expression (RE2 syntax), case-insensitive;
+         *       - `in:a,b,c`: one of the listed values;
+         *       - `eq:v`, `ne:v`: equal, not equal;
+         *       - `gt:v`, `gte:v`, `lt:v`, `lte:v`: comparisons, for numbers and dates;
+         *         a date may be relative to now, `-` then a duration in weeks, days,
+         *         hours, minutes and seconds: `lt:-15m` keeps the dates older than 15
+         *         minutes, `gte:-1d12h` those of the last day and a half;
+         *       - `empty`: no value;
+         *       - `!expr`: the inverse of any of the above, that is the rows `expr` leaves
+         *         out, those without a value included: `!dev`, `!~^dev`, `!in:a,b`,
+         *         `!empty` (any value).
+         *     An unknown property, a property without a column, or an invalid regular
+         *     expression is answered with 400.
+         */
+        filter?: components["parameters"]["inQueryFilter"];
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["DiskGroupListResponse"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
       500: components["responses"]["500"];
     };
   };
@@ -14372,6 +16841,41 @@ export interface operations {
       500: components["responses"]["500"];
     };
   };
+  DeleteCharts: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json":
+          | {
+              [key: string]: unknown;
+            }
+          | {
+              [key: string]: unknown;
+            }[];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": Record<string, never>;
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
   GetChart: {
     parameters: {
       query?: {
@@ -14397,6 +16901,493 @@ export interface operations {
         };
       };
       401: components["responses"]["401"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  PostChart: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Chart id, or name */
+        chart_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": {
+          /** @description New unique name of the chart. */
+          chart_name?: string;
+          /** @description New definition of the chart, in YAML, recorded in its history. */
+          chart_yaml?: string;
+        };
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ChartListResponse"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      409: components["responses"]["409"];
+      500: components["responses"]["500"];
+    };
+  };
+  DeleteChart: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Chart id, or name */
+        chart_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["InfoResponse"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  GetChartAmIResponsible: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Chart id, or name */
+        chart_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": {
+            data: boolean;
+          };
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      500: components["responses"]["500"];
+    };
+  };
+  GetChartDiff: {
+    parameters: {
+      query?: {
+        /** @description Another revision to compare cid with */
+        other?: string;
+      };
+      header?: never;
+      path: {
+        /** @description Chart id, or name */
+        chart_id: string;
+        /** @description Git commit id of a revision */
+        cid: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["FormDiffResponse"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      500: components["responses"]["500"];
+    };
+  };
+  GetChartPublications: {
+    parameters: {
+      query?: {
+        /** @description A list of properties to include in each data dictionnary. */
+        props?: components["parameters"]["inQueryProps"];
+        /** @description The maximum number of entries to return. 0 means no limit. */
+        limit?: components["parameters"]["inQueryLimit"];
+        /** @description Skip the first entries of the data cursor. */
+        offset?: components["parameters"]["inQueryOffset"];
+        /**
+         * @description Include metadata in the response. Enabled by default. Use false or 0 to omit
+         *     the meta field. The metadata of a list carries its total number of rows
+         *     without pagination (total), as well as the rows returned (count), the offset
+         *     and the limit.
+         */
+        meta?: components["parameters"]["inQueryMeta"];
+        /**
+         * @description With "1" or "true", the response counts the distinct values of each
+         *     selected property instead of listing the rows: `data` maps each property
+         *     to an object of value → number of rows ("empty" for a null or blank
+         *     value), over the whole selection (access control, filters and session
+         *     filterset applied, `offset` ignored). `limit`, when given, caps the
+         *     number of values returned per property, the most frequent first; without
+         *     it every value is returned. `meta.total` is the number of rows,
+         *     `meta.distinct` the number of distinct values of each property, and
+         *     `meta.other` the number of rows whose value was left out by the limit.
+         *     A count taking longer than 5 seconds is refused with a 400, asking to
+         *     narrow the selection.
+         */
+        stats?: components["parameters"]["inQueryStats"];
+        /** @description Comma-separated list of properties to sort by. Prefix a property with - for descending order (e.g. orderby=nodename,-app). */
+        orderby?: components["parameters"]["inQueryOrderby"];
+        /** @description Comma-separated list of properties to group the result by (e.g. groupby=app,svcname). */
+        groupby?: components["parameters"]["inQueryGroupby"];
+        /**
+         * @description Column filter, repeatable; several filters combine with AND. Each value is
+         *     `prop:expr`, `prop` being a property of the list (joined ones included, as
+         *     for orderby) and `expr` one of:
+         *       - text: case-insensitive match anywhere in the value;
+         *       - `~regex`: regular expression (RE2 syntax), case-insensitive;
+         *       - `in:a,b,c`: one of the listed values;
+         *       - `eq:v`, `ne:v`: equal, not equal;
+         *       - `gt:v`, `gte:v`, `lt:v`, `lte:v`: comparisons, for numbers and dates;
+         *         a date may be relative to now, `-` then a duration in weeks, days,
+         *         hours, minutes and seconds: `lt:-15m` keeps the dates older than 15
+         *         minutes, `gte:-1d12h` those of the last day and a half;
+         *       - `empty`: no value;
+         *       - `!expr`: the inverse of any of the above, that is the rows `expr` leaves
+         *         out, those without a value included: `!dev`, `!~^dev`, `!in:a,b`,
+         *         `!empty` (any value).
+         *     An unknown property, a property without a column, or an invalid regular
+         *     expression is answered with 400.
+         */
+        filter?: components["parameters"]["inQueryFilter"];
+      };
+      header?: never;
+      path: {
+        /** @description Chart id, or name */
+        chart_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["GroupListResponse"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  PostChartPublication: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Chart id, or name */
+        chart_id: string;
+        /** @description Group id, or role when adding */
+        group_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["InfoResponse"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  DeleteChartPublication: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Chart id, or name */
+        chart_id: string;
+        /** @description Group id, or role when adding */
+        group_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["InfoResponse"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  GetChartResponsibles: {
+    parameters: {
+      query?: {
+        /** @description A list of properties to include in each data dictionnary. */
+        props?: components["parameters"]["inQueryProps"];
+        /** @description The maximum number of entries to return. 0 means no limit. */
+        limit?: components["parameters"]["inQueryLimit"];
+        /** @description Skip the first entries of the data cursor. */
+        offset?: components["parameters"]["inQueryOffset"];
+        /**
+         * @description Include metadata in the response. Enabled by default. Use false or 0 to omit
+         *     the meta field. The metadata of a list carries its total number of rows
+         *     without pagination (total), as well as the rows returned (count), the offset
+         *     and the limit.
+         */
+        meta?: components["parameters"]["inQueryMeta"];
+        /**
+         * @description With "1" or "true", the response counts the distinct values of each
+         *     selected property instead of listing the rows: `data` maps each property
+         *     to an object of value → number of rows ("empty" for a null or blank
+         *     value), over the whole selection (access control, filters and session
+         *     filterset applied, `offset` ignored). `limit`, when given, caps the
+         *     number of values returned per property, the most frequent first; without
+         *     it every value is returned. `meta.total` is the number of rows,
+         *     `meta.distinct` the number of distinct values of each property, and
+         *     `meta.other` the number of rows whose value was left out by the limit.
+         *     A count taking longer than 5 seconds is refused with a 400, asking to
+         *     narrow the selection.
+         */
+        stats?: components["parameters"]["inQueryStats"];
+        /** @description Comma-separated list of properties to sort by. Prefix a property with - for descending order (e.g. orderby=nodename,-app). */
+        orderby?: components["parameters"]["inQueryOrderby"];
+        /** @description Comma-separated list of properties to group the result by (e.g. groupby=app,svcname). */
+        groupby?: components["parameters"]["inQueryGroupby"];
+        /**
+         * @description Column filter, repeatable; several filters combine with AND. Each value is
+         *     `prop:expr`, `prop` being a property of the list (joined ones included, as
+         *     for orderby) and `expr` one of:
+         *       - text: case-insensitive match anywhere in the value;
+         *       - `~regex`: regular expression (RE2 syntax), case-insensitive;
+         *       - `in:a,b,c`: one of the listed values;
+         *       - `eq:v`, `ne:v`: equal, not equal;
+         *       - `gt:v`, `gte:v`, `lt:v`, `lte:v`: comparisons, for numbers and dates;
+         *         a date may be relative to now, `-` then a duration in weeks, days,
+         *         hours, minutes and seconds: `lt:-15m` keeps the dates older than 15
+         *         minutes, `gte:-1d12h` those of the last day and a half;
+         *       - `empty`: no value;
+         *       - `!expr`: the inverse of any of the above, that is the rows `expr` leaves
+         *         out, those without a value included: `!dev`, `!~^dev`, `!in:a,b`,
+         *         `!empty` (any value).
+         *     An unknown property, a property without a column, or an invalid regular
+         *     expression is answered with 400.
+         */
+        filter?: components["parameters"]["inQueryFilter"];
+      };
+      header?: never;
+      path: {
+        /** @description Chart id, or name */
+        chart_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["GroupListResponse"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  PostChartResponsible: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Chart id, or name */
+        chart_id: string;
+        /** @description Group id, or role when adding */
+        group_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["InfoResponse"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  DeleteChartResponsible: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Chart id, or name */
+        chart_id: string;
+        /** @description Group id, or role when adding */
+        group_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["InfoResponse"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  GetChartRevisions: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Chart id, or name */
+        chart_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["FormRevisionListResponse"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      500: components["responses"]["500"];
+    };
+  };
+  GetChartRevision: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Chart id, or name */
+        chart_id: string;
+        /** @description Git commit id of a revision */
+        cid: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["FormRevisionResponse"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      500: components["responses"]["500"];
+    };
+  };
+  PostChartRollback: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Chart id, or name */
+        chart_id: string;
+        /** @description Git commit id of a revision */
+        cid: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["InfoResponse"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
       404: components["responses"]["404"];
       500: components["responses"]["500"];
     };
@@ -14436,6 +17427,146 @@ export interface operations {
           "application/json": components["schemas"]["Problem"];
         };
       };
+      500: components["responses"]["500"];
+    };
+  };
+  PostChartsPublications: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json":
+          | {
+              [key: string]: unknown;
+            }
+          | {
+              [key: string]: unknown;
+            }[];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": Record<string, never>;
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  DeleteChartsPublications: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json":
+          | {
+              [key: string]: unknown;
+            }
+          | {
+              [key: string]: unknown;
+            }[];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": Record<string, never>;
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  PostChartsResponsibles: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json":
+          | {
+              [key: string]: unknown;
+            }
+          | {
+              [key: string]: unknown;
+            }[];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": Record<string, never>;
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  DeleteChartsResponsibles: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json":
+          | {
+              [key: string]: unknown;
+            }
+          | {
+              [key: string]: unknown;
+            }[];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": Record<string, never>;
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
       500: components["responses"]["500"];
     };
   };
@@ -24439,6 +27570,41 @@ export interface operations {
       500: components["responses"]["500"];
     };
   };
+  DeleteMetrics: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json":
+          | {
+              [key: string]: unknown;
+            }
+          | {
+              [key: string]: unknown;
+            }[];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": Record<string, never>;
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
   GetMetric: {
     parameters: {
       query?: {
@@ -24524,6 +27690,316 @@ export interface operations {
       500: components["responses"]["500"];
     };
   };
+  DeleteMetric: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Metric id, or name */
+        metric_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["InfoResponse"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  GetMetricAmIResponsible: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Metric id, or name */
+        metric_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": {
+            data: boolean;
+          };
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      500: components["responses"]["500"];
+    };
+  };
+  GetMetricDiff: {
+    parameters: {
+      query?: {
+        /** @description Another revision to compare cid with */
+        other?: string;
+      };
+      header?: never;
+      path: {
+        /** @description Metric id, or name */
+        metric_id: string;
+        /** @description Git commit id of a revision */
+        cid: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["FormDiffResponse"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      500: components["responses"]["500"];
+    };
+  };
+  GetMetricPublications: {
+    parameters: {
+      query?: {
+        /** @description A list of properties to include in each data dictionnary. */
+        props?: components["parameters"]["inQueryProps"];
+        /** @description The maximum number of entries to return. 0 means no limit. */
+        limit?: components["parameters"]["inQueryLimit"];
+        /** @description Skip the first entries of the data cursor. */
+        offset?: components["parameters"]["inQueryOffset"];
+        /**
+         * @description Include metadata in the response. Enabled by default. Use false or 0 to omit
+         *     the meta field. The metadata of a list carries its total number of rows
+         *     without pagination (total), as well as the rows returned (count), the offset
+         *     and the limit.
+         */
+        meta?: components["parameters"]["inQueryMeta"];
+        /**
+         * @description With "1" or "true", the response counts the distinct values of each
+         *     selected property instead of listing the rows: `data` maps each property
+         *     to an object of value → number of rows ("empty" for a null or blank
+         *     value), over the whole selection (access control, filters and session
+         *     filterset applied, `offset` ignored). `limit`, when given, caps the
+         *     number of values returned per property, the most frequent first; without
+         *     it every value is returned. `meta.total` is the number of rows,
+         *     `meta.distinct` the number of distinct values of each property, and
+         *     `meta.other` the number of rows whose value was left out by the limit.
+         *     A count taking longer than 5 seconds is refused with a 400, asking to
+         *     narrow the selection.
+         */
+        stats?: components["parameters"]["inQueryStats"];
+        /** @description Comma-separated list of properties to sort by. Prefix a property with - for descending order (e.g. orderby=nodename,-app). */
+        orderby?: components["parameters"]["inQueryOrderby"];
+        /** @description Comma-separated list of properties to group the result by (e.g. groupby=app,svcname). */
+        groupby?: components["parameters"]["inQueryGroupby"];
+        /**
+         * @description Column filter, repeatable; several filters combine with AND. Each value is
+         *     `prop:expr`, `prop` being a property of the list (joined ones included, as
+         *     for orderby) and `expr` one of:
+         *       - text: case-insensitive match anywhere in the value;
+         *       - `~regex`: regular expression (RE2 syntax), case-insensitive;
+         *       - `in:a,b,c`: one of the listed values;
+         *       - `eq:v`, `ne:v`: equal, not equal;
+         *       - `gt:v`, `gte:v`, `lt:v`, `lte:v`: comparisons, for numbers and dates;
+         *         a date may be relative to now, `-` then a duration in weeks, days,
+         *         hours, minutes and seconds: `lt:-15m` keeps the dates older than 15
+         *         minutes, `gte:-1d12h` those of the last day and a half;
+         *       - `empty`: no value;
+         *       - `!expr`: the inverse of any of the above, that is the rows `expr` leaves
+         *         out, those without a value included: `!dev`, `!~^dev`, `!in:a,b`,
+         *         `!empty` (any value).
+         *     An unknown property, a property without a column, or an invalid regular
+         *     expression is answered with 400.
+         */
+        filter?: components["parameters"]["inQueryFilter"];
+      };
+      header?: never;
+      path: {
+        /** @description Metric id, or name */
+        metric_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["GroupListResponse"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  PostMetricPublication: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Metric id, or name */
+        metric_id: string;
+        /** @description Group id, or role when adding */
+        group_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["InfoResponse"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  DeleteMetricPublication: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Metric id, or name */
+        metric_id: string;
+        /** @description Group id, or role when adding */
+        group_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["InfoResponse"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  GetMetricRevisions: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Metric id, or name */
+        metric_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["FormRevisionListResponse"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      500: components["responses"]["500"];
+    };
+  };
+  GetMetricRevision: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Metric id, or name */
+        metric_id: string;
+        /** @description Git commit id of a revision */
+        cid: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["FormRevisionResponse"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      500: components["responses"]["500"];
+    };
+  };
+  PostMetricRollback: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Metric id, or name */
+        metric_id: string;
+        /** @description Git commit id of a revision */
+        cid: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["InfoResponse"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
   GetMetricSamples: {
     parameters: {
       query?: never;
@@ -24556,6 +28032,76 @@ export interface operations {
           "application/json": components["schemas"]["Problem"];
         };
       };
+      500: components["responses"]["500"];
+    };
+  };
+  PostMetricsPublications: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json":
+          | {
+              [key: string]: unknown;
+            }
+          | {
+              [key: string]: unknown;
+            }[];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": Record<string, never>;
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  DeleteMetricsPublications: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json":
+          | {
+              [key: string]: unknown;
+            }
+          | {
+              [key: string]: unknown;
+            }[];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": Record<string, never>;
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
       500: components["responses"]["500"];
     };
   };
@@ -26917,6 +30463,357 @@ export interface operations {
       500: components["responses"]["500"];
     };
   };
+  GetNotificationChannels: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": {
+            data: components["schemas"]["NotificationChannel"][];
+          };
+        };
+      };
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      500: components["responses"]["500"];
+    };
+  };
+  PostNotificationChannels: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["NotificationChannelInput"];
+      };
+    };
+    responses: {
+      /** @description The channel created. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["NotificationChannel"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      409: components["responses"]["409"];
+      500: components["responses"]["500"];
+    };
+  };
+  GetNotificationChannel: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        channel_id: components["parameters"]["inPathNotificationChannelId"];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["NotificationChannel"];
+        };
+      };
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  PutNotificationChannel: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        channel_id: components["parameters"]["inPathNotificationChannelId"];
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["NotificationChannelInput"];
+      };
+    };
+    responses: {
+      /** @description The channel replaced. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["NotificationChannel"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      409: components["responses"]["409"];
+      500: components["responses"]["500"];
+    };
+  };
+  DeleteNotificationChannel: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        channel_id: components["parameters"]["inPathNotificationChannelId"];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Deleted. */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  PostNotificationChannelTest: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        channel_id: components["parameters"]["inPathNotificationChannelId"];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description The outcome of the sending. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["NotificationChannelTestResult"];
+        };
+      };
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  GetNotificationDeliveries: {
+    parameters: {
+      query?: {
+        /** @description A list of properties to include in each data dictionnary. */
+        props?: components["parameters"]["inQueryProps"];
+        /** @description The maximum number of entries to return. 0 means no limit. */
+        limit?: components["parameters"]["inQueryLimit"];
+        /** @description Skip the first entries of the data cursor. */
+        offset?: components["parameters"]["inQueryOffset"];
+        /**
+         * @description Include metadata in the response. Enabled by default. Use false or 0 to omit
+         *     the meta field. The metadata of a list carries its total number of rows
+         *     without pagination (total), as well as the rows returned (count), the offset
+         *     and the limit.
+         */
+        meta?: components["parameters"]["inQueryMeta"];
+        /**
+         * @description With "1" or "true", the response counts the distinct values of each
+         *     selected property instead of listing the rows: `data` maps each property
+         *     to an object of value → number of rows ("empty" for a null or blank
+         *     value), over the whole selection (access control, filters and session
+         *     filterset applied, `offset` ignored). `limit`, when given, caps the
+         *     number of values returned per property, the most frequent first; without
+         *     it every value is returned. `meta.total` is the number of rows,
+         *     `meta.distinct` the number of distinct values of each property, and
+         *     `meta.other` the number of rows whose value was left out by the limit.
+         *     A count taking longer than 5 seconds is refused with a 400, asking to
+         *     narrow the selection.
+         */
+        stats?: components["parameters"]["inQueryStats"];
+        /** @description Comma-separated list of properties to sort by. Prefix a property with - for descending order (e.g. orderby=nodename,-app). */
+        orderby?: components["parameters"]["inQueryOrderby"];
+        /**
+         * @description Column filter, repeatable; several filters combine with AND. Each value is
+         *     `prop:expr`, `prop` being a property of the list (joined ones included, as
+         *     for orderby) and `expr` one of:
+         *       - text: case-insensitive match anywhere in the value;
+         *       - `~regex`: regular expression (RE2 syntax), case-insensitive;
+         *       - `in:a,b,c`: one of the listed values;
+         *       - `eq:v`, `ne:v`: equal, not equal;
+         *       - `gt:v`, `gte:v`, `lt:v`, `lte:v`: comparisons, for numbers and dates;
+         *         a date may be relative to now, `-` then a duration in weeks, days,
+         *         hours, minutes and seconds: `lt:-15m` keeps the dates older than 15
+         *         minutes, `gte:-1d12h` those of the last day and a half;
+         *       - `empty`: no value;
+         *       - `!expr`: the inverse of any of the above, that is the rows `expr` leaves
+         *         out, those without a value included: `!dev`, `!~^dev`, `!in:a,b`,
+         *         `!empty` (any value).
+         *     An unknown property, a property without a column, or an invalid regular
+         *     expression is answered with 400.
+         */
+        filter?: components["parameters"]["inQueryFilter"];
+        /** @description Comma-separated list of properties to group the result by (e.g. groupby=app,svcname). */
+        groupby?: components["parameters"]["inQueryGroupby"];
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["NotificationDeliveryListResponse"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      500: components["responses"]["500"];
+    };
+  };
+  GetNotificationSubscriptions: {
+    parameters: {
+      query?: {
+        /** @description Only the subscriptions to this channel. */
+        channel_id?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": {
+            data: components["schemas"]["NotificationSubscription"][];
+          };
+        };
+      };
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      500: components["responses"]["500"];
+    };
+  };
+  PostNotificationSubscriptions: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["NotificationSubscriptionInput"];
+      };
+    };
+    responses: {
+      /** @description The subscription created. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["NotificationSubscription"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      409: components["responses"]["409"];
+      500: components["responses"]["500"];
+    };
+  };
+  PutNotificationSubscription: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        subscription_id: components["parameters"]["inPathNotificationSubscriptionId"];
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["NotificationSubscriptionInput"];
+      };
+    };
+    responses: {
+      /** @description The subscription replaced. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["NotificationSubscription"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      409: components["responses"]["409"];
+      500: components["responses"]["500"];
+    };
+  };
+  DeleteNotificationSubscription: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        subscription_id: components["parameters"]["inPathNotificationSubscriptionId"];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Deleted. */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
   PutObsolescenceRefresh: {
     parameters: {
       query?: never;
@@ -27515,6 +31412,34 @@ export interface operations {
       500: components["responses"]["500"];
     };
   };
+  PostOrchestrationRunCancel: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description ID of the orchestration run */
+        run_id: components["parameters"]["inPathOrchestrationRunId"];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["OrchestrationRun"];
+        };
+      };
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      409: components["responses"]["409"];
+      500: components["responses"]["500"];
+    };
+  };
   PostOrchestrationRunContinue: {
     parameters: {
       query?: never;
@@ -27577,34 +31502,6 @@ export interface operations {
     };
   };
   PostOrchestrationRunStop: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description ID of the orchestration run */
-        run_id: components["parameters"]["inPathOrchestrationRunId"];
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["OrchestrationRun"];
-        };
-      };
-      401: components["responses"]["401"];
-      403: components["responses"]["403"];
-      404: components["responses"]["404"];
-      409: components["responses"]["409"];
-      500: components["responses"]["500"];
-    };
-  };
-  PostOrchestrationRunCancel: {
     parameters: {
       query?: never;
       header?: never;
@@ -28219,6 +32116,69 @@ export interface operations {
       500: components["responses"]["500"];
     };
   };
+  DeleteReports: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json":
+          | {
+              [key: string]: unknown;
+            }
+          | {
+              [key: string]: unknown;
+            }[];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": Record<string, never>;
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  PostReportsImport: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ReportExport"];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ReportImportResponse"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      500: components["responses"]["500"];
+    };
+  };
   GetReport: {
     parameters: {
       query?: {
@@ -28245,6 +32205,100 @@ export interface operations {
       };
       401: components["responses"]["401"];
       404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  PostReport: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Report id, or name */
+        report_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": {
+          /** @description New unique name of the report. */
+          report_name?: string;
+          /** @description New definition of the report, in YAML, recorded in its history. */
+          report_yaml?: string;
+        };
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ReportListResponse"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      409: components["responses"]["409"];
+      500: components["responses"]["500"];
+    };
+  };
+  DeleteReport: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Report id, or name */
+        report_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["InfoResponse"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  GetReportAmIResponsible: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Report id, or name */
+        report_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": {
+            data: boolean;
+          };
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
       500: components["responses"]["500"];
     };
   };
@@ -28284,6 +32338,566 @@ export interface operations {
           "application/json": components["schemas"]["Problem"];
         };
       };
+      500: components["responses"]["500"];
+    };
+  };
+  GetReportDiff: {
+    parameters: {
+      query?: {
+        /** @description Another revision to compare cid with */
+        other?: string;
+      };
+      header?: never;
+      path: {
+        /** @description Report id, or name */
+        report_id: string;
+        /** @description Git commit id of a revision */
+        cid: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["FormDiffResponse"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      500: components["responses"]["500"];
+    };
+  };
+  GetReportExport: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Report id, or name */
+        report_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ReportExport"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  GetReportPublications: {
+    parameters: {
+      query?: {
+        /** @description A list of properties to include in each data dictionnary. */
+        props?: components["parameters"]["inQueryProps"];
+        /** @description The maximum number of entries to return. 0 means no limit. */
+        limit?: components["parameters"]["inQueryLimit"];
+        /** @description Skip the first entries of the data cursor. */
+        offset?: components["parameters"]["inQueryOffset"];
+        /**
+         * @description Include metadata in the response. Enabled by default. Use false or 0 to omit
+         *     the meta field. The metadata of a list carries its total number of rows
+         *     without pagination (total), as well as the rows returned (count), the offset
+         *     and the limit.
+         */
+        meta?: components["parameters"]["inQueryMeta"];
+        /**
+         * @description With "1" or "true", the response counts the distinct values of each
+         *     selected property instead of listing the rows: `data` maps each property
+         *     to an object of value → number of rows ("empty" for a null or blank
+         *     value), over the whole selection (access control, filters and session
+         *     filterset applied, `offset` ignored). `limit`, when given, caps the
+         *     number of values returned per property, the most frequent first; without
+         *     it every value is returned. `meta.total` is the number of rows,
+         *     `meta.distinct` the number of distinct values of each property, and
+         *     `meta.other` the number of rows whose value was left out by the limit.
+         *     A count taking longer than 5 seconds is refused with a 400, asking to
+         *     narrow the selection.
+         */
+        stats?: components["parameters"]["inQueryStats"];
+        /** @description Comma-separated list of properties to sort by. Prefix a property with - for descending order (e.g. orderby=nodename,-app). */
+        orderby?: components["parameters"]["inQueryOrderby"];
+        /** @description Comma-separated list of properties to group the result by (e.g. groupby=app,svcname). */
+        groupby?: components["parameters"]["inQueryGroupby"];
+        /**
+         * @description Column filter, repeatable; several filters combine with AND. Each value is
+         *     `prop:expr`, `prop` being a property of the list (joined ones included, as
+         *     for orderby) and `expr` one of:
+         *       - text: case-insensitive match anywhere in the value;
+         *       - `~regex`: regular expression (RE2 syntax), case-insensitive;
+         *       - `in:a,b,c`: one of the listed values;
+         *       - `eq:v`, `ne:v`: equal, not equal;
+         *       - `gt:v`, `gte:v`, `lt:v`, `lte:v`: comparisons, for numbers and dates;
+         *         a date may be relative to now, `-` then a duration in weeks, days,
+         *         hours, minutes and seconds: `lt:-15m` keeps the dates older than 15
+         *         minutes, `gte:-1d12h` those of the last day and a half;
+         *       - `empty`: no value;
+         *       - `!expr`: the inverse of any of the above, that is the rows `expr` leaves
+         *         out, those without a value included: `!dev`, `!~^dev`, `!in:a,b`,
+         *         `!empty` (any value).
+         *     An unknown property, a property without a column, or an invalid regular
+         *     expression is answered with 400.
+         */
+        filter?: components["parameters"]["inQueryFilter"];
+      };
+      header?: never;
+      path: {
+        /** @description Report id, or name */
+        report_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["GroupListResponse"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  PostReportPublication: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Report id, or name */
+        report_id: string;
+        /** @description Group id, or role when adding */
+        group_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["InfoResponse"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  DeleteReportPublication: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Report id, or name */
+        report_id: string;
+        /** @description Group id, or role when adding */
+        group_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["InfoResponse"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  GetReportResponsibles: {
+    parameters: {
+      query?: {
+        /** @description A list of properties to include in each data dictionnary. */
+        props?: components["parameters"]["inQueryProps"];
+        /** @description The maximum number of entries to return. 0 means no limit. */
+        limit?: components["parameters"]["inQueryLimit"];
+        /** @description Skip the first entries of the data cursor. */
+        offset?: components["parameters"]["inQueryOffset"];
+        /**
+         * @description Include metadata in the response. Enabled by default. Use false or 0 to omit
+         *     the meta field. The metadata of a list carries its total number of rows
+         *     without pagination (total), as well as the rows returned (count), the offset
+         *     and the limit.
+         */
+        meta?: components["parameters"]["inQueryMeta"];
+        /**
+         * @description With "1" or "true", the response counts the distinct values of each
+         *     selected property instead of listing the rows: `data` maps each property
+         *     to an object of value → number of rows ("empty" for a null or blank
+         *     value), over the whole selection (access control, filters and session
+         *     filterset applied, `offset` ignored). `limit`, when given, caps the
+         *     number of values returned per property, the most frequent first; without
+         *     it every value is returned. `meta.total` is the number of rows,
+         *     `meta.distinct` the number of distinct values of each property, and
+         *     `meta.other` the number of rows whose value was left out by the limit.
+         *     A count taking longer than 5 seconds is refused with a 400, asking to
+         *     narrow the selection.
+         */
+        stats?: components["parameters"]["inQueryStats"];
+        /** @description Comma-separated list of properties to sort by. Prefix a property with - for descending order (e.g. orderby=nodename,-app). */
+        orderby?: components["parameters"]["inQueryOrderby"];
+        /** @description Comma-separated list of properties to group the result by (e.g. groupby=app,svcname). */
+        groupby?: components["parameters"]["inQueryGroupby"];
+        /**
+         * @description Column filter, repeatable; several filters combine with AND. Each value is
+         *     `prop:expr`, `prop` being a property of the list (joined ones included, as
+         *     for orderby) and `expr` one of:
+         *       - text: case-insensitive match anywhere in the value;
+         *       - `~regex`: regular expression (RE2 syntax), case-insensitive;
+         *       - `in:a,b,c`: one of the listed values;
+         *       - `eq:v`, `ne:v`: equal, not equal;
+         *       - `gt:v`, `gte:v`, `lt:v`, `lte:v`: comparisons, for numbers and dates;
+         *         a date may be relative to now, `-` then a duration in weeks, days,
+         *         hours, minutes and seconds: `lt:-15m` keeps the dates older than 15
+         *         minutes, `gte:-1d12h` those of the last day and a half;
+         *       - `empty`: no value;
+         *       - `!expr`: the inverse of any of the above, that is the rows `expr` leaves
+         *         out, those without a value included: `!dev`, `!~^dev`, `!in:a,b`,
+         *         `!empty` (any value).
+         *     An unknown property, a property without a column, or an invalid regular
+         *     expression is answered with 400.
+         */
+        filter?: components["parameters"]["inQueryFilter"];
+      };
+      header?: never;
+      path: {
+        /** @description Report id, or name */
+        report_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["GroupListResponse"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  PostReportResponsible: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Report id, or name */
+        report_id: string;
+        /** @description Group id, or role when adding */
+        group_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["InfoResponse"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  DeleteReportResponsible: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Report id, or name */
+        report_id: string;
+        /** @description Group id, or role when adding */
+        group_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["InfoResponse"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  GetReportRevisions: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Report id, or name */
+        report_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["FormRevisionListResponse"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      500: components["responses"]["500"];
+    };
+  };
+  GetReportRevision: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Report id, or name */
+        report_id: string;
+        /** @description Git commit id of a revision */
+        cid: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["FormRevisionResponse"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      500: components["responses"]["500"];
+    };
+  };
+  PostReportRollback: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Report id, or name */
+        report_id: string;
+        /** @description Git commit id of a revision */
+        cid: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["InfoResponse"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  PostReportsPublications: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json":
+          | {
+              [key: string]: unknown;
+            }
+          | {
+              [key: string]: unknown;
+            }[];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": Record<string, never>;
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  DeleteReportsPublications: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json":
+          | {
+              [key: string]: unknown;
+            }
+          | {
+              [key: string]: unknown;
+            }[];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": Record<string, never>;
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  PostReportsResponsibles: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json":
+          | {
+              [key: string]: unknown;
+            }
+          | {
+              [key: string]: unknown;
+            }[];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": Record<string, never>;
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  DeleteReportsResponsibles: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json":
+          | {
+              [key: string]: unknown;
+            }
+          | {
+              [key: string]: unknown;
+            }[];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": Record<string, never>;
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
       500: components["responses"]["500"];
     };
   };
@@ -28491,6 +33105,29 @@ export interface operations {
         };
       };
       400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      500: components["responses"]["500"];
+    };
+  };
+  GetSafeSecrets: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["SafeSecretsResponse"];
+        };
+      };
       401: components["responses"]["401"];
       403: components["responses"]["403"];
       500: components["responses"]["500"];
@@ -32837,6 +37474,56 @@ export interface operations {
       500: components["responses"]["500"];
     };
   };
+  GetUserSelfNotifications: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["UserNotifications"];
+        };
+      };
+      401: components["responses"]["401"];
+      500: components["responses"]["500"];
+    };
+  };
+  PutUserSelfNotifications: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["UserNotificationsInput"];
+      };
+    };
+    responses: {
+      /** @description The settings saved. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["UserNotifications"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      500: components["responses"]["500"];
+    };
+  };
   PostUserSelfPassword: {
     parameters: {
       query?: never;
@@ -32928,44 +37615,6 @@ export interface operations {
         };
       };
       404: components["responses"]["404"];
-      500: components["responses"]["500"];
-    };
-  };
-  PostUserPassword: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description User identifier: auth_user.id, or the user email when it contains an "@". */
-        user_id: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        "application/json": {
-          /** @description At least 12 characters. */
-          new_password: string;
-        };
-      };
-    };
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": {
-            info?: string;
-          };
-        };
-      };
-      400: components["responses"]["400"];
-      401: components["responses"]["401"];
-      403: components["responses"]["403"];
-      404: components["responses"]["404"];
-      409: components["responses"]["409"];
       500: components["responses"]["500"];
     };
   };
@@ -33309,6 +37958,44 @@ export interface operations {
         };
       };
       401: components["responses"]["401"];
+      500: components["responses"]["500"];
+    };
+  };
+  PostUserPassword: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description User identifier: auth_user.id, or the user email when it contains an "@". */
+        user_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": {
+          /** @description At least 12 characters. */
+          new_password: string;
+        };
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": {
+            info?: string;
+          };
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      409: components["responses"]["409"];
       500: components["responses"]["500"];
     };
   };

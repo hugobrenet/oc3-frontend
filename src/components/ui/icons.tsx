@@ -248,6 +248,15 @@ export function ColumnsIcon(props: IconProps) {
   );
 }
 
+/** Handle of what can be dragged to another place: two columns of dots. */
+export function GripIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M9 4.5a1.8 1.8 0 1 1 0 3.6 1.8 1.8 0 0 1 0-3.6Zm6 0a1.8 1.8 0 1 1 0 3.6 1.8 1.8 0 0 1 0-3.6ZM9 10.2a1.8 1.8 0 1 1 0 3.6 1.8 1.8 0 0 1 0-3.6Zm6 0a1.8 1.8 0 1 1 0 3.6 1.8 1.8 0 0 1 0-3.6ZM9 15.9a1.8 1.8 0 1 1 0 3.6 1.8 1.8 0 0 1 0-3.6Zm6 0a1.8 1.8 0 1 1 0 3.6 1.8 1.8 0 0 1 0-3.6Z" />
+    </Svg>
+  );
+}
+
 /** Filter field. */
 export function SearchIcon(props: IconProps) {
   return (

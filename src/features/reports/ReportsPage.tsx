@@ -22,6 +22,8 @@ import { STATS_LIMIT, toValueStats, type ValueStats } from "@/lib/api/value-stat
 import { useViewPrefs, withSavedSearch } from "@/lib/user-prefs";
 import { ReportCreatePanel } from "./ReportCreatePanel";
 import { ReportDetailPanel } from "./ReportDetailPanel";
+import { ReportImportPanel } from "./ReportImportPanel";
+import { useReport } from "./use-report";
 
 type ReportRow = components["schemas"]["ReportRow"];
 
@@ -126,7 +128,8 @@ function useReports(search: ResolvedListSearch) {
  * collector's administration (`adm-reports`). A Manager sees them all, the others
  * those published to one of their teams. Creating one requires the ReportsManager
  * privilege; the interface does not know the caller's privileges and shows the
- * server's refusal. A report is not edited here yet: its detail is read-only.
+ * server's refusal. Its detail edits, exports and deletes a report; reports
+ * exported from a collector are imported here.
  */
 export function ReportsPage() {
   const { t } = useTranslation();
@@ -137,7 +140,11 @@ export function ReportsPage() {
   );
   const navigate = useNavigate({ from: "/reports" });
   const { data, isPending, isError, error, isFetching } = useReports(search);
-  const [creating, setCreating] = useState(false);
+  // A single form: creation when nothing is selected, editing of the selected report.
+  const [form, setForm] = useState<"create" | "edit" | null>(null);
+  const creating = form === "create";
+  const edited = useReport(form === "edit" ? search.sel : undefined);
+  const [importing, setImporting] = useState(false);
 
   /** Ids of the whole selection, filters included, without pagination. */
   async function allIds(): Promise<string[]> {
@@ -152,7 +159,7 @@ export function ReportsPage() {
   function update(next: Partial<ResolvedListSearch>) {
     // Choosing a row ends a creation in progress: the row's detail takes the right
     // edge, where the two drawers would otherwise overlap.
-    if (next.sel !== undefined) setCreating(false);
+    if (next.sel !== undefined) setForm(null);
     // Columns, sort, filters and page size follow the account, the other states
     // stay in the URL.
     prefs.saveSearch(next);
@@ -176,11 +183,23 @@ export function ReportsPage() {
           onClick={() => {
             // The drawers share the right edge: opening the creation closes the detail.
             update({ sel: undefined });
-            setCreating(true);
+            setImporting(false);
+            setForm("create");
           }}
           className="h-7 rounded-(--radius-control) bg-accent px-3 font-medium text-accent-ink"
         >
           {t("reports.form.open")}
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            update({ sel: undefined });
+            setForm(null);
+            setImporting(true);
+          }}
+          className="h-7 rounded-(--radius-control) border border-line px-3 text-ink hover:bg-surface-sunken"
+        >
+          {t("reportAdmin.import.open")}
         </button>
       </div>
       <p className="mb-3 max-w-3xl text-ink-muted">{t("reports.intro")}</p>
@@ -205,10 +224,13 @@ export function ReportsPage() {
       />
 
       <ReportDetailPanel
-        reportId={creating ? undefined : search.sel}
+        reportId={form !== null || importing ? undefined : search.sel}
         label={selected?.report_name ?? ""}
         onClose={() => {
           update({ sel: undefined, tab: undefined });
+        }}
+        onEdit={() => {
+          setForm("edit");
         }}
         tab={search.tab}
         onTabChange={(tab) => {
@@ -217,13 +239,21 @@ export function ReportsPage() {
       />
 
       <ReportCreatePanel
-        open={creating}
+        open={creating || (form === "edit" && edited.data !== undefined)}
+        report={form === "edit" ? edited.data : undefined}
         onClose={() => {
-          setCreating(false);
+          setForm(null);
         }}
         onCreated={(id) => {
-          // The new report opens in the detail.
+          // The new or edited report opens in the detail.
           if (id !== undefined) update({ sel: String(id) });
+        }}
+      />
+
+      <ReportImportPanel
+        open={importing}
+        onClose={() => {
+          setImporting(false);
         }}
       />
     </section>

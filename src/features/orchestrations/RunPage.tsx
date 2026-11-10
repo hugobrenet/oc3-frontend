@@ -2,6 +2,7 @@ import { Link, useParams } from "@tanstack/react-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { OutputLines } from "@/components/opensvc/LogLines";
+import { AnsiText } from "@/components/ui/AnsiText";
 import { ObjectIcon } from "@/components/opensvc/ObjectIcon";
 import { ConfirmButton } from "@/components/ui/ConfirmButton";
 import { DateTime } from "@/components/ui/DateTime";
@@ -296,6 +297,10 @@ export function RunPage() {
                 <span className="text-ink-muted">
                   {plan?.name === "" || plan?.name === undefined ? "" : `${plan.action} · `}
                   {plan === undefined ? "" : t(`orchestrations.step.paces.${plan.pace}`)}
+                  {plan?.failure_threshold !== undefined &&
+                    ` · ${t(`orchestrations.run.threshold.${plan.failure_threshold.unit}`, {
+                      count: plan.failure_threshold.value,
+                    })}`}
                 </span>
                 {COUNT_ORDER.flatMap((status) => {
                   const n = step.counts[status] ?? 0;
@@ -420,7 +425,8 @@ function TargetTable({
               <td
                 className={`max-w-0 truncate px-3 py-1 ${failed ? "text-state-down" : "text-ink-muted"} font-mono`}
               >
-                {output}
+                {/* The agent colours its output: rendered as in the logs, not as escapes. */}
+                <AnsiText text={output} />
               </td>
             </tr>
           );

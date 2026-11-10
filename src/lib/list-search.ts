@@ -195,12 +195,12 @@ export function mergeSearch(previous: ListSearch, next: Partial<ResolvedListSear
 }
 
 /**
- * Visible columns, in the order the view declares them.
+ * Visible columns, in the order of the selection: the user may have moved them.
  *
  * Without a selection in the URL, these are the view's default columns and not all
  * of them: a view may offer dozens without imposing them. Props unknown to an old or
- * hand-made URL are ignored, and an empty selection falls back to the default
- * columns, a table without a column having nothing to show.
+ * hand-made URL are ignored, as are repeated ones, and an empty selection falls back
+ * to the default columns, a table without a column having nothing to show.
  */
 export function visibleProps(
   cols: string[] | undefined,
@@ -208,7 +208,8 @@ export function visibleProps(
   allProps: string[],
 ): string[] {
   if (cols === undefined) return defaultCols;
-  const kept = allProps.filter((prop) => cols.includes(prop));
+  const known = new Set(allProps);
+  const kept = [...new Set(cols)].filter((prop) => known.has(prop));
   return kept.length === 0 ? defaultCols : kept;
 }
 

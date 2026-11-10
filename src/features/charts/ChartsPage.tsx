@@ -22,6 +22,7 @@ import { STATS_LIMIT, toValueStats, type ValueStats } from "@/lib/api/value-stat
 import { useViewPrefs, withSavedSearch } from "@/lib/user-prefs";
 import { ChartCreatePanel } from "./ChartCreatePanel";
 import { ChartDetailPanel } from "./ChartDetailPanel";
+import { useChart } from "./use-chart";
 
 type ChartRow = components["schemas"]["ChartRow"];
 
@@ -138,7 +139,10 @@ export function ChartsPage() {
   );
   const navigate = useNavigate({ from: "/charts" });
   const { data, isPending, isError, error, isFetching } = useCharts(search);
-  const [creating, setCreating] = useState(false);
+  // A single form: creation when nothing is selected, editing of the selected chart.
+  const [form, setForm] = useState<"create" | "edit" | null>(null);
+  const creating = form === "create";
+  const edited = useChart(form === "edit" ? search.sel : undefined);
 
   /** Ids of the whole selection, filters included, without pagination. */
   async function allIds(): Promise<string[]> {
@@ -153,7 +157,7 @@ export function ChartsPage() {
   function update(next: Partial<ResolvedListSearch>) {
     // Choosing a row ends a creation in progress: the row's detail takes the right
     // edge, where the two drawers would otherwise overlap.
-    if (next.sel !== undefined) setCreating(false);
+    if (next.sel !== undefined) setForm(null);
     // Columns, sort, filters and page size follow the account, the other states
     // stay in the URL.
     prefs.saveSearch(next);
@@ -177,7 +181,7 @@ export function ChartsPage() {
           onClick={() => {
             // The drawers share the right edge: opening the creation closes the detail.
             update({ sel: undefined });
-            setCreating(true);
+            setForm("create");
           }}
           className="h-7 rounded-(--radius-control) bg-accent px-3 font-medium text-accent-ink"
         >
@@ -206,17 +210,25 @@ export function ChartsPage() {
       />
 
       <ChartDetailPanel
-        chartId={creating ? undefined : search.sel}
+        chartId={form !== null ? undefined : search.sel}
         label={selected?.chart_name ?? ""}
         onClose={() => {
-          update({ sel: undefined });
+          update({ sel: undefined, tab: undefined });
+        }}
+        onEdit={() => {
+          setForm("edit");
+        }}
+        tab={search.tab}
+        onTabChange={(tab) => {
+          update({ tab });
         }}
       />
 
       <ChartCreatePanel
-        open={creating}
+        open={creating || (form === "edit" && edited.data !== undefined)}
+        chart={form === "edit" ? edited.data : undefined}
         onClose={() => {
-          setCreating(false);
+          setForm(null);
         }}
         onCreated={(id) => {
           // The new chart opens in the detail.

@@ -74,7 +74,9 @@
     "formConnectors": "Form connectors",
     "compModules": "Modules",
     "quotas": "Disk quotas",
-    "saves": "Backups"
+    "arrays": "Storage arrays",
+    "saves": "Backups",
+    "notifications": "Notifications"
   },
   "shortcuts": {
     "title": "Keyboard shortcuts",
@@ -812,6 +814,8 @@
     },
     "filterColumns": "Filter columns",
     "resetColumns": "Reset to default columns",
+    "reorderHint": "Drag the ticked columns, here or by their header, to reorder them; Alt+Up/Down on the keyboard.",
+    "dragHeader": "Drag to move the column",
     "selected": "{{count}} selected",
     "clearSelection": "Clear",
     "selectAll": "Select every row on this page",
@@ -1923,6 +1927,22 @@
         "auto": "As the format",
         "h23": "24-hour",
         "h12": "12-hour"
+      }
+    },
+    "notifications": {
+      "hint": "The new alerts of the apps your groups are responsible for, mailed to you, one message a minute at most.",
+      "mailDisabled": "The collector sends no mail at the moment: these settings take effect once it does.",
+      "enabled": "Mail me the alerts ({{email}})",
+      "level": "From the level",
+      "delay": "After (min)",
+      "periods": "On the periods",
+      "saved": "Saved",
+      "levels": {
+        "debug": "all (debug)",
+        "info": "all (info)",
+        "warning": "warning",
+        "error": "error",
+        "critical": "critical"
       }
     }
   },
@@ -4237,6 +4257,26 @@
     },
     "delete": {
       "question": "Delete {{name}} from the safe? Its content goes too; the services and rulesets referencing it will no longer get it. Its previous versions stay. This cannot be undone."
+    },
+    "secrets": {
+      "title": "Secrets stored apart from the files",
+      "intro": "The secrets of the form connectors and of the notification channels are encrypted with the master key of the safe, but stored in their own rows, not as files of the safe: they are listed here, never their values, with the key they depend on. After a new master key is made active, oc3 safe rewrap wraps them with it, as it does the files; an older key can be removed from the keys file once nothing depends on it any more.",
+      "empty": "No secret stored apart from the files.",
+      "stale_one": "{{count}} secret still depends on an older master key: run oc3 safe rewrap before removing it.",
+      "stale_other": "{{count}} secrets still depend on an older master key: run oc3 safe rewrap before removing it.",
+      "fields": {
+        "kind": "Held by",
+        "name": "Name",
+        "key": "Master key",
+        "updated": "Updated"
+      },
+      "kinds": {
+        "form_connector": "Form connector",
+        "notification_channel": "Notification channel"
+      },
+      "keyActive": "active",
+      "keyOld": "older key",
+      "keyMissing": "key missing: the secrets do not open"
     }
   },
   "assistant": {
@@ -4641,7 +4681,14 @@
       },
       "batchUnit": "at a time",
       "timeout": "Time limit",
-      "timeoutHint": "minutes; 0 for none. A target still running then fails the step."
+      "timeoutHint": "minutes; 0 for none. A target still running then fails the step.",
+      "failureThreshold": "Failures",
+      "failureUnit": "Unit of the failure threshold",
+      "failureUnits": {
+        "count": "targets",
+        "percent": "%"
+      },
+      "failureThresholdHint": "the step goes on to the next one while fewer of its targets fail; 0: the first failure fails it."
     },
     "check": {
       "title": "Step {{n}} · targets now",
@@ -4724,7 +4771,13 @@
       "cancelQuestion": "Cancel this run for good?",
       "cancelRunningDetails": "It stops as with Stop, and can no longer be resumed nor continued: the actions still waiting in the queue are cancelled, those an agent already runs finish and their results are kept.",
       "cancelDetails": "It can no longer be resumed nor continued. To run the workflow again, start a new run.",
-      "cancelledAt": "Cancelled at step {{n}}:"
+      "cancelledAt": "Cancelled at step {{n}}:",
+      "threshold": {
+        "count_one": "fewer than {{count}} failure",
+        "count_other": "fewer than {{count}} failures",
+        "percent_one": "fewer than {{count}}% failures",
+        "percent_other": "fewer than {{count}}% failures"
+      }
     },
     "columns": {
       "name": "Name",
@@ -5143,6 +5196,298 @@
         "location": "Location",
         "owner": "Owner"
       }
+    }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "intro": "Where the alerts of the dashboard are sent, beside the mails each user sets in their profile: the channels (mail lists, Slack, Mattermost, Teams, generic webhooks) and the subscriptions of the groups to them. The collector sends them once a minute, one message per subscription detailing the most severe alerts.",
+    "save": "Save",
+    "saving": "Saving…",
+    "disabled": "disabled",
+    "none": "None",
+    "fields": {
+      "name": "Name",
+      "type": "Type",
+      "description": "Description",
+      "destination": "Destination",
+      "subscriptions": "Subscriptions",
+      "updated": "Updated",
+      "addresses": "Mail addresses",
+      "username": "Sender name",
+      "icon_url": "Sender picture URL",
+      "networks": "Private networks",
+      "channel": "Channel",
+      "group": "Group",
+      "scope": "Alerts",
+      "min_severity": "From severity",
+      "delay_min": "Delay (min)",
+      "filters": "Filters",
+      "types_include": "Only the types",
+      "types_exclude": "Except the types",
+      "envs": "Environments",
+      "filterset": "Filterset",
+      "recipient": "Recipient",
+      "alert": "Alert",
+      "state": "State"
+    },
+    "types": {
+      "email": "Mail",
+      "slack": "Slack",
+      "mattermost": "Mattermost",
+      "teams": "Teams",
+      "webhook": "Webhook"
+    },
+    "severities": {
+      "notice": "notice",
+      "warning": "warning",
+      "error": "error",
+      "critical": "critical",
+      "alert": "alert"
+    },
+    "scope": {
+      "responsible": "Those of the apps the group is responsible for",
+      "all": "All the alerts of the collector"
+    },
+    "scopeShort": {
+      "responsible": "its apps",
+      "all": "all"
+    },
+    "states": {
+      "pending": "sending",
+      "sent": "sent",
+      "failed": "failed"
+    },
+    "days": {
+      "mon": "Monday",
+      "tue": "Tuesday",
+      "wed": "Wednesday",
+      "thu": "Thursday",
+      "fri": "Friday",
+      "sat": "Saturday",
+      "sun": "Sunday"
+    },
+    "periods": {
+      "always": "Always",
+      "never": "Never",
+      "custom": "From… to…",
+      "begin": "Start on {{day}}",
+      "end": "End on {{day}}",
+      "hint": "Local time of the collector. A period ending before it starts spans midnight. Out of the periods, the alerts wait for the next one."
+    },
+    "filters": {
+      "include": "only {{types}}",
+      "exclude": "except {{types}}",
+      "envs": "envs {{envs}}",
+      "filterset": "filterset #{{id}}",
+      "periods": "periods",
+      "resolved": "resolutions"
+    },
+    "channels": {
+      "title": "Channels",
+      "new": "New channel",
+      "intro": "The destinations of the alerts. A webhook URL is a secret: it is stored encrypted with the master key of the safe, in the channel itself, not as a file of the safe (the Safe view lists it apart), and never shown again.",
+      "empty": "No channel yet.",
+      "urlSet": "URL set",
+      "signed": "signed",
+      "noUrl": "No URL",
+      "noSubscription": "No subscription: nothing is sent"
+    },
+    "subscriptions": {
+      "title": "Subscriptions",
+      "new": "New subscription",
+      "intro": "The alerts of a group sent to a channel. A group responsible for no app receives nothing, unless its subscription takes all the alerts.",
+      "empty": "No subscription yet."
+    },
+    "deliveries": {
+      "title": "Latest deliveries",
+      "intro": "What was sent where, kept as long as the alert is in the dashboard (two days more for the subscriptions announcing the resolutions). A failed delivery is tried again, up to four times. Columns, filters and sort as in the other lists.",
+      "gone": "resolved since",
+      "nextTry": "Next try"
+    },
+    "channel": {
+      "createTitle": "New channel",
+      "editTitle": "Channel {{name}}",
+      "nameHint": "1 to 64 letters, digits, \".\", \"_\" or \"-\".",
+      "enabled": "Enabled: the subscriptions send to it",
+      "destination": "Destination",
+      "addressesHint": "One per line. Every alert of the subscriptions goes to all of them.",
+      "usernameHint": "Shown as the sender, when the webhook lets the sender choose it.",
+      "networksHint": "One CIDR prefix per line, when the webhook host is on a private network (an internal Mattermost say); the public addresses are always allowed. Plain http is accepted only then.",
+      "secret": {
+        "url": "Webhook URL",
+        "secret": "Signing secret"
+      },
+      "secretHint": {
+        "slack": "Slack: an incoming webhook of the app of the workspace (https://hooks.slack.com/services/…).",
+        "mattermost": "Mattermost: Integrations > Incoming webhooks (https://…/hooks/…).",
+        "teams": "Teams: a Workflows flow \"When a Teams webhook request is received\", posting the Adaptive Card to the channel.",
+        "webhook": "Any https endpoint receiving the JSON document of the alerts (version 1).",
+        "email": "",
+        "secret": "Optional: the messages are then signed, X-OC3-Signature being sha256= and the HMAC-SHA256 of X-OC3-Timestamp, a dot and the body."
+      },
+      "testTitle": "Test",
+      "testIntro": "Sends a test message now, the channel enabled or not.",
+      "testRun": "Send a test message",
+      "testRunning": "Sending…",
+      "testOk": "accepted in {{ms}} ms",
+      "testFailed": "refused: {{message}}",
+      "delete": "Delete the channel",
+      "deleteQuestion": "Delete the channel {{name}} and its subscriptions?"
+    },
+    "subscription": {
+      "createTitle": "New subscription",
+      "editTitle": "Subscription",
+      "who": "Who",
+      "which": "Which alerts",
+      "when": "When",
+      "enabled": "Enabled",
+      "typesHint": "Alert types as the dashboard shows them, one per line; empty for all.",
+      "envsHint": "None checked: every environment.",
+      "filtersetHint": "Only the alerts of the nodes and services of the filterset. A filterset selecting nothing lets no alert through.",
+      "noFilterset": "No filterset",
+      "resolved": "Announce the alerts sent once they are resolved (gone from the dashboard)",
+      "delete": "Delete the subscription",
+      "deleteQuestion": "Stop sending the alerts of {{group}} to {{channel}}?"
+    },
+    "deliveryFields": {
+      "updated": "Updated",
+      "state": "State",
+      "attempts": "Tries",
+      "recipient_kind": "Recipient type",
+      "recipient_label": "Recipient",
+      "channel_name": "Channel",
+      "group_role": "Group",
+      "alert_severity": "Severity",
+      "alert_object": "Object",
+      "alert_type": "Alert type",
+      "alert_message": "Message",
+      "alert_present": "In the dashboard",
+      "last_error": "Error",
+      "next_try": "Next try",
+      "created": "Created",
+      "alert_id": "Alert id",
+      "recipient": "Recipient key",
+      "id": "Id"
+    },
+    "recipientKinds": {
+      "subscription": "subscription",
+      "user": "personal mail"
+    },
+    "present": {
+      "yes": "yes",
+      "no": "no"
+    }
+  },
+  "reportAdmin": {
+    "edit": "Edit",
+    "export": "Export",
+    "exporting": "Exporting…",
+    "exportHint": "Download the report with the charts and the metrics it shows, to import it into another collector",
+    "editTitle": {
+      "report": "Edit the report",
+      "chart": "Edit the chart"
+    },
+    "tabs": {
+      "chart": "Chart tabs",
+      "metric": "Metric tabs"
+    },
+    "deleteQuestion": {
+      "report": "Delete the report {{name}}, with its publications and responsibles?",
+      "chart": "Delete the chart {{name}}, with its publications and responsibles? The reports showing it lose it.",
+      "metric": "Delete the metric {{name}}, with its publications and its historized values? The charts and reports showing it lose it."
+    },
+    "teamsReadOnly": {
+      "report": "Only a ReportsManager responsible for the report changes its teams.",
+      "chart": "Only a ReportsManager responsible for the chart changes its teams.",
+      "metric": "Only a Manager changes the teams of a metric."
+    },
+    "revisions": {
+      "tab": "Revisions",
+      "description": "Changes of its definition",
+      "empty": "No revision recorded yet: the history starts at the next change.",
+      "current": "current version",
+      "change": "Show the change",
+      "compare": "Compare with the current version",
+      "restore": "Restore this version",
+      "restoreQuestion": "Restore the definition as it was in {{version}}? A new revision: the history keeps every one.",
+      "restoreConfirm": "Restore",
+      "restoring": "Restoring…",
+      "same": "No change to the definition.",
+      "since": "Changes from {{version}} to the current version:"
+    },
+    "import": {
+      "open": "Import",
+      "title": "Import reports",
+      "intro": "A report exported from a collector, with its charts and metrics. Those of a name already used are kept as they are; the others are created, published to your primary team, which is made responsible for them. Creating a metric requires the Manager privilege.",
+      "file": "Export file",
+      "text": "Or its content",
+      "invalid": "Not valid JSON: {{message}}",
+      "run": "Import",
+      "running": "Importing…"
+    }
+  },
+  "arrays": {
+    "title": "Storage arrays",
+    "intro": "The storage arrays the agents inventory, as the nodes inventorying them, their proxies, report them. An array shows its disk groups, its luns and the nodes and services using them, and its target ports. A StorageManager writes its comment and sets its proxies; the quotas of the disk groups have their own view.",
+    "fields": {
+      "array_name": "Name",
+      "array_model": "Model",
+      "array_firmware": "Firmware",
+      "array_cache": "Cache (MB)",
+      "array_level": "Level",
+      "array_comment": "Comment",
+      "array_updated": "Updated",
+      "id": "Record id"
+    },
+    "detail": {
+      "title": "Storage array",
+      "tabs": "Storage array tabs",
+      "editHint": "As a StorageManager, you change the comment in place.",
+      "groups": {
+        "identity": "Array",
+        "record": "Record"
+      }
+    },
+    "tabs": {
+      "diskgroups": "Disk groups",
+      "disks": "Disks",
+      "targets": "Target ports"
+    },
+    "proxies": {
+      "title": "Proxies",
+      "intro": "The nodes whose agent inventories the array: a node pushing the array becomes one by itself.",
+      "none": "No node inventories this array.",
+      "add": "Set a node as proxy",
+      "noMatch": "No node matches.",
+      "remove": "Unset {{node}} as proxy",
+      "added": "{{node}} set as proxy.",
+      "removed": "{{node}} unset as proxy."
+    },
+    "dg": {
+      "intro": "Sizes in MB. The reserved space is the sum of the quotas of the disk group.",
+      "empty": "No disk group reported.",
+      "dg_name": "Disk group",
+      "dg_size": "Size",
+      "dg_used": "Used",
+      "dg_free": "Free",
+      "dg_reserved": "Reserved",
+      "dg_updated": "Updated"
+    },
+    "targets": {
+      "empty": "No target port reported.",
+      "array_tgtid": "Port WWN",
+      "updated": "Updated"
+    },
+    "disks": {
+      "search": "Search the disks",
+      "empty": "No disk.",
+      "disk_id": "Disk id",
+      "disk_devid": "Device id",
+      "disk_name": "Name",
+      "disk_size": "Size (MB)",
+      "disk_group": "Disk group",
+      "node": "Node",
+      "service": "Service"
     }
   }
 }

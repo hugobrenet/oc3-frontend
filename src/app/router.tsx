@@ -15,6 +15,7 @@ import { CheckContextualPage } from "@/features/checks/CheckContextualPage";
 import { PackagesPage } from "@/features/packages/PackagesPage";
 import { HardwarePage } from "@/features/hardware/HardwarePage";
 import { SwitchesPage } from "@/features/switches/SwitchesPage";
+import { ArraysPage } from "@/features/arrays/ArraysPage";
 import { MetricsPage } from "@/features/metrics/MetricsPage";
 import { ReportsPage } from "@/features/reports/ReportsPage";
 import { ReportReaderPage } from "@/features/report-reader/ReportReaderPage";
@@ -30,6 +31,7 @@ import { ServiceActionsPage } from "@/features/service-actions/ServiceActionsPag
 import { FiltersPage } from "@/features/filters/FiltersPage";
 import { ClaimMappingsPage } from "@/features/claim-mappings/ClaimMappingsPage";
 import { FormConnectorsPage } from "@/features/form-connectors/FormConnectorsPage";
+import { NotificationsPage } from "@/features/notifications/NotificationsPage";
 import { FieldConstraintsPage } from "@/features/field-constraints/FieldConstraintsPage";
 import { FiltersetsPage } from "@/features/filtersets/FiltersetsPage";
 import { FormsPage } from "@/features/forms/FormsPage";
@@ -218,6 +220,13 @@ const clustersRoute = createRoute({
   validateSearch: parseListSearch,
 });
 
+const arraysRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/arrays",
+  component: ArraysPage,
+  validateSearch: parseListSearch,
+});
+
 const switchesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/san-switches",
@@ -309,6 +318,14 @@ const formConnectorsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/form-connectors",
   component: FormConnectorsPage,
+  validateSearch: parseListSearch,
+});
+
+// The channels and subscriptions of the alert notifications: AlertsManager, as the api.
+const notificationsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/notifications",
+  component: NotificationsPage,
   validateSearch: parseListSearch,
 });
 
@@ -486,6 +503,7 @@ const routeTree = rootRoute.addChildren([
   checksRoute,
   checkDefaultsRoute,
   checkContextualRoute,
+  arraysRoute,
   switchesRoute,
   metricsRoute,
   reportsRoute,
@@ -503,6 +521,7 @@ const routeTree = rootRoute.addChildren([
   filtersRoute,
   claimMappingsRoute,
   formConnectorsRoute,
+  notificationsRoute,
   fieldConstraintsRoute,
   filtersetsRoute,
   formsRoute,

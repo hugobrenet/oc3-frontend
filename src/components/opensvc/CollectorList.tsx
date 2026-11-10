@@ -17,6 +17,7 @@ import {
   ColumnsIcon,
   DownloadIcon,
   FilterIcon,
+  GripIcon,
   ResetIcon,
   SearchIcon,
   SlidersIcon,
@@ -43,6 +44,7 @@ import { readProp } from "@/lib/row";
 import { labelMatches, normalizeSearch } from "@/lib/label-search";
 import { FlashCell, FlashScope } from "./Flash";
 import { useFitColumns, useFitColumnsEnabled } from "@/components/ui/use-fit-columns";
+import { movedColumns, useColumnDrag, type ColumnDropTarget } from "./use-column-drag";
 
 export interface ListColumn<T> {
   /** Name of the apicollector prop: used for sorting and for picking the requested columns. */
@@ -381,6 +383,12 @@ export function CollectorList<T>({
     () => Object.fromEntries(allProps.map((prop) => [prop, shown.includes(prop)])),
     [allProps, shown],
   );
+  // The visible columns in their order, then the hidden ones in the order of the
+  // view: the headers, the cells and the picker follow it.
+  const columnOrder = useMemo(
+    () => [...shown, ...allProps.filter((prop) => !shown.includes(prop))],
+    [allProps, shown],
+  );
   const pagination = useMemo<PaginationState>(
     () => ({ pageIndex: Math.floor(search.offset / search.limit), pageSize: search.limit }),
     [search.offset, search.limit],
@@ -556,7 +564,11 @@ export function CollectorList<T>({
 
   const onColumnVisibilityChange: OnChangeFn<VisibilityState> = (updater) => {
     const next = resolveUpdater(updater, columnVisibility);
-    const kept = allProps.filter((prop) => next[prop] !== false);
+    // The columns kept stay where the user put them, a column ticked comes last.
+    const kept = [
+      ...shown.filter((prop) => next[prop] !== false),
+      ...allProps.filter((prop) => !shown.includes(prop) && next[prop] === true),
+    ];
     if (kept.length === 0) return; // the last visible column cannot be unticked
     // Hiding a column also removes its sort key: the header is the only indication of
     // the sort, and an invisible key would have no way left of being cancelled.
@@ -570,6 +582,42 @@ export function CollectorList<T>({
       offset: 0,
     });
   };
+
+  // The element that had the focus when a column moved from the keyboard: the move
+  // may take it out of the document an instant, it gets the focus back.
+  const refocus = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    const element = refocus.current;
+    refocus.current = null;
+    if (element !== null && element.isConnected && document.activeElement !== element) {
+      element.focus();
+    }
+  }, [shownKey]);
+
+  /** Moves a visible column, the others keeping their order. */
+  function moveColumn(prop: string, to: ColumnDropTarget | { step: number }) {
+    const cols = movedColumns(shown, prop, to);
+    if (cols === undefined) return;
+    // The rows stay the same: no offset change, no scroll.
+    onChange({ cols });
+  }
+  const columnDrag = useColumnDrag(moveColumn);
+
+  /** The look of a column being dragged, or of the one it would land beside. */
+  function dragLook(prop: string, axis: "x" | "y"): string {
+    const drag = columnDrag.drag;
+    if (drag === null) return "";
+    if (drag.prop === prop) return "opacity-50 cursor-grabbing";
+    if (drag.target?.prop !== prop) return "";
+    if (axis === "x") {
+      return drag.target.after
+        ? "shadow-[inset_-2px_0_0_0_var(--color-accent)]"
+        : "shadow-[inset_2px_0_0_0_var(--color-accent)]";
+    }
+    return drag.target.after
+      ? "shadow-[inset_0_-2px_0_0_var(--color-accent)]"
+      : "shadow-[inset_0_2px_0_0_var(--color-accent)]";
+  }
 
   // The page, sort, filters, filterset and columns on display, for the flashes.
   const viewSubject = JSON.stringify([
@@ -590,7 +638,7 @@ export function CollectorList<T>({
   const table = useReactTable({
     data: rows,
     columns: columnDefs,
-    state: { sorting, columnVisibility, pagination, rowSelection },
+    state: { sorting, columnVisibility, columnOrder, pagination, rowSelection },
     getRowId: (row, index) => rowId(row) ?? String(index),
     getCoreRowModel: getCoreRowModel(),
     // The server sorts and paginates; the table only reflects the state.
@@ -703,15 +751,34 @@ export function CollectorList<T>({
               {pickerColumns.map((column) => {
                 const meta = getMeta(column.columnDef).column;
                 const checked = column.getIsVisible();
+                // A visible column moves by dragging, or by Alt+Up/Down on its box.
                 return (
-                  <li key={column.id}>
-                    <label className="flex items-center gap-2 py-0.5">
+                  <li
+                    key={column.id}
+                    {...(checked ? columnDrag.handlers(meta.prop, "y") : {})}
+                    className={`flex items-center gap-1 rounded-(--radius-control) select-none ${checked ? dragLook(meta.prop, "y") : ""}`}
+                  >
+                    <span
+                      aria-hidden="true"
+                      className={`w-3 shrink-0 ${checked ? "cursor-grab text-ink-muted" : "invisible"}`}
+                    >
+                      <GripIcon className="h-3 w-3" />
+                    </span>
+                    <label className="flex min-w-0 grow items-center gap-2 py-0.5">
                       <input
                         type="checkbox"
                         checked={checked}
                         // The last visible column cannot be unticked.
                         disabled={checked && shown.length === 1}
                         onChange={column.getToggleVisibilityHandler()}
+                        aria-keyshortcuts={checked ? "Alt+ArrowUp Alt+ArrowDown" : undefined}
+                        onKeyDown={(event) => {
+                          if (!checked || !event.altKey) return;
+                          if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return;
+                          event.preventDefault();
+                          refocus.current = event.currentTarget;
+                          moveColumn(meta.prop, { step: event.key === "ArrowUp" ? -1 : 1 });
+                        }}
                       />
                       <ColumnFamilyIcon family={meta.family} />
                       {t(meta.labelKey)}
@@ -729,6 +796,7 @@ export function CollectorList<T>({
                 );
               })}
             </ul>
+            <p className="mt-2 text-ink-muted">{t("list.reorderHint")}</p>
             <button
               type="button"
               onClick={() => {
@@ -1169,7 +1237,9 @@ export function CollectorList<T>({
                             <th
                               key={header.id}
                               scope="col"
-                              className={`px-2 py-1.5 font-medium ${meta.numeric === true ? "text-right" : ""}`}
+                              {...columnDrag.handlers(meta.prop, "x")}
+                              title={t("list.dragHeader")}
+                              className={`px-2 py-1.5 font-medium select-none ${meta.numeric === true ? "text-right" : ""} ${dragLook(meta.prop, "x")}`}
                             >
                               <span
                                 className={`flex items-center gap-1 ${meta.numeric === true ? "justify-end" : ""}`}
@@ -1191,7 +1261,9 @@ export function CollectorList<T>({
                                   ? "ascending"
                                   : "descending"
                             }
-                            className={meta.numeric === true ? "text-right" : undefined}
+                            {...columnDrag.handlers(meta.prop, "x")}
+                            title={t("list.dragHeader")}
+                            className={`select-none ${meta.numeric === true ? "text-right" : ""} ${dragLook(meta.prop, "x")}`}
                           >
                             <span
                               className={`flex items-center gap-0.5 pr-1 ${meta.numeric === true ? "justify-end" : ""}`}

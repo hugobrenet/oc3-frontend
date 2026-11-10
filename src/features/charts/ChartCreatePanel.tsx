@@ -1,10 +1,13 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
+import type { components } from "@/lib/api/schema";
 import { api } from "@/lib/api/client";
 import { problemText } from "@/lib/api/problem";
 import { SlideOver } from "@/components/ui/SlideOver";
 import { ObjectIcon } from "@/components/opensvc/ObjectIcon";
+
+type ChartRow = components["schemas"]["ChartRow"];
 
 const INPUT = "h-8 w-full rounded-(--radius-control) border border-line bg-surface px-2";
 
@@ -15,13 +18,19 @@ const INPUT = "h-8 w-full rounded-(--radius-control) border border-line bg-surfa
  * at once. The server checks that the name is free and that the definition is valid
  * YAML; its refusals are shown as they are, a missing ReportsManager privilege
  * included.
+ *
+ * Given a chart, the same form edits its name and its definition, for whoever is
+ * responsible for it: the new definition is recorded in its history.
  */
 export function ChartCreatePanel({
   open,
+  chart,
   onClose,
   onCreated,
 }: {
   open: boolean;
+  /** Chart to edit; absent, the form creates one. */
+  chart?: ChartRow | null;
   onClose: () => void;
   onCreated?: (id: number | undefined) => void;
 }) {
@@ -30,23 +39,31 @@ export function ChartCreatePanel({
   const [name, setName] = useState("");
   const [definition, setDefinition] = useState("");
 
-  // Every opening starts from an empty form.
+  const editing = chart !== undefined && chart !== null;
+
+  // Every opening starts again from the chart to edit, or from an empty form.
   useEffect(() => {
     if (!open) return;
-    setName("");
-    setDefinition("");
-  }, [open]);
+    setName(chart?.chart_name ?? "");
+    setDefinition(chart?.chart_yaml ?? "");
+  }, [open, chart]);
 
   const create = useMutation({
     mutationFn: async () => {
-      const { data, error } = await api.POST("/charts", {
-        body: { chart_name: name.trim(), chart_yaml: definition },
-      });
+      const body = { chart_name: name.trim(), chart_yaml: definition };
+      const { data, error } =
+        editing && chart.id !== undefined
+          ? await api.POST("/charts/{chart_id}", {
+              params: { path: { chart_id: String(chart.id) } },
+              body,
+            })
+          : await api.POST("/charts", { body });
       if (error !== undefined) throw new Error(problemText(error));
       return Array.isArray(data.data) ? data.data[0]?.id : undefined;
     },
     onSuccess: async (id) => {
       await queryClient.invalidateQueries({ queryKey: ["charts"] });
+      if (editing) await queryClient.invalidateQueries({ queryKey: ["chart", String(chart.id)] });
       onCreated?.(id);
       onClose();
     },
@@ -61,13 +78,13 @@ export function ChartCreatePanel({
     <SlideOver
       open={open}
       size="wide"
-      title={t("charts.form.title")}
+      title={editing ? t("reportAdmin.editTitle.chart") : t("charts.form.title")}
       onClose={onClose}
       closeLabel={t("detail.close")}
       resizeLabel={t("detail.resize")}
       leading={<ObjectIcon kind="chart" />}
     >
-      <p className="mb-3 text-ink-muted">{t("charts.form.intro")}</p>
+      {!editing && <p className="mb-3 text-ink-muted">{t("charts.form.intro")}</p>}
 
       <form onSubmit={onSubmit}>
         <div className="mb-3">
