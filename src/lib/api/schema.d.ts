@@ -291,6 +291,122 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/ai/resources": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description List the resources of the AI assistant the caller may read, their metadata only,
+     *     never their body, sorted by name. An AIManager or a Manager reads them all;
+     *     the others, those published to none of the groups, or to one of theirs.
+     *     The publications of each are given to an AIManager or a Manager only.
+     *     The answer carries an ETag: a request with If-None-Match set to it gets a 304
+     *     while the list it would read is the same. It serves an administration
+     *     interface polling the list; the MCP servers read the list at each request
+     *     and keep nothing.
+     */
+    get: operations["GetAIResources"];
+    put?: never;
+    /**
+     * @description Create a resource of the AI assistant. Its name must be unique among the resources.
+     *     Requires the AIManager or Manager privilege. The model reads what an AIManager
+     *     writes as instructions, for every user it is published to.
+     */
+    post: operations["PostAIResources"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/ai/resources/{name}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description Display a resource of the AI assistant with its body, if the caller may read it
+     *     (see GET /ai/resources): a resource that does not exist, is not for the backend
+     *     asked, or is not published to the caller answers the same 404.
+     */
+    get: operations["GetAIResource"];
+    /**
+     * @description Replace the writable fields of a resource of the AI assistant; its name stays.
+     *     Requires the AIManager or Manager privilege. The model reads what an AIManager
+     *     writes as instructions, for every user it is published to.
+     */
+    put: operations["PutAIResource"];
+    post?: never;
+    /** @description Delete a resource of the AI assistant. Requires the AIManager or Manager privilege. */
+    delete: operations["DeleteAIResource"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/ai/skills": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description List the skills of the AI assistant the caller may read, their metadata only,
+     *     never their body, sorted by name. An AIManager or a Manager reads them all;
+     *     the others, those published to none of the groups, or to one of theirs.
+     *     The publications of each are given to an AIManager or a Manager only.
+     *     The answer carries an ETag: a request with If-None-Match set to it gets a 304
+     *     while the list it would read is the same. It serves an administration
+     *     interface polling the list; the MCP servers read the list at each request
+     *     and keep nothing.
+     */
+    get: operations["GetAISkills"];
+    put?: never;
+    /**
+     * @description Create a skill of the AI assistant. Its name must be unique among the skills.
+     *     Requires the AIManager or Manager privilege. The model reads what an AIManager
+     *     writes as instructions, for every user it is published to.
+     */
+    post: operations["PostAISkills"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/ai/skills/{name}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description Display a skill of the AI assistant with its body, if the caller may read it
+     *     (see GET /ai/skills): a skill that does not exist, is not for the backend
+     *     asked, or is not published to the caller answers the same 404.
+     */
+    get: operations["GetAISkill"];
+    /**
+     * @description Replace the writable fields of a skill of the AI assistant; its name stays.
+     *     Requires the AIManager or Manager privilege. The model reads what an AIManager
+     *     writes as instructions, for every user it is published to.
+     */
+    put: operations["PutAISkill"];
+    post?: never;
+    /** @description Delete a skill of the AI assistant. Requires the AIManager or Manager privilege. */
+    delete: operations["DeleteAISkill"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/alert_event": {
     parameters: {
       query?: never;
@@ -1116,6 +1232,33 @@ export interface paths {
      *     calling with a bearer token. Answered by oc3, without calling the agent.
      */
     get: operations["GetAssistantStatus"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/assistant/tools": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description The tools of the MCP the model may call for the caller, as the agent lists
+     *     them: name, title, description, arguments, and whether a call needs the
+     *     confirmation of the user. The assistant shows them to the user.
+     *
+     *     Relayed by oc3 to the AI agent, at the base_url and path of
+     *     server.assistant, with the access token of the caller's single sign-on
+     *     session, or the bearer token of the request; nothing else of the
+     *     browser's request is forwarded. The agent's answers and error codes are
+     *     returned as they are.
+     */
+    get: operations["GetAssistantTools"];
     put?: never;
     post?: never;
     delete?: never;
@@ -8749,6 +8892,84 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
+    /**
+     * @description an AI backend of the agent, om3 for a cluster, oc3 for the collector
+     * @enum {string}
+     */
+    AIBackend: "om3" | "oc3";
+    AIResource: components["schemas"]["AIResourceMeta"] & {
+      body: string;
+    };
+    AIResourceInput: {
+      backends: components["schemas"]["AIBackend"][];
+      /** @description the text, valid UTF-8, at most 65536 bytes, no NUL byte */
+      body: string;
+      /** @description what the text holds and when to read it, at most 1024 bytes; the model reads it to decide */
+      description: string;
+      /**
+       * @description text/markdown by default
+       * @enum {string}
+       */
+      mime_type?: "text/markdown" | "text/plain";
+      /** @description the name of the resource, ^[a-z0-9]+(-[a-z0-9]+)*$, at most 64 bytes; required to create it, ignored on a replace */
+      name?: string;
+      /** @description the ids of the groups that may read it; empty, everybody */
+      publications?: number[];
+      /** @description a title on one line, at most 128 bytes */
+      title?: string;
+    };
+    AIResourceListResponse: {
+      data: components["schemas"]["AIResourceMeta"][];
+    };
+    AIResourceMeta: {
+      backends: components["schemas"]["AIBackend"][];
+      description: string;
+      /** @description sha256:<hex> of the bytes of the body */
+      digest: string;
+      mime_type: string;
+      name: string;
+      /** @description the ids of the groups that may read it, empty for everybody; given to an AIManager only */
+      publications?: number[];
+      /** @description the bytes of the body */
+      size: number;
+      title: string;
+      /** Format: date-time */
+      updated: string;
+    };
+    AISkill: components["schemas"]["AISkillMeta"] & {
+      body: string;
+    };
+    AISkillInput: {
+      backends: components["schemas"]["AIBackend"][];
+      /**
+       * @description the whole SKILL.md, at most 65536 bytes: a YAML frontmatter between two ---
+       *     lines that start it, whose name equals the name of the skill, whose
+       *     description is at most 1024 bytes, whose values are strings or a map of
+       *     strings on one level, metadata.opensvc/tools naming at most 24 tools
+       */
+      body: string;
+      /** @description the name of the skill, the name of its frontmatter too; required to create it, ignored on a replace */
+      name?: string;
+      /** @description the ids of the groups that may read it; empty, everybody */
+      publications?: number[];
+    };
+    AISkillListResponse: {
+      data: components["schemas"]["AISkillMeta"][];
+    };
+    AISkillMeta: {
+      backends: components["schemas"]["AIBackend"][];
+      digest: string;
+      /** @description the frontmatter as written, its values strings or maps of strings */
+      frontmatter: {
+        [key: string]: unknown;
+      };
+      name: string;
+      /** @description the ids of the groups that may read it, empty for everybody; given to an AIManager only */
+      publications?: number[];
+      size: number;
+      /** Format: date-time */
+      updated: string;
+    };
     /** @description One action to enqueue with PUT /actions. */
     ActionEnqueue: {
       /** @description Agent action to run */
@@ -9183,6 +9404,10 @@ export interface components {
     AssistantTitleRequest: {
       /** @description Control characters are replaced by spaces and whitespace is normalized. */
       title: string;
+    };
+    /** @description The tools the agent lists, as it gives them. */
+    AssistantTools: {
+      [key: string]: unknown;
     };
     AuthInfo: {
       /**
@@ -12862,6 +13087,8 @@ export interface components {
     };
   };
   parameters: {
+    /** @description the name of the resource or of the skill */
+    inPathAIName: string;
     /** @description The name of the moduleset or ruleset. */
     inPathComplianceAgentName: string;
     /** @description ID of the moduleset */
@@ -12876,6 +13103,8 @@ export interface components {
     inPathOrchestrationRunId: number;
     /** @description ID of the ruleset */
     inPathRsetId: string;
+    /** @description only the objects for this backend, as the MCP servers ask; all of them when absent */
+    inQueryAIBackend: components["schemas"]["AIBackend"];
     /** @description The object of the node, as namespace/kind/name. Default the node. */
     inQueryAgentPath: string;
     /**
@@ -13475,6 +13704,308 @@ export interface operations {
     requestBody?: never;
     responses: {
       200: components["responses"]["TagAgentInfo"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  GetAIResources: {
+    parameters: {
+      query?: {
+        /** @description only the objects for this backend, as the MCP servers ask; all of them when absent */
+        backend?: components["parameters"]["inQueryAIBackend"];
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          /** @description the version of the list read */
+          ETag?: string;
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AIResourceListResponse"];
+        };
+      };
+      /** @description Not modified since the ETag given in If-None-Match */
+      304: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      500: components["responses"]["500"];
+    };
+  };
+  PostAIResources: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["AIResourceInput"];
+      };
+    };
+    responses: {
+      /** @description Created */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AIResourceMeta"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      409: components["responses"]["409"];
+      500: components["responses"]["500"];
+    };
+  };
+  GetAIResource: {
+    parameters: {
+      query?: {
+        /** @description only the objects for this backend, as the MCP servers ask; all of them when absent */
+        backend?: components["parameters"]["inQueryAIBackend"];
+      };
+      header?: never;
+      path: {
+        /** @description the name of the resource or of the skill */
+        name: components["parameters"]["inPathAIName"];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AIResource"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  PutAIResource: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description the name of the resource or of the skill */
+        name: components["parameters"]["inPathAIName"];
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["AIResourceInput"];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AIResourceMeta"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  DeleteAIResource: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description the name of the resource or of the skill */
+        name: components["parameters"]["inPathAIName"];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Deleted */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  GetAISkills: {
+    parameters: {
+      query?: {
+        /** @description only the objects for this backend, as the MCP servers ask; all of them when absent */
+        backend?: components["parameters"]["inQueryAIBackend"];
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          /** @description the version of the list read */
+          ETag?: string;
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AISkillListResponse"];
+        };
+      };
+      /** @description Not modified since the ETag given in If-None-Match */
+      304: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      500: components["responses"]["500"];
+    };
+  };
+  PostAISkills: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["AISkillInput"];
+      };
+    };
+    responses: {
+      /** @description Created */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AISkillMeta"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      409: components["responses"]["409"];
+      500: components["responses"]["500"];
+    };
+  };
+  GetAISkill: {
+    parameters: {
+      query?: {
+        /** @description only the objects for this backend, as the MCP servers ask; all of them when absent */
+        backend?: components["parameters"]["inQueryAIBackend"];
+      };
+      header?: never;
+      path: {
+        /** @description the name of the resource or of the skill */
+        name: components["parameters"]["inPathAIName"];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AISkill"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  PutAISkill: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description the name of the resource or of the skill */
+        name: components["parameters"]["inPathAIName"];
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["AISkillInput"];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AISkillMeta"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  DeleteAISkill: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description the name of the resource or of the skill */
+        name: components["parameters"]["inPathAIName"];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Deleted */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
       401: components["responses"]["401"];
       403: components["responses"]["403"];
       404: components["responses"]["404"];
@@ -16497,6 +17028,71 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["AssistantStatus"];
+        };
+      };
+    };
+  };
+  GetAssistantTools: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description The tools. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AssistantTools"];
+        };
+      };
+      /** @description No access token for the caller (assistant_token_unavailable), or the agent refused it. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AssistantError"];
+        };
+      };
+      /** @description Not while impersonating (assistant_forbidden). */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AssistantError"];
+        };
+      };
+      /** @description The assistant is not configured (assistant_disabled), or the agent lists no tools (not_found). */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AssistantError"];
+        };
+      };
+      /** @description The agent could not be reached, or answered badly (assistant_unreachable). */
+      502: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AssistantError"];
+        };
+      };
+      /** @description The agent is unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AssistantError"];
         };
       };
     };

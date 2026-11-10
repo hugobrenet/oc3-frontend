@@ -1,5 +1,6 @@
 import {
   BellIcon,
+  BookIcon,
   AlertTriangleIcon,
   DashboardIcon,
   AsteriskIcon,
@@ -63,6 +64,8 @@ export type ObjectKind =
   | "form"
   | "safe"
   | "ai"
+  | "aiResource"
+  | "aiSkill"
   | "package"
   | "hardware"
   | "switch"
@@ -140,6 +143,10 @@ const KINDS: Record<ObjectKind, { Icon: typeof ServerIcon; className: string }> 
   safe: { Icon: LockIcon, className: "text-icon-form" },
   // The assistant takes the accent: it belongs to no object family.
   ai: { Icon: SparklesIcon, className: "text-accent" },
+  // The texts the assistant reads, in its accent: the documents it consults, and
+  // the procedures it follows.
+  aiResource: { Icon: BookIcon, className: "text-accent" },
+  aiSkill: { Icon: ListChecksIcon, className: "text-accent" },
   package: { Icon: CubeIcon, className: "text-icon-package" },
   // Cornflower blue in the historical collector (`hw16`): the tint of nodes.
   hardware: { Icon: CpuIcon, className: "text-icon-node" },

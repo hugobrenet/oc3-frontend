@@ -31,6 +31,7 @@ import { ServiceActionsPage } from "@/features/service-actions/ServiceActionsPag
 import { FiltersPage } from "@/features/filters/FiltersPage";
 import { ClaimMappingsPage } from "@/features/claim-mappings/ClaimMappingsPage";
 import { FormConnectorsPage } from "@/features/form-connectors/FormConnectorsPage";
+import { AIResourcesPage, AISkillsPage } from "@/features/ai-content/AIContentPage";
 import { NotificationsPage } from "@/features/notifications/NotificationsPage";
 import { FieldConstraintsPage } from "@/features/field-constraints/FieldConstraintsPage";
 import { FiltersetsPage } from "@/features/filtersets/FiltersetsPage";
@@ -350,6 +351,21 @@ const filtersetsRoute = createRoute({
   validateSearch: parseListSearch,
 });
 
+// The texts the assistant reads, resources and skills: AIManager, as the api.
+const aiResourcesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/ai-resources",
+  component: AIResourcesPage,
+  validateSearch: parseListSearch,
+});
+
+const aiSkillsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/ai-skills",
+  component: AISkillsPage,
+  validateSearch: parseListSearch,
+});
+
 // The conversation with the AI assistant, which oc3 relays to the agent.
 const assistantRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -521,6 +537,8 @@ const routeTree = rootRoute.addChildren([
   filtersRoute,
   claimMappingsRoute,
   formConnectorsRoute,
+  aiResourcesRoute,
+  aiSkillsRoute,
   notificationsRoute,
   fieldConstraintsRoute,
   filtersetsRoute,

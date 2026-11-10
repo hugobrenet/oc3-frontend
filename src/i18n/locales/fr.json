@@ -19,7 +19,8 @@
       "filtering": "Filtrage",
       "audit": "Audit",
       "checks": "Checks",
-      "orchestration": "Orchestration"
+      "orchestration": "Orchestration",
+      "assistant": "Assistant IA"
     },
     "apps": "Codes application",
     "networks": "Réseaux",
@@ -76,7 +77,9 @@
     "quotas": "Quotas disques",
     "arrays": "Baies de stockage",
     "saves": "Sauvegardes",
-    "notifications": "Notifications"
+    "notifications": "Notifications",
+    "aiResources": "Ressources",
+    "aiSkills": "Skills"
   },
   "shortcuts": {
     "title": "Raccourcis clavier",
@@ -5178,6 +5181,92 @@
       "running": "Appel…",
       "failed": "Pas de réponse : {{message}}",
       "answered": "Réponse {{status}} en {{ms}} ms"
+    }
+  },
+  "aiContent": {
+    "warning": "L'assistant lit ce texte comme des instructions, pour chaque utilisateur à qui il est publié : rédigez-le comme une consigne à un opérateur, et ne le publiez qu'aux équipes concernées.",
+    "everybody": "Tout le monde",
+    "backends": {
+      "oc3": "Collecteur (oc3)",
+      "om3": "Clusters (om3)"
+    },
+    "mime": {
+      "markdown": "Markdown",
+      "plain": "Texte brut"
+    },
+    "fields": {
+      "name": "Nom",
+      "title": "Titre",
+      "description": "Description",
+      "mime_type": "Format",
+      "tools": "Outils",
+      "backends": "Pour",
+      "publications": "Publié à",
+      "size": "Taille",
+      "updated": "Mis à jour",
+      "body": "Texte",
+      "skillBody": "SKILL.md"
+    },
+    "resources": {
+      "title": "Ressources de l'assistant",
+      "new": "Nouvelle ressource",
+      "intro": "Les documents que l'assistant peut lire : procédures, glossaires, conventions de vos sites. Il voit la liste et leurs descriptions, et lit un texte quand une question le demande. Chacun est destiné au collecteur, aux clusters ou aux deux, et publié à certains groupes, ou à tout le monde.",
+      "empty": "Aucune ressource pour l'instant.",
+      "createTitle": "Nouvelle ressource",
+      "editTitle": "Ressource {{name}}",
+      "deleteQuestion": "Supprimer la ressource {{name}} ? L'assistant ne la lira plus."
+    },
+    "skills": {
+      "title": "Skills de l'assistant",
+      "new": "Nouveau skill",
+      "intro": "Les procédures que l'assistant peut charger pour mener une tâche : un SKILL.md, dont le frontmatter lui dit quand le charger et quels outils il utilise, suivi des étapes. Chacun est destiné au collecteur, aux clusters ou aux deux, et publié à certains groupes, ou à tout le monde.",
+      "empty": "Aucun skill pour l'instant.",
+      "createTitle": "Nouveau skill",
+      "editTitle": "Skill {{name}}",
+      "deleteQuestion": "Supprimer le skill {{name}} ? L'assistant ne le chargera plus."
+    },
+    "form": {
+      "general": "Général",
+      "nameHint": "Lettres minuscules et chiffres, séparés par des tirets simples ; il ne pourra plus être changé.",
+      "nameFixed": "Le nom ne change pas : pour renommer, créez-en un autre et supprimez celui-ci.",
+      "descriptionHint": "Ce que contient le texte et quand le lire : l'assistant s'en sert pour décider d'ouvrir le texte.",
+      "backendsHint": "Les assistants qui peuvent le lire : celui du collecteur, celui d'un cluster, ou les deux.",
+      "publicationsHint": "Les groupes dont l'assistant des membres peut le lire ; aucun, celui de tout le monde.",
+      "addGroup": "Ajouter un groupe",
+      "removeGroup": "Retirer {{group}}",
+      "write": "Écrire",
+      "preview": "Aperçu",
+      "size": "{{size}} / {{max}} octets",
+      "skillBodyHint": "Le frontmatter, entre deux lignes ---, donne le nom du skill, sa description, et dans metadata.opensvc/tools les outils qu'il utilise, {{max}} au plus, séparés par des espaces.",
+      "saving": "Enregistrement…",
+      "saveCreate": "Créer",
+      "saveEdit": "Enregistrer",
+      "saved": "Enregistré",
+      "delete": "Supprimer",
+      "deleteConfirm": "Supprimer",
+      "deleting": "Suppression…"
+    },
+    "problems": {
+      "nameMissing": "Le nom est obligatoire.",
+      "nameTooLong": "Le nom dépasse {{max}} octets.",
+      "nameInvalid": "Le nom doit être en lettres minuscules et chiffres, séparés par des tirets simples.",
+      "titleTooLong": "Le titre dépasse {{max}} octets.",
+      "titleLines": "Le titre doit tenir sur une ligne.",
+      "descriptionMissing": "La description est obligatoire : elle dit à l'assistant quand lire le texte.",
+      "descriptionTooLong": "La description dépasse {{max}} octets.",
+      "backendsMissing": "Choisissez au moins le collecteur ou les clusters.",
+      "bodyMissing": "Le texte est obligatoire.",
+      "bodyTooLong": "Le texte dépasse {{max}} octets.",
+      "bodyNul": "Le texte contient un caractère NUL.",
+      "frontmatter": {
+        "noStart": "Le SKILL.md doit commencer par une ligne --- qui ouvre son frontmatter.",
+        "noEnd": "Le frontmatter n'a pas de ligne --- de fermeture.",
+        "name": "Le nom du frontmatter, « {{found}} », n'est pas celui du skill, « {{name}} ».",
+        "description": "Le frontmatter n'a pas de description.",
+        "descriptionTooLong": "La description du frontmatter dépasse {{max}} octets.",
+        "tooManyTools": "metadata.opensvc/tools nomme plus de {{max}} outils.",
+        "badTool": "metadata.opensvc/tools : « {{tool}} » n'est pas un nom d'outil."
+      }
     }
   },
   "compModules": {

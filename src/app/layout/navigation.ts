@@ -41,6 +41,8 @@ export type MenuId =
   | "adm-groups"
   | "adm-claim-mappings"
   | "adm-form-connectors"
+  | "adm-ai-resources"
+  | "adm-ai-skills"
   | "adm-notifications"
   | "adm-field-constraints"
   | "view-app"
@@ -91,6 +93,8 @@ export interface NavEntry {
     | "/filters"
     | "/claim-mappings"
     | "/form-connectors"
+    | "/ai-resources"
+    | "/ai-skills"
     | "/notifications"
     | "/field-constraints"
     | "/metrics"
@@ -421,6 +425,29 @@ export const NAV_CATEGORIES: NavCategory[] = [
         labelKey: "nav.formConnectors",
         icon: "formConnector",
         privileges: ["Manager"],
+      },
+    ],
+  },
+  // The texts the assistant reads: AIManager, as the api; the model takes them as
+  // instructions, for every user they are published to.
+  {
+    key: "assistant",
+    labelKey: "nav.categories.assistant",
+    view: "admin",
+    entries: [
+      {
+        to: "/ai-resources",
+        menuId: "adm-ai-resources",
+        labelKey: "nav.aiResources",
+        icon: "aiResource",
+        privileges: ["AIManager"],
+      },
+      {
+        to: "/ai-skills",
+        menuId: "adm-ai-skills",
+        labelKey: "nav.aiSkills",
+        icon: "aiSkill",
+        privileges: ["AIManager"],
       },
     ],
   },
