@@ -49,6 +49,8 @@ const LOG_PROPS = [
   "nodes.nodename",
   "log_user",
   "log_impersonator",
+  "log_origin",
+  "log_request_id",
   "log_action",
   "log_fmt",
   "log_dict",
@@ -86,6 +88,8 @@ const FAMILY: Record<string, ColumnFamily> = {
   "nodes.nodename": "node",
   log_user: "team",
   log_impersonator: "team",
+  log_origin: "team",
+  log_request_id: "state",
   log_action: "state",
   log_fmt: "alert",
   log_dict: "alert",
@@ -108,8 +112,9 @@ function queryProps(cols: string[] | undefined): string {
     // The joined names are badges towards their view: they need their id.
     ...(shown.includes("nodes.nodename") ? ["node_id"] : []),
     ...(shown.includes("services.svcname") ? ["svc_id"] : []),
-    // The user cell names the impersonator, when there was one.
-    ...(shown.includes("log_user") ? ["log_impersonator"] : []),
+    // The user cell names the impersonator, when there was one, and the client
+    // the action was made through, the assistant for one.
+    ...(shown.includes("log_user") ? ["log_impersonator", "log_origin"] : []),
   ];
   return [...new Set(["id", ...shown, ...extra])].join(",");
 }
@@ -231,7 +236,13 @@ export function LogsPage() {
           </CrossLink>
         );
       if (prop === "log_user")
-        return <LogUser user={row.log_user} impersonator={row.log_impersonator} />;
+        return (
+          <LogUser
+            user={row.log_user}
+            impersonator={row.log_impersonator}
+            origin={row.log_origin}
+          />
+        );
       if (prop === "log_fmt") {
         const message = formatLogMessage(row.log_fmt, row.log_dict);
         return message.corrupted ? (

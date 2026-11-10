@@ -71,7 +71,9 @@ export function NodeLogs({ nodeId }: { nodeId: string; locale: string }) {
     {
       key: "log_user",
       label: t("logs.fields.log_user"),
-      render: (row) => <LogUser user={row.log_user} impersonator={row.log_impersonator} />,
+      render: (row) => (
+        <LogUser user={row.log_user} impersonator={row.log_impersonator} origin={row.log_origin} />
+      ),
     },
     { key: "log_action", label: t("logs.fields.log_action"), render: (row) => row.log_action },
     {

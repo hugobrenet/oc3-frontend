@@ -10817,6 +10817,18 @@ export interface components {
        */
       log_impersonator?: string;
       log_level?: string;
+      /**
+       * @description The client the request came through, as it declared it with the
+       *     X-OpenSVC-Origin header: assistant for the AI assistant, through
+       *     the MCP of the collector and its agent, mcp for another client of
+       *     that MCP; empty for the web interface, the API and the collector.
+       */
+      log_origin?: string;
+      /**
+       * @description The X-Request-ID of the request, given with log_origin: the agent
+       *     and the MCP write it on their audit lines.
+       */
+      log_request_id?: string;
       log_user?: string;
       node_id?: string;
       "nodes.nodename"?: string | null;

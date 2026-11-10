@@ -30,6 +30,10 @@ const GROUPS: DetailGroup<LogRow>[] = [
       field("log_user"),
       // The user who really signed in, when the action was made as log_user.
       field("log_impersonator"),
+      // The client the action was made through, as it declared it, and its
+      // request ID, on the audit lines of the agent and of the MCP too.
+      field("log_origin"),
+      field("log_request_id"),
       // Plain text in the panel: the bold of the table adds nothing there.
       { prop: "log_fmt", format: (row) => formatLogMessage(row.log_fmt, row.log_dict).text },
     ],
@@ -70,6 +74,8 @@ const PROPS = [
   "log_action",
   "log_user",
   "log_impersonator",
+  "log_origin",
+  "log_request_id",
   "log_fmt",
   "log_dict",
   "services.svcname",

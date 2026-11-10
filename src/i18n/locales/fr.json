@@ -2161,7 +2161,9 @@
       "log_entry_id": "Identifiant d'entrée",
       "log_gtalk_sent": "Envoyé par messagerie",
       "log_email_sent": "Envoyé par e-mail",
-      "log_impersonator": "Usurpateur d'identité"
+      "log_impersonator": "Usurpateur d'identité",
+      "log_origin": "Origine",
+      "log_request_id": "Id de requête"
     },
     "detail": {
       "title": "Événement du journal",
@@ -2172,7 +2174,11 @@
       }
     },
     "via": "via {{impersonator}}",
-    "impersonatedBy": "{{impersonator}} agissant comme {{user}}"
+    "impersonatedBy": "{{impersonator}} agissant comme {{user}}",
+    "origin": {
+      "assistant": "via l'assistant",
+      "mcp": "via MCP"
+    }
   },
   "charts": {
     "title": "Graphiques",

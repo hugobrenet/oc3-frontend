@@ -59,7 +59,7 @@ export function useNodeLogs(nodeId: string | undefined) {
         params: {
           query: {
             props:
-              "id,log_date,log_level,svc_id,services.svcname,log_user,log_impersonator,log_action,log_fmt,log_dict",
+              "id,log_date,log_level,svc_id,services.svcname,log_user,log_impersonator,log_origin,log_action,log_fmt,log_dict",
             orderby: "-log_date,-id",
             // One more than shown: whether older entries remain.
             limit: NODE_LOGS_LIMIT + 1,

@@ -336,7 +336,7 @@ export function useServiceLogs(svcId: string | undefined) {
         params: {
           query: {
             props:
-              "id,log_date,log_level,node_id,nodes.nodename,log_user,log_impersonator,log_action,log_fmt,log_dict",
+              "id,log_date,log_level,node_id,nodes.nodename,log_user,log_impersonator,log_origin,log_action,log_fmt,log_dict",
             orderby: "-log_date,-id",
             // One more than shown: whether older entries remain.
             limit: SERVICE_LOGS_LIMIT + 1,

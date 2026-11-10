@@ -2161,7 +2161,9 @@
       "log_entry_id": "Entry id",
       "log_gtalk_sent": "Sent by IM",
       "log_email_sent": "Sent by email",
-      "log_impersonator": "Impersonator"
+      "log_impersonator": "Impersonator",
+      "log_origin": "Origin",
+      "log_request_id": "Request id"
     },
     "detail": {
       "title": "Log event",
@@ -2172,7 +2174,11 @@
       }
     },
     "via": "via {{impersonator}}",
-    "impersonatedBy": "{{impersonator}} acting as {{user}}"
+    "impersonatedBy": "{{impersonator}} acting as {{user}}",
+    "origin": {
+      "assistant": "via the assistant",
+      "mcp": "via MCP"
+    }
   },
   "charts": {
     "title": "Charts",
