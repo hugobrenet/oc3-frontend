@@ -183,14 +183,56 @@ describe("the confirmation card", () => {
     }
   });
 
-  test("shows the arguments, and why, when the preview failed", async () => {
+  test("folds the arguments, and tells why there is no preview, when the preview failed", async () => {
     client.run.mockImplementationOnce(replayRun("confirmation_preview_error"));
     const card = await ask("Set env.a of web");
     expect(within(card).getByText(/No preview: the preview was refused/)).toBeInTheDocument();
-    expect(within(card).getByText("Arguments of the call").closest("details")).toHaveAttribute(
+    expect(within(card).getByText("Arguments of the call").closest("details")).not.toHaveAttribute(
       "open",
     );
     expect(within(card).getByText("test/svc/web")).toHaveProperty("tagName", "CODE");
+  });
+
+  test("folds the arguments and leaves out the empty ones", async () => {
+    const card = await reload(
+      pendingConfirmation({
+        tool: { name: "unfreeze_node", title: "Unfreeze nodes", destructive: true },
+        arguments: { nodes: ["dev2n1"], app: "", tag: "", frozen: false, cluster_id: "" },
+        editable: true,
+        input_schema: {
+          type: "object",
+          properties: {
+            nodes: { type: "array", items: { type: "string" } },
+            app: { type: "string" },
+            tag: { type: "string" },
+            frozen: { type: "boolean" },
+            cluster_id: { type: "string" },
+          },
+        },
+      }),
+    );
+    const details = within(card).getByText("Arguments of the call").closest("details");
+    expect(details).not.toHaveAttribute("open");
+    expect(within(card).getByText('["dev2n1"]')).toHaveProperty("tagName", "CODE");
+    for (const name of ["app", "tag", "frozen", "cluster_id"])
+      expect(within(card).queryByText(name)).not.toBeInTheDocument();
+    expect(within(card).getByText("nodes")).toHaveProperty("tagName", "CODE");
+  });
+
+  test("keeps a false that means something: a boolean that may be null", async () => {
+    const card = await reload(
+      pendingConfirmation({
+        tool: { name: "ack_service_action", title: "Acknowledge", destructive: true },
+        arguments: { acknowledged: false, service: "web" },
+        editable: true,
+        input_schema: {
+          type: "object",
+          properties: { acknowledged: { type: ["null", "boolean"] }, service: { type: "string" } },
+        },
+      }),
+    );
+    expect(within(card).getByText("acknowledged")).toHaveProperty("tagName", "CODE");
+    expect(within(card).getByText("false")).toHaveProperty("tagName", "CODE");
   });
 
   test("computes the preview again for edited arguments, nothing running", async () => {

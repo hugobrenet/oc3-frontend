@@ -11,7 +11,6 @@ import {
 import { useTranslation } from "react-i18next";
 import { Markdown } from "@/components/ui/Markdown";
 import { Modal } from "@/components/ui/Modal";
-import { RelativeTime } from "@/components/ui/RelativeTime";
 import { SearchBox } from "@/components/ui/SearchBox";
 import {
   ClockIcon,
@@ -54,7 +53,7 @@ const BUTTON =
 const SMALL_BUTTON =
   "h-7 rounded-(--radius-control) border border-line px-2 text-ink hover:bg-surface-sunken disabled:opacity-60";
 
-type Dialog = "" | "replace" | "delete" | "deleteAll";
+type Dialog = "" | "replace" | "delete";
 
 /**
  * The conversation with the AI assistant: the user's conversations in a column,
@@ -69,7 +68,7 @@ type Dialog = "" | "replace" | "delete" | "deleteAll";
  * the tool allows it, or rejects.
  */
 export function Assistant({ client }: { client: AssistantClient }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const chat = useAssistantChat(client);
   const toolDocs = useToolDocs(client, chat.confirmation !== null);
   const panel = useConversationsOpen();
@@ -236,10 +235,7 @@ export function Assistant({ client }: { client: AssistantClient }) {
       composer.current?.focus();
       return;
     }
-    const result =
-      dialog === "deleteAll"
-        ? await chat.deleteAllConversations()
-        : await chat.deleteConversation(deleting?.id);
+    const result = await chat.deleteConversation(deleting?.id);
     if (result !== undefined) setDialog("");
   }
 
@@ -343,11 +339,6 @@ export function Assistant({ client }: { client: AssistantClient }) {
                       <span className="w-full [overflow-wrap:anywhere]">
                         {titleOf(conversation)}
                       </span>
-                      {conversation.updated_at !== undefined && (
-                        <span className="text-ink-muted">
-                          <RelativeTime value={conversation.updated_at} locale={i18n.language} />
-                        </span>
-                      )}
                     </button>
                     <button
                       type="button"
@@ -369,19 +360,6 @@ export function Assistant({ client }: { client: AssistantClient }) {
               </ul>
             </div>
           ))}
-          {chat.conversations.length > 0 && (
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => {
-                setDialog("deleteAll");
-              }}
-              className={`${BUTTON} text-ink-muted hover:text-state-down`}
-            >
-              <TrashIcon className="h-3.5 w-3.5" />
-              {t("assistant.conversations.deleteAll")}
-            </button>
-          )}
         </div>
       </section>
 
@@ -497,7 +475,7 @@ export function Assistant({ client }: { client: AssistantClient }) {
           className="min-h-48 flex-1 overflow-y-auto"
         >
           {chat.historyCursor !== "" && (
-            <div className="mx-auto max-w-3xl px-4 pt-3">
+            <div className="px-4 pt-3">
               <button type="button" disabled={busy} onClick={loadOlder} className={SMALL_BUTTON}>
                 {chat.pending === "history"
                   ? t("assistant.transcript.loadingEarlier")
@@ -521,7 +499,7 @@ export function Assistant({ client }: { client: AssistantClient }) {
             />
           )}
           {chat.messages.length > 0 && (
-            <ol className="mx-auto flex max-w-3xl flex-col gap-5 px-4 py-6">
+            <ol className="flex flex-col gap-3 px-4 py-6">
               {chat.messages.map((message, index) => {
                 if (message.role === "user")
                   return <UserMessage key={message.id} message={message} time={time} />;
@@ -684,9 +662,7 @@ export function Assistant({ client }: { client: AssistantClient }) {
           title={
             dialog === "replace"
               ? t("assistant.dialog.replaceTitle")
-              : dialog === "deleteAll"
-                ? t("assistant.dialog.deleteAllTitle")
-                : t("assistant.dialog.deleteTitle")
+              : t("assistant.dialog.deleteTitle")
           }
           closeLabel={t("detail.close")}
           className="max-w-md"
@@ -698,11 +674,9 @@ export function Assistant({ client }: { client: AssistantClient }) {
             <p>
               {dialog === "replace"
                 ? t("assistant.dialog.replaceText")
-                : dialog === "deleteAll"
-                  ? t("assistant.dialog.deleteAllText", { count: chat.conversations.length })
-                  : t("assistant.dialog.deleteText", {
-                      title: deleting !== null ? titleOf(deleting) : "",
-                    })}
+                : t("assistant.dialog.deleteText", {
+                    title: deleting !== null ? titleOf(deleting) : "",
+                  })}
             </p>
             {chat.error !== null && (
               <p role="alert" className="text-state-down">
@@ -804,17 +778,30 @@ function EmptyState({ onPick }: { onPick: (text: string) => void }) {
   );
 }
 
+/**
+ * A message of the transcript, as in the om3 webapp: a card of its own, its
+ * author named on top, the user's against the right edge of the transcript on a
+ * sunken ground, the assistant's against the left one, neither wider than 85%
+ * of it: where one message ends and the next starts shows.
+ */
+const MESSAGE = "w-fit max-w-[85%] min-w-0 rounded-(--radius-control) border border-line px-3 py-2";
+const MESSAGE_LABEL = "text-data font-semibold text-ink-muted";
+
 function UserMessage({ message, time }: { message: ChatMessage; time: Intl.DateTimeFormat }) {
   const { t } = useTranslation();
   const date = new Date(message.createdAt ?? "");
   return (
-    <li className="flex flex-col items-end gap-1">
-      <span className="sr-only">{t("assistant.you")}</span>
-      <p className="max-w-[85%] rounded-(--radius-panel) rounded-br-(--radius-control) bg-accent-soft px-3 py-2 [overflow-wrap:anywhere] whitespace-pre-wrap text-ink">
-        {message.text}
+    <li className={`${MESSAGE} self-end bg-surface-sunken`}>
+      <p className={MESSAGE_LABEL}>
+        <span aria-hidden="true">{t("assistant.message.you")}</span>
+        <span className="sr-only">{t("assistant.you")}</span>
       </p>
+      <p className="[overflow-wrap:anywhere] whitespace-pre-wrap text-ink">{message.text}</p>
       {!Number.isNaN(date.getTime()) && (
-        <time dateTime={date.toISOString()} className="text-ink-muted">
+        <time
+          dateTime={date.toISOString()}
+          className="mt-1 block text-right text-data text-ink-muted"
+        >
           {time.format(date)}
         </time>
       )}
@@ -881,17 +868,9 @@ function Answer({
 function AssistantMessage({ children }: { children: ReactNode }) {
   const { t } = useTranslation();
   return (
-    <li className="flex gap-3">
-      <div
-        aria-hidden="true"
-        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent"
-      >
-        <SparklesIcon className="h-4 w-4" />
-      </div>
-      <div className="flex min-w-0 flex-1 flex-col gap-2">
-        <span className="font-medium">{t("assistant.name")}</span>
-        {children}
-      </div>
+    <li className={`${MESSAGE} flex flex-col gap-2 self-start bg-surface`}>
+      <p className={MESSAGE_LABEL}>{t("assistant.name")}</p>
+      {children}
     </li>
   );
 }

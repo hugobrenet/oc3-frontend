@@ -4260,7 +4260,6 @@
       "search": "Rechercher une conversation",
       "noMatch": "Aucune conversation ne correspond.",
       "delete": "Supprimer la conversation {{title}}",
-      "deleteAll": "Supprimer toutes les conversations",
       "groups": {
         "today": "Aujourd'hui",
         "yesterday": "Hier",
@@ -4336,6 +4335,7 @@
       }
     },
     "message": {
+      "you": "Vous",
       "awaiting": "En attente de votre décision sur l'action ci-dessous.",
       "stopped": "Réponse incomplète, arrêtée. Elle n'a pas été relancée.",
       "failed": "Réponse incomplète, en échec. Elle n'a pas été relancée.",
@@ -4499,8 +4499,6 @@
     "dialog": {
       "deleteTitle": "Supprimer la conversation",
       "deleteText": "Supprimer « {{title}} » et son contexte enregistré ? C'est irréversible.",
-      "deleteAllTitle": "Supprimer toutes les conversations",
-      "deleteAllText": "Supprimer toutes vos conversations ({{count}} chargées) et leur contexte enregistré ? C'est irréversible.",
       "confirmDelete": "Confirmer la suppression",
       "replaceTitle": "Remplacer le message en file",
       "replaceText": "Un message est déjà en file. Le remplacer par celui que vous avez tapé ?",

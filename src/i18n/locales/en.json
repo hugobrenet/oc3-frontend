@@ -4260,7 +4260,6 @@
       "search": "Search the conversations",
       "noMatch": "No conversation matches.",
       "delete": "Delete the conversation {{title}}",
-      "deleteAll": "Delete all conversations",
       "groups": {
         "today": "Today",
         "yesterday": "Yesterday",
@@ -4336,6 +4335,7 @@
       }
     },
     "message": {
+      "you": "You",
       "awaiting": "Waiting for your decision on the action below.",
       "stopped": "Incomplete answer, stopped. It was not retried.",
       "failed": "Incomplete answer, failed. It was not retried.",
@@ -4499,8 +4499,6 @@
     "dialog": {
       "deleteTitle": "Delete the conversation",
       "deleteText": "Delete \"{{title}}\" and its saved context? This cannot be undone.",
-      "deleteAllTitle": "Delete all conversations",
-      "deleteAllText": "Delete all your conversations ({{count}} loaded) and their saved context? This cannot be undone.",
       "confirmDelete": "Confirm the deletion",
       "replaceTitle": "Replace the queued message",
       "replaceText": "A message is already queued. Replace it with the one you typed?",

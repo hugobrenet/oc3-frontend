@@ -221,11 +221,14 @@ export function Sidebar({ open }: { open: boolean }) {
     next.focus();
   }
 
+  // The menu is at most as high as the window under the header, and scrolls its own
+  // entries: a long menu would otherwise set the height of the row, and leave a void
+  // under the views sized to the window, such as the assistant.
   return (
     <aside
       id="app-sidebar"
       inert={!open}
-      className={`overflow-hidden border-r border-line bg-surface-raised transition-[width] duration-200 ease-out ${
+      className={`sticky top-0 max-h-[calc(100dvh-2.75rem)] self-start overflow-x-hidden overflow-y-auto border-r border-line bg-surface-raised transition-[width] duration-200 ease-out ${
         open ? "w-52" : "w-0 border-r-0"
       }`}
     >

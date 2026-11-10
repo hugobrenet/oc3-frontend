@@ -46,11 +46,12 @@ function NumberedText({ text }: { text: string }) {
 }
 
 /**
- * The arguments of the call, one by one under their name, each as its MIME type
- * says (`argumentTypes`), never as its content looks: YAML as code, coloured,
- * indentation kept; any other text as written, its line breaks and spaces kept;
- * a value other than text as JSON. What an argument is, from the tools of the
- * agent, shows on hover of its name.
+ * The arguments of the call, each as its MIME type says (`argumentTypes`), never
+ * as its content looks: YAML as code, coloured, indentation kept; any other text
+ * as written, its line breaks and spaces kept; a value other than text as JSON.
+ * A short value stands on the line of its name, as in the om3 webapp; a block,
+ * a YAML or a text of several lines, under it, the width of the card. What an
+ * argument is, from the tools of the agent, shows on hover of its name.
  */
 function ConfirmationArguments({
   args,
@@ -62,14 +63,17 @@ function ConfirmationArguments({
   descriptions: Record<string, string>;
 }) {
   return (
-    <dl className="flex max-h-96 flex-col gap-2 overflow-auto">
+    <dl className="grid max-h-96 grid-cols-[auto_minmax(0,1fr)] items-baseline gap-x-3 gap-y-1 overflow-auto">
       {Object.entries(args).map(([name, value]) => {
         const type = Object.hasOwn(types, name) ? types[name] : undefined;
         const description = Object.hasOwn(descriptions, name) ? descriptions[name] : undefined;
         const yaml = typeof value === "string" && type !== undefined && YAML_TYPES.has(type);
+        const block =
+          yaml || (typeof value === "string" && (type !== undefined || value.includes("\n")));
+        const span = block ? "col-span-2" : "";
         return (
-          <div key={name} className="flex flex-col gap-0.5">
-            <dt className="flex items-baseline gap-2">
+          <div key={name} className="contents">
+            <dt className={`flex items-baseline gap-2 ${span}`}>
               <code
                 title={description}
                 className={`font-mono font-medium ${description !== undefined ? "cursor-help underline decoration-dotted underline-offset-2" : ""}`}
@@ -78,7 +82,7 @@ function ConfirmationArguments({
               </code>
               {type !== undefined && <span className="text-data text-ink-muted">{type}</span>}
             </dt>
-            <dd className="min-w-0">
+            <dd className={`min-w-0 ${span}`}>
               {yaml ? (
                 <YamlCode text={value} lineNumbers className={`overflow-x-auto ${BOX}`} />
               ) : typeof value === "string" && (type !== undefined || value.includes("\n")) ? (
@@ -93,6 +97,42 @@ function ConfirmationArguments({
         );
       })}
     </dl>
+  );
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+/**
+ * Whether an argument carries nothing: null, an empty text, list or object, or
+ * false for a plain boolean of the schema, none of which the MCP tells from the
+ * argument left out. A model may fill every optional filter of a tool so: they
+ * change nothing in the call, and would bury the one that names its target.
+ */
+function unsetArgument(value: unknown, property: unknown): boolean {
+  if (value === null || value === undefined || value === "") return true;
+  if (Array.isArray(value)) return value.length === 0;
+  if (isRecord(value)) return Object.keys(value).length === 0;
+  // A boolean that may be null, or that defaults to true, means something false.
+  return (
+    value === false &&
+    isRecord(property) &&
+    property.type === "boolean" &&
+    !Object.hasOwn(property, "default")
+  );
+}
+
+/** The arguments of a call that carry a value: the required ones always. */
+function setArguments(args: Args, schema: Args | undefined): Args {
+  const properties = isRecord(schema?.properties) ? schema.properties : {};
+  const required = new Set(Array.isArray(schema?.required) ? (schema.required as unknown[]) : []);
+  return Object.fromEntries(
+    Object.entries(args).filter(
+      ([name, value]) =>
+        required.has(name) ||
+        !unsetArgument(value, Object.hasOwn(properties, name) ? properties[name] : undefined),
+    ),
   );
 }
 
@@ -304,7 +344,11 @@ export function ConfirmationCard({
   const expired = expiresAt <= now;
   const destructive = confirmation.tool.destructive;
   const preview = confirmation.preview;
-  const entries = Object.keys(confirmation.arguments);
+  // The arguments that carry a value: the empty ones change nothing in the call.
+  const shown = useMemo(
+    () => setArguments(confirmation.arguments, confirmation.inputSchema),
+    [confirmation],
+  );
   const fields = useMemo(
     () =>
       confirmation.editable
@@ -397,14 +441,15 @@ export function ConfirmationCard({
             }}
           />
         </form>
-      ) : entries.length > 0 ? (
-        <details open={preview === undefined}>
+      ) : Object.keys(shown).length > 0 ? (
+        // Folded: the tool and the preview name the action; the list holds its arguments.
+        <details>
           <summary className="cursor-pointer text-ink-muted">
             {t("assistant.confirm.arguments")}
           </summary>
           <div className="mt-1">
             <ConfirmationArguments
-              args={confirmation.arguments}
+              args={shown}
               types={confirmation.argumentTypes}
               descriptions={doc?.arguments ?? {}}
             />

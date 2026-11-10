@@ -300,25 +300,6 @@ describe("the page of the assistant", () => {
     ).not.toBeInTheDocument();
   });
 
-  test("deletes every conversation after a confirmation", async () => {
-    await renderAssistant(client);
-    const button = await screen.findByRole("button", { name: "Delete all conversations" });
-    client.listConversations.mockResolvedValueOnce([existing]).mockResolvedValueOnce([]);
-    fireEvent.click(button);
-    expect(screen.getByRole("dialog")).toHaveTextContent(
-      "Delete all your conversations (1 loaded)",
-    );
-    expect(client.deleteConversation).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole("button", { name: "Confirm the deletion" }));
-    await waitFor(() => {
-      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    });
-    expect(client.deleteConversation).toHaveBeenCalledWith("existing", expect.any(Object));
-    expect(
-      screen.queryByRole("button", { name: "Delete all conversations" }),
-    ).not.toBeInTheDocument();
-  });
-
   test("keeps the title on Escape or when empty, and saves it on leaving the field", async () => {
     await renderAssistant(client);
     await submit("hello");
