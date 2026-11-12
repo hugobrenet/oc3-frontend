@@ -114,14 +114,17 @@ export function AlertDetailPanel({
                 onClose();
               }}
             />
-            <AskAssistantLink
-              prompt={t("assistant.askAbout.alert", {
-                type: alert.dash_type ?? "",
-                object: alert["services.svcname"] ?? alert["nodes.nodename"] ?? "",
-                instance: alert.dash_instance ?? "",
-                context: alert.dash_instance ? "instance" : undefined,
-              })}
-            />
+            {/* A question about an alert without a type or an object would name nothing. */}
+            {alert.dash_type && (alert["services.svcname"] || alert["nodes.nodename"]) && (
+              <AskAssistantLink
+                prompt={t("assistant.askAbout.alert", {
+                  type: alert.dash_type,
+                  object: alert["services.svcname"] || alert["nodes.nodename"],
+                  instance: alert.dash_instance ?? "",
+                  context: alert.dash_instance ? "instance" : undefined,
+                })}
+              />
+            )}
           </div>
         ) : undefined
       }

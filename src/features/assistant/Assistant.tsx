@@ -152,7 +152,9 @@ export function Assistant({
   // A question another page opened the assistant with, read once: the assistant
   // opens on no conversation, so the question goes in the message box of a new
   // one, once ready and after the effect above emptied the box. It is put there,
-  // never sent: the user reads it first.
+  // never sent: the user reads it first. Read when the assistant mounts only: the
+  // links that give one are on other pages; a link in this page would need an
+  // effect on initialPrompt.
   const pendingPrompt = useRef(initialPrompt ?? "");
   useEffect(() => {
     if (pendingPrompt.current === "" || !chat.historyReady) return;
