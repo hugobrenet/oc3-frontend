@@ -336,7 +336,7 @@ export function Assistant({
             <p className="px-2 text-ink-muted">{t("assistant.conversations.noMatch")}</p>
           )}
         </div>
-        <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-2 pb-2">
+        <div className="relative flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-2 pb-2">
           {groups.map((group) => (
             <div key={group.key}>
               <h3
@@ -497,7 +497,10 @@ export function Assistant({
           aria-live="polite"
           aria-relevant="additions text"
           aria-busy={answering}
-          className="min-h-48 flex-1 overflow-y-auto"
+          // Relative: the containing block of the hidden labels (sr-only) of the
+          // steps, which are absolute. Without it, a step opened far down the
+          // conversation placed them against the page, which grew and scrolled.
+          className="relative min-h-48 flex-1 overflow-y-auto"
         >
           {chat.historyCursor !== "" && (
             <div className="px-4 pt-3">
