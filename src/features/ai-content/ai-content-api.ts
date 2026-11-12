@@ -12,6 +12,25 @@ export type AISkillMeta = components["schemas"]["AISkillMeta"];
 export type AISkill = components["schemas"]["AISkill"];
 export type AISkillInput = components["schemas"]["AISkillInput"];
 export type AIMimeType = NonNullable<AIResourceInput["mime_type"]>;
+export type AIRead = components["schemas"]["AIRead"];
+
+/**
+ * The reads of a text by the assistants, all backends together: how many, and
+ * the last one; none, a text no assistant read yet. Only an AIManager gets the
+ * reads: absent, nothing is known.
+ */
+export function readStats(
+  reads: AIRead[] | undefined,
+): { count: number; last: string | undefined } | undefined {
+  if (reads === undefined) return undefined;
+  let count = 0;
+  let last: string | undefined;
+  for (const r of reads) {
+    count += r.count;
+    if (last === undefined || Date.parse(r.last_read) > Date.parse(last)) last = r.last_read;
+  }
+  return { count, last };
+}
 
 export const AI_BACKENDS: AIBackend[] = ["oc3", "om3"];
 export const AI_MIME_TYPES: AIMimeType[] = ["text/markdown", "text/plain"];

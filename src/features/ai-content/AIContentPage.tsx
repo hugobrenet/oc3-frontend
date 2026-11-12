@@ -8,7 +8,9 @@ import {
   useAIResources,
   useAISkills,
   KIND_ICON,
+  readStats,
   type AIBackend,
+  type AIRead,
   type AIContentKind,
 } from "./ai-content-api";
 import { AIResourcePanel, AISkillPanel } from "./AIContentPanel";
@@ -22,6 +24,8 @@ interface Row {
   description: string;
   backends: AIBackend[];
   publications: number[];
+  /** The reads of the assistants, by backend: absent when not given. */
+  reads: AIRead[] | undefined;
   size: number;
   updated: string;
   /** The column proper to the kind: the format of a resource, the tools of a skill. */
@@ -41,6 +45,7 @@ function useRows(kind: AIContentKind) {
         description: r.description,
         backends: r.backends,
         publications: r.publications ?? [],
+        reads: r.reads,
         size: r.size,
         updated: r.updated,
         extra: t(`aiContent.mime.${r.mime_type === "text/plain" ? "plain" : "markdown"}`),
@@ -58,6 +63,7 @@ function useRows(kind: AIContentKind) {
         description: typeof values.description === "string" ? values.description : "",
         backends: s.backends,
         publications: s.publications ?? [],
+        reads: s.reads,
         size: s.size,
         updated: s.updated,
         extra:
@@ -147,6 +153,8 @@ function AIContentPage({ kind }: { kind: AIContentKind }) {
                   kind === "resources" ? "mime_type" : "tools",
                   "backends",
                   "publications",
+                  "reads",
+                  "last_read",
                   "size",
                   "updated",
                 ].map((key) => (
@@ -177,7 +185,13 @@ function AIContentPage({ kind }: { kind: AIContentKind }) {
                     </button>
                     {r.subtitle !== "" && <span className="block">{r.subtitle}</span>}
                   </th>
-                  <td className="max-w-md px-3 py-1.5">{r.description}</td>
+                  <td className="max-w-md px-3 py-1.5">
+                    {/* Two lines at most: a long description would make each row a
+                        paragraph. The whole of it in the title, and in the panel. */}
+                    <span title={r.description} className="line-clamp-2">
+                      {r.description}
+                    </span>
+                  </td>
                   <td className="px-3 py-1.5">{r.extra}</td>
                   <td className="px-3 py-1.5 whitespace-nowrap">
                     {r.backends.map((b) => t(`aiContent.backends.${b}`)).join(", ")}
@@ -191,6 +205,7 @@ function AIContentPage({ kind }: { kind: AIContentKind }) {
                       r.publications.map(roleOf).join(", ")
                     )}
                   </td>
+                  <ReadCells reads={r.reads} format={size} />
                   <td className="px-3 py-1.5 text-right whitespace-nowrap tabular-nums">
                     {size.format(r.size)}
                   </td>
@@ -206,6 +221,47 @@ function AIContentPage({ kind }: { kind: AIContentKind }) {
 
       {kind === "resources" ? <AIResourcePanel {...panel} /> : <AISkillPanel {...panel} />}
     </section>
+  );
+}
+
+/**
+ * How often the assistants read a text, all backends together, the count by
+ * backend in its title, and when they read it last: a text never read has a
+ * description the model does not follow, or answers no question asked.
+ */
+function ReadCells({ reads, format }: { reads: AIRead[] | undefined; format: Intl.NumberFormat }) {
+  const { t } = useTranslation();
+  const stats = readStats(reads);
+  if (stats === undefined)
+    return (
+      <>
+        <td className="px-3 py-1.5 text-ink-muted">—</td>
+        <td className="px-3 py-1.5 text-ink-muted">—</td>
+      </>
+    );
+  const byBackend = (reads ?? [])
+    .map((r) =>
+      t("aiContent.readsBy", { backend: t(`aiContent.backends.${r.backend}`), count: r.count }),
+    )
+    .join("\n");
+  return (
+    <>
+      <td
+        className="px-3 py-1.5 text-right whitespace-nowrap tabular-nums"
+        title={byBackend === "" ? undefined : byBackend}
+      >
+        {format.format(stats.count)}
+      </td>
+      <td className="px-3 py-1.5 whitespace-nowrap">
+        {stats.last === undefined ? (
+          <span className="text-state-warn">
+            <span aria-hidden="true">▲</span> {t("aiContent.neverRead")}
+          </span>
+        ) : (
+          <DateTime value={stats.last} />
+        )}
+      </td>
+    </>
   );
 }
 

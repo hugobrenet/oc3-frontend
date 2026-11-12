@@ -8897,6 +8897,13 @@ export interface components {
      * @enum {string}
      */
     AIBackend: "om3" | "oc3";
+    /** @description the reads of an object by the assistants of a backend, through a GET of its text with that backend */
+    AIRead: {
+      backend: components["schemas"]["AIBackend"];
+      count: number;
+      /** Format: date-time */
+      last_read: string;
+    };
     AIResource: components["schemas"]["AIResourceMeta"] & {
       body: string;
     };
@@ -8930,6 +8937,8 @@ export interface components {
       name: string;
       /** @description the ids of the groups that may read it, empty for everybody; given to an AIManager only */
       publications?: number[];
+      /** @description the reads of the assistants, by backend, none for a backend that never read it; given to an AIManager only */
+      reads?: components["schemas"]["AIRead"][];
       /** @description the bytes of the body */
       size: number;
       title: string;
@@ -8966,6 +8975,8 @@ export interface components {
       name: string;
       /** @description the ids of the groups that may read it, empty for everybody; given to an AIManager only */
       publications?: number[];
+      /** @description the reads of the assistants, by backend, none for a backend that never read it; given to an AIManager only */
+      reads?: components["schemas"]["AIRead"][];
       size: number;
       /** Format: date-time */
       updated: string;

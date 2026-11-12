@@ -5186,6 +5186,8 @@
   "aiContent": {
     "warning": "The assistant reads this text as instructions, for every user it is published to: write it as you would brief an operator, and publish it only to the teams it is meant for.",
     "everybody": "Everybody",
+    "neverRead": "Never read",
+    "readsBy": "{{backend}}: {{count}}",
     "backends": {
       "oc3": "Collector (oc3)",
       "om3": "Clusters (om3)"
@@ -5202,6 +5204,8 @@
       "tools": "Tools",
       "backends": "For",
       "publications": "Published to",
+      "reads": "Reads",
+      "last_read": "Last read",
       "size": "Size",
       "updated": "Updated",
       "body": "Text",

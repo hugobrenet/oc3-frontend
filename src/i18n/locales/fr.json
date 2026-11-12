@@ -5186,6 +5186,8 @@
   "aiContent": {
     "warning": "L'assistant lit ce texte comme des instructions, pour chaque utilisateur à qui il est publié : rédigez-le comme une consigne à un opérateur, et ne le publiez qu'aux équipes concernées.",
     "everybody": "Tout le monde",
+    "neverRead": "Jamais lu",
+    "readsBy": "{{backend}} : {{count}}",
     "backends": {
       "oc3": "Collecteur (oc3)",
       "om3": "Clusters (om3)"
@@ -5202,6 +5204,8 @@
       "tools": "Outils",
       "backends": "Pour",
       "publications": "Publié à",
+      "reads": "Lectures",
+      "last_read": "Dernière lecture",
       "size": "Taille",
       "updated": "Mis à jour",
       "body": "Texte",
