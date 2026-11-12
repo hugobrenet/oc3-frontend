@@ -333,6 +333,8 @@ export interface paths {
      * @description Display a resource of the AI assistant with its body, if the caller may read it
      *     (see GET /ai/resources): a resource that does not exist, is not for the backend
      *     asked, or is not published to the caller answers the same 404.
+     *     A read naming a backend, as the MCP servers make for the agent, counts
+     *     in the reads of the object for that backend, which an AIManager sees.
      */
     get: operations["GetAIResource"];
     /**
@@ -344,6 +346,89 @@ export interface paths {
     post?: never;
     /** @description Delete a resource of the AI assistant. Requires the AIManager or Manager privilege. */
     delete: operations["DeleteAIResource"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/ai/schedules": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description List the schedules of the skills of the AI assistant, by name; of one skill
+     *     with skill. Requires the AIManager or Manager privilege: a schedule runs as
+     *     the technical account of the collector, and its reports tell what that
+     *     account reads.
+     */
+    get: operations["GetAISchedules"];
+    put?: never;
+    /**
+     * @description Schedule a skill of the AI assistant: the scheduler of the collector asks the
+     *     assistant to run it at the time given, on the days given, in the time zone
+     *     given, as the technical account of the collector and without the changes
+     *     that need a confirmation, and sends the answer to the notification channels
+     *     given. Requires the AIManager or Manager privilege.
+     */
+    post: operations["PostAISchedules"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/ai/schedules/{schedule_id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description Display a schedule of a skill of the AI assistant. Requires the AIManager or
+     *     Manager privilege.
+     */
+    get: operations["GetAISchedule"];
+    /**
+     * @description Replace a schedule of a skill of the AI assistant; its next run follows the
+     *     new days, time and time zone. Requires the AIManager or Manager privilege.
+     */
+    put: operations["PutAISchedule"];
+    post?: never;
+    /**
+     * @description Delete a schedule of a skill of the AI assistant, with its runs. Requires the
+     *     AIManager or Manager privilege.
+     */
+    delete: operations["DeleteAISchedule"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/ai/schedules/{schedule_id}/runs": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description List the latest runs of a schedule, the most recent first, with their
+     *     reports. Requires the AIManager or Manager privilege.
+     */
+    get: operations["GetAIScheduleRuns"];
+    put?: never;
+    /**
+     * @description Run a schedule at once, enabled or not: the run is queued, and the scheduler
+     *     of the collector starts it within a minute and sends its report to the
+     *     channels of the schedule. A schedule has one run queued at most. Requires
+     *     the AIManager or Manager privilege.
+     */
+    post: operations["PostAIScheduleRuns"];
+    delete?: never;
     options?: never;
     head?: never;
     patch?: never;
@@ -391,6 +476,8 @@ export interface paths {
      * @description Display a skill of the AI assistant with its body, if the caller may read it
      *     (see GET /ai/skills): a skill that does not exist, is not for the backend
      *     asked, or is not published to the caller answers the same 404.
+     *     A read naming a backend, as the MCP servers make for the agent, counts
+     *     in the reads of the object for that backend, which an AIManager sees.
      */
     get: operations["GetAISkill"];
     /**
@@ -6061,7 +6148,11 @@ export interface paths {
      */
     put: operations["PutNotificationChannel"];
     post?: never;
-    /** @description Delete a channel and its subscriptions. For the Managers and the AlertsManagers. */
+    /**
+     * @description Delete a channel and its subscriptions. For the Managers and the AlertsManagers.
+     *     A channel a schedule of the AI assistant skills sends to is not deleted (409):
+     *     remove it from the schedules first.
+     */
     delete: operations["DeleteNotificationChannel"];
     options?: never;
     head?: never;
@@ -8945,6 +9036,114 @@ export interface components {
       /** Format: date-time */
       updated: string;
     };
+    AISchedule: {
+      at: string;
+      channels: number[];
+      /** Format: date-time */
+      created: string;
+      days: components["schemas"]["AIScheduleDay"][];
+      enabled: boolean;
+      /** Format: int64 */
+      id: number;
+      name: string;
+      /**
+       * Format: date-time
+       * @description when it runs next, absent when disabled
+       */
+      next_run?: string;
+      prompt: string;
+      send_failures: boolean;
+      skill: string;
+      timezone: string;
+      /** Format: date-time */
+      updated: string;
+      updated_by: string;
+    };
+    /** @enum {string} */
+    AIScheduleDay: "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
+    AIScheduleInput: {
+      /**
+       * @description the time it runs at, HH:MM
+       * @example 08:00
+       */
+      at: string;
+      /** @description the ids of the notification channels the report goes to, 1 to 10 */
+      channels: number[];
+      /** @description the days of the week it runs on */
+      days: components["schemas"]["AIScheduleDay"][];
+      /** @description true by default; a disabled schedule only runs when asked to */
+      enabled?: boolean;
+      /** @description the name of the schedule, unique, of lowercase letters, digits and dashes, at most 64 */
+      name: string;
+      /** @description what to ask the assistant with the skill, at most 4000 characters; the skill alone when empty */
+      prompt?: string;
+      /** @description send a message to the channels when a run gives no report, true by default */
+      send_failures?: boolean;
+      /** @description the skill to run, for the oc3 backend */
+      skill: string;
+      /** @description the time zone of the time, such as Europe/Paris */
+      timezone: string;
+    };
+    AIScheduleListResponse: {
+      data: components["schemas"]["AISchedule"][];
+    };
+    /** @description A schedule of an AI assistant skill, as a notification channel names it. */
+    AIScheduleRef: {
+      enabled: boolean;
+      /** Format: int64 */
+      id: number;
+      name: string;
+      skill: string;
+    };
+    AIScheduleRun: {
+      /** @description the calls of tools the run made, the first 256, by identifiers only */
+      calls?: components["schemas"]["AIScheduleRunCall"][];
+      /** Format: date-time */
+      ended?: string;
+      /** @description why the run failed, or which channels did not take the report */
+      error: string;
+      /** Format: int64 */
+      id: number;
+      /** Format: date-time */
+      queued: string;
+      /** @description who asked for the run, empty for a scheduled one */
+      queued_by: string;
+      /** @description the changes the assistant asked to make, not made */
+      refused_actions: number;
+      /** @description the answer of the assistant, in Markdown */
+      report: string;
+      /** @description the X-Request-ID the agent gave the run, which its audit carries with the run ID oc3-schedule-run-<id> */
+      request_id?: string;
+      /** Format: int64 */
+      schedule_id: number;
+      /** Format: date-time */
+      started?: string;
+      /**
+       * @description queued, running, then sent (the report reached a channel at least),
+       *     unsent (no channel took it) or failed (the assistant gave no report)
+       * @enum {string}
+       */
+      state: "queued" | "running" | "sent" | "failed" | "unsent";
+      /** @description the tools the assistant called */
+      tool_calls: number;
+      /** @enum {string} */
+      trigger: "schedule" | "manual";
+    };
+    AIScheduleRunCall: {
+      /** Format: int64 */
+      duration_ms: number;
+      /** @description the call failed, or did not run */
+      error: boolean;
+      name: string;
+      /**
+       * @description why the call did not run, unoffered (such as a write) or needs_confirmation
+       * @enum {string}
+       */
+      not_run?: "unoffered" | "needs_confirmation";
+    };
+    AIScheduleRunListResponse: {
+      data: components["schemas"]["AIScheduleRun"][];
+    };
     AISkill: components["schemas"]["AISkillMeta"] & {
       body: string;
     };
@@ -9196,6 +9395,7 @@ export interface components {
     };
     AssistantConversationEnvelope: {
       conversation: components["schemas"]["AssistantConversation"];
+      /** @description The action the conversation waits a decision on. Only the conversation read returns it. */
       pending_confirmation?: components["schemas"]["AssistantConfirmation"];
     };
     AssistantConversationList: {
@@ -9269,6 +9469,7 @@ export interface components {
     AssistantMessage: {
       /** Format: date-time */
       created_at: string;
+      /** @description On an assistant message, the feedback of the user on its turn, if any. */
       feedback?: components["schemas"]["AssistantFeedback"];
       id: string;
       /** @enum {string} */
@@ -11053,6 +11254,18 @@ export interface components {
        */
       log_impersonator?: string;
       log_level?: string;
+      /**
+       * @description The client the request came through, as it declared it with the
+       *     X-OpenSVC-Origin header: assistant for the AI assistant, through
+       *     the MCP of the collector and its agent, mcp for another client of
+       *     that MCP; empty for the web interface, the API and the collector.
+       */
+      log_origin?: string;
+      /**
+       * @description The X-Request-ID of the request, given with log_origin: the agent
+       *     and the MCP write it on their audit lines.
+       */
+      log_request_id?: string;
       log_user?: string;
       node_id?: string;
       "nodes.nodename"?: string | null;
@@ -11352,6 +11565,12 @@ export interface components {
     NotificationChannel: {
       /** @description The mail addresses of an email channel. */
       addresses: string[];
+      /**
+       * @description The schedules of the AI assistant skills sending their reports to the
+       *     channel, by name: their names and skills only. A channel they use is not
+       *     deleted.
+       */
+      ai_schedules: components["schemas"]["AIScheduleRef"][];
       created: string;
       description: string;
       enabled: boolean;
@@ -13002,6 +13221,13 @@ export interface components {
         "application/json": components["schemas"]["Problem"];
       };
     };
+    /** @description No Content */
+    204: {
+      headers: {
+        [name: string]: unknown;
+      };
+      content?: never;
+    };
     /** @description Bad Request */
     400: {
       headers: {
@@ -13031,6 +13257,15 @@ export interface components {
     };
     /** @description Not Found */
     404: {
+      headers: {
+        [name: string]: unknown;
+      };
+      content: {
+        "application/json": components["schemas"]["Problem"];
+      };
+    };
+    /** @description Request Timeout */
+    408: {
       headers: {
         [name: string]: unknown;
       };
@@ -13098,8 +13333,10 @@ export interface components {
     };
   };
   parameters: {
+    ObjectPathHeader: string;
     /** @description the name of the resource or of the skill */
     inPathAIName: string;
+    inPathAIScheduleId: number;
     /** @description The name of the moduleset or ruleset. */
     inPathComplianceAgentName: string;
     /** @description ID of the moduleset */
@@ -13169,6 +13406,7 @@ export interface components {
      *     narrow the selection.
      */
     inQueryStats: string;
+    inQuerySync: boolean;
   };
   requestBodies: never;
   headers: never;
@@ -13869,6 +14107,200 @@ export interface operations {
       401: components["responses"]["401"];
       403: components["responses"]["403"];
       404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  GetAISchedules: {
+    parameters: {
+      query?: {
+        /** @description the skill whose schedules to list */
+        skill?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AIScheduleListResponse"];
+        };
+      };
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      500: components["responses"]["500"];
+    };
+  };
+  PostAISchedules: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["AIScheduleInput"];
+      };
+    };
+    responses: {
+      /** @description Created */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AISchedule"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      409: components["responses"]["409"];
+      500: components["responses"]["500"];
+    };
+  };
+  GetAISchedule: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        schedule_id: components["parameters"]["inPathAIScheduleId"];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AISchedule"];
+        };
+      };
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  PutAISchedule: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        schedule_id: components["parameters"]["inPathAIScheduleId"];
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["AIScheduleInput"];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AISchedule"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      409: components["responses"]["409"];
+      500: components["responses"]["500"];
+    };
+  };
+  DeleteAISchedule: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        schedule_id: components["parameters"]["inPathAIScheduleId"];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Deleted */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  GetAIScheduleRuns: {
+    parameters: {
+      query?: {
+        /** @description the most runs to list, 20 by default, 100 at most */
+        limit?: number;
+      };
+      header?: never;
+      path: {
+        schedule_id: components["parameters"]["inPathAIScheduleId"];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AIScheduleRunListResponse"];
+        };
+      };
+      400: components["responses"]["400"];
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      500: components["responses"]["500"];
+    };
+  };
+  PostAIScheduleRuns: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        schedule_id: components["parameters"]["inPathAIScheduleId"];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Queued */
+      202: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AIScheduleRun"];
+        };
+      };
+      401: components["responses"]["401"];
+      403: components["responses"]["403"];
+      404: components["responses"]["404"];
+      409: components["responses"]["409"];
       500: components["responses"]["500"];
     };
   };
@@ -31203,6 +31635,7 @@ export interface operations {
       401: components["responses"]["401"];
       403: components["responses"]["403"];
       404: components["responses"]["404"];
+      409: components["responses"]["409"];
       500: components["responses"]["500"];
     };
   };

@@ -5271,6 +5271,71 @@
         "tooManyTools": "metadata.opensvc/tools nomme plus de {{max}} outils.",
         "badTool": "metadata.opensvc/tools : « {{tool}} » n'est pas un nom d'outil."
       }
+    },
+    "schedules": {
+      "title": "Planifications",
+      "intro": "Le collecteur demande à l'assistant d'exécuter ce skill aux heures dites, avec son compte technique et sans aucune modification, puis envoie la réponse aux canaux de notification choisis.",
+      "add": "Ajouter une planification",
+      "nameHint": "Lettres minuscules, chiffres et tirets ; unique parmi les planifications.",
+      "prompt": "Consigne",
+      "promptHint": "Ce que l'on demande en plus du skill, par exemple le périmètre ou la langue ; vide, le skill seul.",
+      "days": "Jours",
+      "at": "Heure",
+      "timezone": "Fuseau horaire",
+      "channels": "Canaux de notification",
+      "channelsUnreadable": "Vous ne pouvez pas lire les canaux (privilège AlertsManager) : seuls leurs numéros sont affichés.",
+      "noChannel": "Aucun canal : créez-en un dans Notifications.",
+      "sendFailures": "Prévenir les canaux quand une exécution échoue",
+      "enabled": "Active",
+      "on": "Active",
+      "off": "Inactive",
+      "everyDay": "Tous les jours",
+      "weekdays": "Du lundi au vendredi",
+      "when": "{{days}} à {{at}} ({{timezone}})",
+      "to": "Envoyé à : {{channels}}",
+      "nextRun": "Prochaine exécution :",
+      "edit": "Modifier",
+      "runNow": "Exécuter maintenant",
+      "queued": "Exécution demandée : elle démarre dans la minute.",
+      "history": "Historique",
+      "deleteQuestion": "Supprimer la planification {{name}} et son historique ?",
+      "noRun": "Aucune exécution.",
+      "report": "Rapport",
+      "states": {
+        "queued": "En attente",
+        "running": "En cours",
+        "sent": "Envoyé",
+        "unsent": "Non envoyé",
+        "failed": "Échec"
+      },
+      "triggers": {
+        "schedule": "planifiée",
+        "manual": "demandée par {{by}}"
+      },
+      "toolCalls_one": "{{count}} outil appelé",
+      "toolCalls_other": "{{count}} outils appelés",
+      "refused_one": "{{count}} modification demandée, non faite",
+      "refused_other": "{{count}} modifications demandées, non faites",
+      "problems": {
+        "name": "Le nom : 1 à 64 lettres minuscules, chiffres et tirets, sans tiret au début ni à la fin.",
+        "prompt": "La consigne dépasse {{max}} caractères.",
+        "days": "Choisissez au moins un jour.",
+        "at": "L'heure : HH:MM.",
+        "timezone": "Le fuseau horaire n'est pas connu, par exemple Europe/Paris.",
+        "channelsNone": "Choisissez au moins un canal.",
+        "channelsMany": "{{max}} canaux au plus."
+      },
+      "timezoneHint": "Un fuseau IANA, comme Europe/Paris ; le serveur le vérifie, certains alias comme US/Eastern peuvent être refusés.",
+      "calls_one": "{{count}} appel d'outil",
+      "calls_other": "{{count}} appels d'outils",
+      "callMs": "{{ms}} ms",
+      "callFailed": "échec, {{ms}} ms",
+      "notRun": {
+        "unoffered": "non exécuté : écriture non proposée en planification",
+        "needs_confirmation": "non exécuté : demande une confirmation"
+      },
+      "requestId": "Identifiant de requête de l'agent :",
+      "restricted": "Ce skill n'est publié qu'à certains groupes : les exécutions échoueront si le compte technique n'est membre d'aucun d'eux."
     }
   },
   "compModules": {
@@ -5600,7 +5665,9 @@
       "urlSet": "URL renseignée",
       "signed": "signé",
       "noUrl": "Pas d'URL",
-      "noSubscription": "Aucun abonnement : rien n'est envoyé"
+      "noSubscription": "Aucun abonnement : rien n'est envoyé",
+      "aiSchedule": "Planification IA",
+      "aiScheduleSkill": "skill {{skill}}"
     },
     "subscriptions": {
       "title": "Abonnements",

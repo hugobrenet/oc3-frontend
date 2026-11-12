@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { ObjectIcon } from "@/components/opensvc/ObjectIcon";
@@ -180,13 +181,38 @@ export function NotificationsPage() {
                         )}
                       </td>
                       <td className={TD}>
-                        {subs.length === 0 ? (
+                        {subs.length === 0 && c.ai_schedules.length === 0 ? (
                           <span className="text-state-warn">
                             <span aria-hidden="true">▲</span>{" "}
                             {t("notifications.channels.noSubscription")}
                           </span>
                         ) : (
-                          subs.map((s) => s.group_role).join(", ")
+                          <>
+                            {subs.length > 0 && (
+                              <span className="block">
+                                {subs.map((s) => s.group_role).join(", ")}
+                              </span>
+                            )}
+                            {/* The schedules of the AI skills sending their reports here. */}
+                            {c.ai_schedules.map((s) => (
+                              <span key={s.id} className="block">
+                                <span className="text-ink-muted">
+                                  {t("notifications.channels.aiSchedule")}
+                                </span>{" "}
+                                <Link
+                                  to="/ai-skills"
+                                  search={{ sel: s.skill }}
+                                  className="font-mono text-accent hover:underline"
+                                >
+                                  {s.name}
+                                </Link>{" "}
+                                <span className="text-ink-muted">
+                                  ({t("notifications.channels.aiScheduleSkill", { skill: s.skill })}
+                                  {!s.enabled && `, ${t("notifications.disabled")}`})
+                                </span>
+                              </span>
+                            ))}
+                          </>
                         )}
                       </td>
                       <td className={`${TD} whitespace-nowrap`}>

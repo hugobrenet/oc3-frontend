@@ -44,6 +44,7 @@ import {
   Problems,
   PublicationsField,
 } from "./AIContentFields";
+import { AISchedulesSection } from "./AISchedulesSection";
 
 /**
  * The frame of both panels: the slide-over, the form, its checks, saving and
@@ -64,6 +65,7 @@ function ContentPanel<D>({
   onClose,
   onSaved,
   children,
+  after,
 }: {
   kind: AIContentKind;
   open: boolean;
@@ -78,6 +80,8 @@ function ContentPanel<D>({
   onClose: () => void;
   onSaved: (name: string) => void;
   children: ReactNode;
+  /** Shown under the form, outside of it, for a text saved already. */
+  after?: ReactNode;
 }) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -160,6 +164,8 @@ function ContentPanel<D>({
               )}
             </div>
           </form>
+
+          {editing && after}
 
           {editing && (
             <div className="mt-6 border-t border-line pt-4">
@@ -420,6 +426,15 @@ export function AISkillPanel({
       save={(d) => saveAISkill(name, skillInputOf(d))}
       onClose={onClose}
       onSaved={onSaved}
+      after={
+        // The collector runs the schedules on the assistant of its own backend.
+        name !== undefined && skill.data?.backends.includes("oc3") === true ? (
+          <AISchedulesSection
+            skill={name}
+            restricted={(skill.data.publications?.length ?? 0) > 0}
+          />
+        ) : undefined
+      }
     >
       <fieldset className={FIELDSET}>
         <legend className="px-1 font-medium">{t("aiContent.form.general")}</legend>

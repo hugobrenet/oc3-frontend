@@ -5271,6 +5271,71 @@
         "tooManyTools": "metadata.opensvc/tools names more than {{max}} tools.",
         "badTool": "metadata.opensvc/tools: “{{tool}}” is not a tool name."
       }
+    },
+    "schedules": {
+      "title": "Schedules",
+      "intro": "The collector asks the assistant to run this skill at the times set, as its technical account and without any change, and sends the answer to the notification channels chosen.",
+      "add": "Add a schedule",
+      "nameHint": "Lowercase letters, digits and dashes; unique among the schedules.",
+      "prompt": "Prompt",
+      "promptHint": "What to ask besides the skill, such as the scope or the language; empty, the skill alone.",
+      "days": "Days",
+      "at": "Time",
+      "timezone": "Time zone",
+      "channels": "Notification channels",
+      "channelsUnreadable": "You may not read the channels (AlertsManager privilege): only their numbers are shown.",
+      "noChannel": "No channel: create one in Notifications.",
+      "sendFailures": "Tell the channels when a run fails",
+      "enabled": "Enabled",
+      "on": "Enabled",
+      "off": "Disabled",
+      "everyDay": "Every day",
+      "weekdays": "Monday to Friday",
+      "when": "{{days}} at {{at}} ({{timezone}})",
+      "to": "Sent to: {{channels}}",
+      "nextRun": "Next run:",
+      "edit": "Edit",
+      "runNow": "Run now",
+      "queued": "Run asked: it starts within a minute.",
+      "history": "History",
+      "deleteQuestion": "Delete the schedule {{name}} and its history?",
+      "noRun": "No run.",
+      "report": "Report",
+      "states": {
+        "queued": "Queued",
+        "running": "Running",
+        "sent": "Sent",
+        "unsent": "Not sent",
+        "failed": "Failed"
+      },
+      "triggers": {
+        "schedule": "scheduled",
+        "manual": "asked by {{by}}"
+      },
+      "toolCalls_one": "{{count}} tool call",
+      "toolCalls_other": "{{count}} tool calls",
+      "refused_one": "{{count}} change asked, not made",
+      "refused_other": "{{count}} changes asked, not made",
+      "problems": {
+        "name": "The name: 1 to 64 lowercase letters, digits and dashes, no dash first or last.",
+        "prompt": "The prompt is longer than {{max}} characters.",
+        "days": "Choose a day at least.",
+        "at": "The time: HH:MM.",
+        "timezone": "The time zone is unknown, such as Europe/Paris.",
+        "channelsNone": "Choose a channel at least.",
+        "channelsMany": "{{max}} channels at most."
+      },
+      "timezoneHint": "An IANA zone, such as Europe/Paris; the server checks it, some aliases such as US/Eastern may be refused.",
+      "calls_one": "{{count}} tool call",
+      "calls_other": "{{count}} tool calls",
+      "callMs": "{{ms}} ms",
+      "callFailed": "failed, {{ms}} ms",
+      "notRun": {
+        "unoffered": "not run: a write, not offered in a schedule",
+        "needs_confirmation": "not run: needs a confirmation"
+      },
+      "requestId": "Request ID of the agent:",
+      "restricted": "This skill is published to some groups only: the runs fail unless the technical account is a member of one of them."
     }
   },
   "compModules": {
@@ -5600,7 +5665,9 @@
       "urlSet": "URL set",
       "signed": "signed",
       "noUrl": "No URL",
-      "noSubscription": "No subscription: nothing is sent"
+      "noSubscription": "No subscription: nothing is sent",
+      "aiSchedule": "AI schedule",
+      "aiScheduleSkill": "skill {{skill}}"
     },
     "subscriptions": {
       "title": "Subscriptions",
