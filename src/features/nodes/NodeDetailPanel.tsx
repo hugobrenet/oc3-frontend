@@ -21,6 +21,7 @@ import {
 import { RelatedTabsPanel } from "@/components/opensvc/RelatedTabsPanel";
 import { useNodeTags } from "./related/queries";
 import { problemText } from "@/lib/api/problem";
+import { AskAssistantLink } from "@/features/assistant/AskAssistantLink";
 
 /**
  * Attributes a user may set, because the agent's inventory push does not write them.
@@ -356,6 +357,9 @@ export function NodeDetailPanel({
             />
           )}
           <NodeWebappLink node={node} />
+          {node?.nodename !== undefined && (
+            <AskAssistantLink prompt={t("assistant.askAbout.node", { node: node.nodename })} />
+          )}
         </div>
       }
     >

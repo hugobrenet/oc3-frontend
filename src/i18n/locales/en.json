@@ -4583,6 +4583,14 @@
         "429": "The assistant is busy. Try again later.",
         "503": "The assistant is temporarily unavailable."
       }
+    },
+    "ask": "Analyze with the assistant",
+    "askAbout": {
+      "alert": "Analyze the alert “{{type}}” on {{object}}: its likely cause and what to do about it.",
+      "alert_instance": "Analyze the alert “{{type}}” on {{object}} ({{instance}}): its likely cause and what to do about it.",
+      "node": "Review the health of the node {{node}}: its alerts, its checks out of bounds and its latest failed actions.",
+      "service": "Review the service {{service}}: its availability, its alerts and its latest failed actions.",
+      "failedAction": "Explain why the action {{action}} of the service {{service}} failed on {{node}} (action {{id}}), and suggest a fix."
     }
   },
   "checks": {

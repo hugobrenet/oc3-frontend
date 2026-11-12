@@ -8,6 +8,7 @@ import { DetailPanel } from "@/components/opensvc/DetailPanel";
 import { ACTION_GROUPS } from "./action-groups";
 import { ActionAckMenu } from "./ActionAckMenu";
 import { actionName } from "./action-name";
+import { AskAssistantLink } from "@/features/assistant/AskAssistantLink";
 
 /** The props the panel shows, and those the log lines are found with. */
 const PROPS = [
@@ -83,7 +84,17 @@ export function ServiceActionDetailPanel({
         action !== undefined &&
         action !== null &&
         action.status === "err" ? (
-          <ActionAckMenu actions={action.ack === 1 ? [] : [{ id: actionId, name: title }]} />
+          <div className="flex items-center gap-2">
+            <ActionAckMenu actions={action.ack === 1 ? [] : [{ id: actionId, name: title }]} />
+            <AskAssistantLink
+              prompt={t("assistant.askAbout.failedAction", {
+                action: action.action ?? "",
+                service: action["services.svcname"] ?? action.svc_id ?? "",
+                node: action["nodes.nodename"] ?? action.node_id ?? "",
+                id: actionId,
+              })}
+            />
+          </div>
         ) : undefined
       }
       after={

@@ -1,24 +1,12 @@
-import { useQuery } from "@tanstack/react-query";
+import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { ObjectIcon } from "@/components/opensvc/ObjectIcon";
 import { SparklesIcon } from "@/components/ui/icons";
-import { api } from "@/lib/api/client";
 import { useCredentials } from "@/lib/api/auth";
 import { useImpersonation } from "@/lib/api/impersonation";
 import { Assistant } from "./Assistant";
 import { assistantClient } from "./assistant-client";
-
-/** Whether the assistant is configured, and whether the user can use it now: oc3 answers it alone. */
-function useAssistantStatus() {
-  return useQuery({
-    queryKey: ["assistant", "status"],
-    queryFn: async () => {
-      const { data, error } = await api.GET("/assistant/status");
-      if (error !== undefined) throw new Error("status");
-      return data;
-    },
-  });
-}
+import { useAssistantStatus } from "./assistant-status";
 
 /**
  * The page of the AI assistant. oc3 relays every request to the agent with the
@@ -34,6 +22,13 @@ export function AssistantPage() {
   // impersonation, starts the view afresh, its stream stopped and its queue lost.
   const user = useCredentials()?.user ?? "";
   const impersonated = useImpersonation()?.userId ?? null;
+  // A question another page opened the assistant with (AskAssistantLink): put in
+  // the message box of a new conversation, then taken out of the address, so that
+  // a reload or a return to the page does not put it there again.
+  // Read without naming the route, the page rendered under any.
+  const search: { prompt?: unknown } = useSearch({ strict: false });
+  const prompt = typeof search.prompt === "string" ? search.prompt : undefined;
+  const navigate = useNavigate();
 
   return (
     <section className="flex h-[calc(100dvh-2.75rem-2rem)] flex-col gap-3">
@@ -48,7 +43,14 @@ export function AssistantPage() {
       ) : !available ? (
         <Unavailable reason={status.data?.reason ?? "disabled"} />
       ) : (
-        <Assistant key={JSON.stringify([user, impersonated])} client={assistantClient} />
+        <Assistant
+          key={JSON.stringify([user, impersonated])}
+          client={assistantClient}
+          initialPrompt={prompt}
+          onPromptTaken={() => {
+            void navigate({ to: ".", search: {}, replace: true });
+          }}
+        />
       )}
     </section>
   );

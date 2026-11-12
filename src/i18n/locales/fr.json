@@ -4583,6 +4583,14 @@
         "429": "L'assistant est occupé. Réessayez plus tard.",
         "503": "L'assistant est momentanément indisponible."
       }
+    },
+    "ask": "Analyser avec l'assistant",
+    "askAbout": {
+      "alert": "Analyse l'alerte « {{type}} » sur {{object}} : sa cause probable et les actions à mener.",
+      "alert_instance": "Analyse l'alerte « {{type}} » sur {{object}} ({{instance}}) : sa cause probable et les actions à mener.",
+      "node": "Fais le bilan de santé du node {{node}} : ses alertes, ses checks hors seuils et ses dernières actions en échec.",
+      "service": "Fais le point sur le service {{service}} : sa disponibilité, ses alertes et ses dernières actions en échec.",
+      "failedAction": "Explique l'échec de l'action {{action}} du service {{service}} sur {{node}} (action {{id}}), et propose une correction."
     }
   },
   "checks": {

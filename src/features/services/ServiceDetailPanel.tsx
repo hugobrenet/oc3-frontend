@@ -23,6 +23,7 @@ import { ServiceWebappLink } from "@/components/opensvc/AgentWebappLink";
 import { useServiceTags } from "./related/queries";
 import { SERVICE_RELATED_TABS, SERVICE_TAB_GROUPS } from "./related/service-related";
 import { formatDateTime } from "@/lib/format";
+import { AskAssistantLink } from "@/features/assistant/AskAssistantLink";
 
 type ServiceRow = components["schemas"]["ServiceRow"];
 
@@ -240,6 +241,11 @@ export function ServiceDetailPanel({
             nodes={service?.svc_nodes}
             clusterId={service?.cluster_id}
           />
+          {service?.svcname !== undefined && (
+            <AskAssistantLink
+              prompt={t("assistant.askAbout.service", { service: service.svcname })}
+            />
+          )}
         </div>
       }
     >

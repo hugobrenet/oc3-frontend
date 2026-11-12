@@ -9,6 +9,7 @@ import { formatDateTime } from "@/lib/format";
 import { AlertTimeline } from "./AlertTimeline";
 import { AlertActionsMenu } from "./AlertActionsMenu";
 import { alertName } from "./alert-name";
+import { AskAssistantLink } from "@/features/assistant/AskAssistantLink";
 
 type AlertRow = components["schemas"]["AlertRow"];
 
@@ -105,13 +106,23 @@ export function AlertDetailPanel({
       onClose={onClose}
       titleActions={
         alertId !== undefined && alert !== null && alert !== undefined ? (
-          <AlertActionsMenu
-            alerts={[{ id: alertId, name: alertName(alert) }]}
-            onDeleted={() => {
-              onDeleted?.(alertId);
-              onClose();
-            }}
-          />
+          <div className="flex items-center gap-2">
+            <AlertActionsMenu
+              alerts={[{ id: alertId, name: alertName(alert) }]}
+              onDeleted={() => {
+                onDeleted?.(alertId);
+                onClose();
+              }}
+            />
+            <AskAssistantLink
+              prompt={t("assistant.askAbout.alert", {
+                type: alert.dash_type ?? "",
+                object: alert["services.svcname"] ?? alert["nodes.nodename"] ?? "",
+                instance: alert.dash_instance ?? "",
+                context: alert.dash_instance ? "instance" : undefined,
+              })}
+            />
+          </div>
         ) : undefined
       }
       groups={GROUPS}
