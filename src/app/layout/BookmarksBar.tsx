@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { useLocation, useSearch } from "@tanstack/react-router";
 import { TrailBar } from "@/components/ui/TrailBar";
 import { currentIndex, parseTrail } from "@/lib/peek-trail";
@@ -38,8 +39,24 @@ export function BookmarksBar() {
       : rowKind !== undefined && typeof search.sel === "string" && search.sel !== ""
         ? `${rowKind}:${search.sel}`
         : undefined;
+  // Its height, for what floats at the foot of the window, such as the dock of
+  // the assistant, to stand over it: none while there is no bookmark.
+  const bar = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const element = bar.current;
+    const root = document.documentElement;
+    if (element === null || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(() => {
+      root.style.setProperty("--bookmarks-bar-height", `${String(element.offsetHeight)}px`);
+    });
+    observer.observe(element);
+    return () => {
+      observer.disconnect();
+      root.style.removeProperty("--bookmarks-bar-height");
+    };
+  }, []);
   return (
-    <div className="sticky bottom-0">
+    <div ref={bar} className="sticky bottom-0">
       <TrailBar current={current} onClear={bookmarks.clear} />
     </div>
   );

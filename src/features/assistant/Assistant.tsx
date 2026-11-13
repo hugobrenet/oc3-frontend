@@ -1,31 +1,21 @@
-import {
-  useEffect,
-  useId,
-  useLayoutEffect,
-  useRef,
-  useState,
-  type FormEvent,
-  type KeyboardEvent,
-  type ReactNode,
-} from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Markdown } from "@/components/ui/Markdown";
 import { Modal } from "@/components/ui/Modal";
 import { SearchBox } from "@/components/ui/SearchBox";
 import {
-  ClockIcon,
   InfoIcon,
   PencilIcon,
   PlusIcon,
   PuzzleIcon,
-  SendIcon,
   SidebarIcon,
   SparklesIcon,
   TrashIcon,
 } from "@/components/ui/icons";
 import { dateTimeFormat } from "@/lib/date-format";
 import { AnswerFeedback } from "./AnswerFeedback";
-import { MAX_PROMPT_BYTES, type AssistantClient, type Conversation } from "./assistant-client";
+import { type AssistantClient, type Conversation } from "./assistant-client";
+import { Composer } from "./Composer";
 import { ConfirmationCard } from "./ConfirmationCard";
 import { groupConversations, useConversationsOpen } from "./conversations";
 import { errorText } from "./error-text";
@@ -33,15 +23,14 @@ import { PromptTips } from "./PromptTips";
 import { paramOf } from "./steps";
 import { AnswerFooter, AnswerSteps, TARGET_ARGUMENTS, TargetBadge } from "./Steps";
 import { ToolsDialog } from "./ToolsDialog";
-import { useAssistantChat, type AssistantChat, type ChatMessage } from "./use-assistant-chat";
+import { AssistantChatProvider } from "./assistant-chat-context";
+import { useSharedAssistantChat } from "./assistant-chat";
+import { type AssistantChat, type ChatMessage } from "./use-assistant-chat";
 import { codeSpans, useTargets } from "./use-targets";
 import { useToolDocs } from "./use-tool-docs";
 
 /** The questions an empty conversation suggests, keys of `assistant.suggestions`. */
 const SUGGESTIONS = ["servicesDown", "criticalAlerts", "silentNodes", "compliance"] as const;
-
-/** The composer grows with its text up to this many lines, then scrolls. */
-const MAX_LINES = 8;
 
 const CONVERSATIONS_PANEL = "assistant-conversations-panel";
 const PANEL =
@@ -53,7 +42,7 @@ const BUTTON =
 const SMALL_BUTTON =
   "h-7 rounded-(--radius-control) border border-line px-2 text-ink hover:bg-surface-sunken disabled:opacity-60";
 
-type Dialog = "" | "replace" | "delete";
+type Dialog = "" | "delete";
 
 /**
  * The conversation with the AI assistant: the user's conversations in a column,
@@ -67,30 +56,45 @@ type Dialog = "" | "replace" | "delete";
  * waits on a card with its exact arguments, which the user approves, edits when
  * the tool allows it, or rejects.
  */
-export function Assistant({
-  client,
-  initialPrompt,
-  onPromptTaken,
-}: {
+export function Assistant(props: AssistantProps) {
+  // The chat the application holds, so that a turn goes on while the user looks
+  // at another page; without one, as in a test, a chat of this page alone.
+  if (useSharedAssistantChat() === null)
+    return (
+      <AssistantChatProvider client={props.client}>
+        <AssistantView {...props} />
+      </AssistantChatProvider>
+    );
+  return <AssistantView {...props} />;
+}
+
+interface AssistantProps {
   client: AssistantClient;
   /** A question to put in the message box of a new conversation, not sent. */
   initialPrompt?: string;
-  /** Called once the question is in the message box. */
+  /** Called once the question is asked of the chat. */
   onPromptTaken?: () => void;
-}) {
+}
+
+function AssistantView({ client, initialPrompt, onPromptTaken }: AssistantProps) {
   const { t } = useTranslation();
-  const chat = useAssistantChat(client);
+  const shared = useSharedAssistantChat();
+  if (shared === null) throw new Error("AssistantView needs an AssistantChatProvider");
+  const chat = shared.chat;
+  // The page on display: the turns that end now are read, not left unread.
+  const { attach } = shared;
+  useEffect(() => attach(), [attach]);
   const toolDocs = useToolDocs(client, chat.confirmation !== null);
   const panel = useConversationsOpen();
   const [search, setSearch] = useState("");
-  const [draft, setDraft] = useState("");
+  const { setDraft } = shared;
   const [dialog, setDialog] = useState<Dialog>("");
+  // The dialog of the composer replacing the message queued is open.
+  const [replacing, setReplacing] = useState(false);
   const [tipsOpen, setTipsOpen] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
   // The conversation the delete dialog asks about.
   const [deleting, setDeleting] = useState<Conversation | null>(null);
-  // The text that would replace the message queued, while the dialog asks.
-  const [replacement, setReplacement] = useState("");
   // The title edited in place of the heading, while renaming; set once saved or
   // canceled, so that the blur that follows does nothing more.
   const [title, setTitle] = useState("");
@@ -104,18 +108,9 @@ export function Assistant({
   } | null>(null);
   const composer = useRef<HTMLTextAreaElement>(null);
   const shownConversation = useRef<string | null>(null);
-  const composerId = useId();
-  const hintId = useId();
 
   const busy = chat.pending !== "";
-  const waiting = chat.confirmation !== null;
-  const promptTooLarge = new TextEncoder().encode(draft).length > MAX_PROMPT_BYTES;
-  // A run resumed after an approval is the rest of its turn: the action runs,
-  // then the model goes on, at times for long. The message box closes for the
-  // short operations only: loading, resuming, renaming, deleting, previewing.
   const answering = chat.pending === "turn" || chat.pending === "confirming";
-  const queueing = answering || (waiting && !busy);
-  const composerClosed = !chat.historyReady || (busy && !answering);
   const titleOf = (conversation: Conversation) =>
     conversation.title !== "" ? conversation.title : t("assistant.untitled");
   // The search runs on the titles of the conversations loaded: the agent has none.
@@ -128,12 +123,8 @@ export function Assistant({
         ),
   );
 
-  // Another conversation on display: the message box starts from the message
-  // queued, given back, or empty. The conversation the first turn creates is the
-  // one on display: what the user types meanwhile stays. One being resumed passes
-  // through none, its history not read: only the one it goes to counts. At the
-  // commit, before any click on what it shows, so that a dialog opened right
-  // after is not closed by it.
+  // Another conversation on display: the dialogs and the renaming of the former
+  // one end. The message box is the provider's, which starts it again.
   const conversationKey = chat.conversation?.id ?? "";
   useLayoutEffect(() => {
     if (!chat.historyReady) return;
@@ -141,36 +132,25 @@ export function Assistant({
     if (previous === conversationKey) return;
     shownConversation.current = conversationKey;
     if (chat.pending === "turn" && previous === "") return;
-    setDraft(chat.takeQueued() ?? "");
     setDialog("");
     setTitle("");
     setRenaming(false);
-    // The conversation shown only: the queue is read when it changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversationKey, chat.pending, chat.historyReady]);
 
-  // A question another page opened the assistant with, read once: the assistant
-  // opens on no conversation, so the question goes in the message box of a new
-  // one, once ready and after the effect above emptied the box. It is put there,
-  // never sent: the user reads it first. Read when the assistant mounts only: the
-  // links that give one are on other pages; a link in this page would need an
-  // effect on initialPrompt.
-  const pendingPrompt = useRef(initialPrompt ?? "");
+  // A question another page opened the assistant with, asked of the chat once,
+  // when the view mounts: the composer puts it in the message box of a new
+  // conversation, or the chat drops it, and says so, when a turn runs or an
+  // action waits. The links that give one are on other pages; a link in this
+  // page would need an effect on initialPrompt.
+  const asked = useRef(false);
   useEffect(() => {
-    if (pendingPrompt.current === "" || !chat.historyReady) return;
-    setDraft(pendingPrompt.current);
-    pendingPrompt.current = "";
-    composer.current?.focus();
+    if (asked.current || initialPrompt === undefined || initialPrompt === "") return;
+    asked.current = true;
+    shared.ask(initialPrompt);
     onPromptTaken?.();
-    // Once the history is ready only.
+    // Once, when the view mounts.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chat.historyReady]);
-
-  // The message the dialog would replace went meanwhile: there is nothing left
-  // to replace, and what the user typed stays in the box.
-  useEffect(() => {
-    if (dialog === "replace" && chat.queued === null) setDialog("");
-  }, [dialog, chat.queued]);
+  }, []);
 
   // Before paint: the latest message stays in sight, and older messages put
   // before keep the reading position without a jump.
@@ -191,15 +171,6 @@ export function Assistant({
     if (chat.pending !== "history") scrollAnchor.current = null;
   }, [chat.pending]);
 
-  // The composer fits its text, up to MAX_LINES.
-  useEffect(() => {
-    const input = composer.current;
-    if (input === null) return;
-    input.style.height = "auto";
-    const lineHeight = parseFloat(getComputedStyle(input).lineHeight) || 20;
-    input.style.height = `${String(Math.min(input.scrollHeight, lineHeight * MAX_LINES + 16))}px`;
-  }, [draft]);
-
   function loadOlder() {
     const log = transcript.current;
     if (busy || log === null) return;
@@ -211,57 +182,7 @@ export function Assistant({
     void chat.loadOlderMessages();
   }
 
-  function submit() {
-    if (composerClosed || draft.trim() === "" || promptTooLarge) return;
-    if (queueing) {
-      // One message queued at most: replacing it is asked first.
-      if (chat.queued !== null) {
-        setReplacement(draft);
-        setDialog("replace");
-        return;
-      }
-      if (chat.queue(draft)) setDraft("");
-      composer.current?.focus();
-      return;
-    }
-    const prompt = draft;
-    setDraft("");
-    void chat.send(prompt);
-  }
-
-  function onSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    submit();
-  }
-
-  function onKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
-    // Enter sends, Shift+Enter breaks the line; a composition in progress is left alone.
-    if (
-      event.key !== "Enter" ||
-      event.shiftKey ||
-      event.nativeEvent.isComposing ||
-      event.nativeEvent.keyCode === 229
-    )
-      return;
-    event.preventDefault();
-    submit();
-  }
-
-  // After a stop or a failure, nothing goes alone: the user sends the queued
-  // message again, or takes it back.
-  function resend() {
-    const text = chat.takeQueued();
-    if (text !== null) void chat.send(text);
-  }
-
   async function confirmDialog() {
-    if (dialog === "replace") {
-      if (chat.queue(replacement)) setDraft("");
-      setReplacement("");
-      setDialog("");
-      composer.current?.focus();
-      return;
-    }
     const result = await chat.deleteConversation(deleting?.id);
     if (result !== undefined) setDialog("");
   }
@@ -283,8 +204,7 @@ export function Assistant({
       void chat.renameConversation(next);
   }
 
-  // The replacement of the queued message is asked while a turn runs.
-  const dialogBusy = dialog !== "replace" && busy;
+  const dialogBusy = busy;
   const time = dateTimeFormat({ hour: "2-digit", minute: "2-digit" });
   const empty = chat.messages.length === 0 && chat.historyReady && chat.pending !== "resuming";
 
@@ -567,7 +487,7 @@ export function Assistant({
             }}
           />
         )}
-        {chat.error !== null && dialog === "" && (
+        {chat.error !== null && dialog === "" && !replacing && (
           <p role="alert" className="mx-3 mb-2 text-state-down">
             ■ {errorText(t, chat.error)}
           </p>
@@ -577,123 +497,12 @@ export function Assistant({
             {t(`assistant.notice.${chat.notice}`)}
           </p>
         )}
-
-        <form
-          onSubmit={onSubmit}
-          className="flex flex-col gap-2 border-t border-line bg-surface p-3"
-        >
-          {/* Always there, so that the first message queued is announced too. */}
-          <p aria-live="polite" className="sr-only">
-            {chat.queued !== null ? t("assistant.queue.announce", { text: chat.queued.text }) : ""}
-          </p>
-          {chat.queued !== null && (
-            <div
-              role="group"
-              aria-label={t("assistant.queue.label")}
-              className="mx-auto flex w-full max-w-3xl flex-wrap items-center gap-2 rounded-(--radius-control) border border-line bg-surface-sunken px-2 py-1"
-            >
-              <ClockIcon className="h-3.5 w-3.5 shrink-0 text-ink-muted" />
-              <span className="text-ink-muted">{t("assistant.queue.label")}</span>
-              {/* The text of the user, as typed. */}
-              <span className="min-w-0 flex-1 truncate">{chat.queued.text}</span>
-              {!queueing && !busy && (
-                <button
-                  type="button"
-                  disabled={!chat.historyReady}
-                  onClick={resend}
-                  className={SMALL_BUTTON}
-                >
-                  {t("assistant.queue.resend")}
-                </button>
-              )}
-              <button
-                type="button"
-                // Never over what the user types.
-                disabled={draft.trim() !== ""}
-                onClick={() => {
-                  setDraft(chat.takeQueued() ?? "");
-                  composer.current?.focus();
-                }}
-                className={SMALL_BUTTON}
-              >
-                {t("assistant.queue.edit")}
-              </button>
-              <button type="button" onClick={chat.unqueue} className={SMALL_BUTTON}>
-                {t("assistant.queue.remove")}
-              </button>
-            </div>
-          )}
-          <div className="mx-auto w-full max-w-3xl">
-            <label htmlFor={composerId} className="sr-only">
-              {t("assistant.composer.label")}
-            </label>
-            <div className="flex items-end gap-2 rounded-(--radius-panel) border border-line bg-surface-raised p-2 focus-within:border-accent">
-              <textarea
-                id={composerId}
-                ref={composer}
-                rows={1}
-                value={draft}
-                disabled={composerClosed}
-                placeholder={t("assistant.composer.placeholder")}
-                aria-describedby={hintId}
-                aria-invalid={promptTooLarge || undefined}
-                onChange={(event) => {
-                  setDraft(event.target.value);
-                }}
-                onKeyDown={onKeyDown}
-                className="max-h-56 min-h-8 flex-1 resize-none bg-transparent px-1 py-1 leading-6 text-ink outline-none placeholder:text-ink-muted disabled:opacity-60"
-              />
-              {/* A turn only: after an approval the action runs on the agent, which
-                  a stop would not cancel; its result is what to see. */}
-              {chat.pending === "turn" && (
-                <button
-                  type="button"
-                  onClick={chat.stop}
-                  aria-label={t("assistant.composer.stop")}
-                  title={t("assistant.composer.stop")}
-                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line text-ink hover:bg-surface-sunken"
-                >
-                  <span aria-hidden="true" className="h-3 w-3 rounded-sm bg-current" />
-                </button>
-              )}
-              <button
-                type="submit"
-                disabled={composerClosed || draft.trim() === "" || promptTooLarge}
-                aria-label={queueing ? t("assistant.composer.queue") : t("assistant.composer.send")}
-                title={queueing ? t("assistant.composer.queue") : t("assistant.composer.send")}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent text-accent-ink disabled:opacity-40"
-              >
-                {queueing ? <ClockIcon className="h-4 w-4" /> : <SendIcon className="h-4 w-4" />}
-              </button>
-            </div>
-            <p
-              id={hintId}
-              className={`mt-1.5 flex flex-wrap justify-between gap-x-4 gap-y-1 ${promptTooLarge ? "text-state-down" : "text-ink-muted"}`}
-            >
-              {promptTooLarge ? (
-                <span>{t("assistant.composer.tooLarge")}</span>
-              ) : waiting && !busy ? (
-                <span>{t("assistant.composer.queuedDuringConfirmation")}</span>
-              ) : answering ? (
-                <span>{t("assistant.composer.queuedHint")}</span>
-              ) : (
-                <>
-                  <span>{t("assistant.composer.scope")}</span>
-                  <span>{t("assistant.composer.keys")}</span>
-                </>
-              )}
-            </p>
-          </div>
-        </form>
+        <Composer inputRef={composer} onReplacingChange={setReplacing} />
       </section>
 
       {dialog !== "" && (
         <Modal
-          title={
-            dialog === "replace"
-              ? t("assistant.dialog.replaceTitle")
-              : t("assistant.dialog.deleteTitle")
-          }
+          title={t("assistant.dialog.deleteTitle")}
           closeLabel={t("detail.close")}
           className="max-w-md"
           onClose={() => {
@@ -702,11 +511,9 @@ export function Assistant({
         >
           <div className="flex flex-col gap-3">
             <p>
-              {dialog === "replace"
-                ? t("assistant.dialog.replaceText")
-                : t("assistant.dialog.deleteText", {
-                    title: deleting !== null ? titleOf(deleting) : "",
-                  })}
+              {t("assistant.dialog.deleteText", {
+                title: deleting !== null ? titleOf(deleting) : "",
+              })}
             </p>
             {chat.error !== null && (
               <p role="alert" className="text-state-down">
@@ -730,11 +537,9 @@ export function Assistant({
                 onClick={() => {
                   void confirmDialog();
                 }}
-                className={`h-8 rounded-(--radius-control) px-3 font-medium text-accent-ink disabled:opacity-60 ${dialog === "replace" ? "bg-accent" : "bg-state-down"}`}
+                className="h-8 rounded-(--radius-control) bg-state-down px-3 font-medium text-accent-ink disabled:opacity-60"
               >
-                {dialog === "replace"
-                  ? t("assistant.dialog.replace")
-                  : t("assistant.dialog.confirmDelete")}
+                {t("assistant.dialog.confirmDelete")}
               </button>
             </div>
           </div>
@@ -817,7 +622,13 @@ function EmptyState({ onPick }: { onPick: (text: string) => void }) {
 const MESSAGE = "w-fit max-w-[85%] min-w-0 rounded-(--radius-control) border border-line px-3 py-2";
 const MESSAGE_LABEL = "text-data font-semibold text-ink-muted";
 
-function UserMessage({ message, time }: { message: ChatMessage; time: Intl.DateTimeFormat }) {
+export function UserMessage({
+  message,
+  time,
+}: {
+  message: ChatMessage;
+  time: Intl.DateTimeFormat;
+}) {
   const { t } = useTranslation();
   const date = new Date(message.createdAt ?? "");
   return (
@@ -840,7 +651,7 @@ function UserMessage({ message, time }: { message: ChatMessage; time: Intl.DateT
 }
 
 /** An answer of the assistant: its steps, its text, how it ended, and the feedback of its turn. */
-function Answer({
+export function Answer({
   message,
   chat,
   rateable,

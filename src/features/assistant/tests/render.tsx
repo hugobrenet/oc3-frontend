@@ -65,8 +65,9 @@ export async function renderAssistant(
   newConversation = "New conversation",
 ) {
   const view = renderWithProviders(<Assistant client={client} />);
+  // Once the conversations are read: an untitled one shows under the same name.
   await waitFor(() => {
-    expect(screen.getByRole("button", { name: newConversation })).toBeEnabled();
+    expect(screen.getAllByRole("button", { name: newConversation })[0]).toBeEnabled();
   });
   return view;
 }

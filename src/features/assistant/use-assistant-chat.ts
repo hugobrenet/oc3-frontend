@@ -117,6 +117,9 @@ const emptyState = (): ChatState => ({
   ratings: {},
 });
 
+/** The state the chat starts from: loading, as it reads its conversations next. */
+const startingState = (): ChatState => ({ ...emptyState(), pending: "loading" });
+
 /** The fields of the state that belong to the conversation shown, for none. */
 const noConversation = {
   conversation: null,
@@ -499,8 +502,10 @@ type Update = (change: (previous: ChatState) => ChatState) => void;
  * conversation ends normally, never after a stop, a failure, or on a
  * confirmation.
  */
-export function useAssistantChat(client: AssistantClient) {
-  const [state, setState] = useState(emptyState);
+export function useAssistantChat(client: AssistantClient, enabled = true, identity = "") {
+  // The chat starts as loading, as it reads its conversations once mounted and
+  // enabled: nothing shows it ready, empty, before they are read.
+  const [state, setState] = useState(startingState);
   // The queued message, and its copy read after an await.
   const [queued, setQueuedState] = useState<Queued | null>(null);
   const queuedRef = useRef<Queued | null>(null);
@@ -584,8 +589,20 @@ export function useAssistantChat(client: AssistantClient) {
   );
 
   // Mounted, the list is read; left, the operation and the feedback requests
-  // stop, and what they give late is dropped, the epoch having moved on.
+  // stop, and what they give late is dropped, the epoch having moved on. Not
+  // enabled, nothing is read: the chat the application holds for all its pages
+  // waits for the assistant to be opened once. Another identity, by a sign-in or
+  // an impersonation, stops the former one's operation the same way, and starts
+  // the chat afresh, its conversations, its queue and its pending action dropped.
+  const shownIdentity = useRef(identity);
   useEffect(() => {
+    if (shownIdentity.current !== identity) {
+      shownIdentity.current = identity;
+      setState(startingState());
+      setQueued(null);
+      setRelease(null);
+    }
+    if (!enabled) return;
     const counter = epoch;
     counter.current++;
     void refreshConversations();
@@ -597,7 +614,7 @@ export function useAssistantChat(client: AssistantClient) {
       for (const controller of requests) controller.abort();
       requests.clear();
     };
-  }, [refreshConversations]);
+  }, [refreshConversations, enabled, identity, setQueued]);
 
   /**
    * Shows no conversation: the next prompt starts one, so that no conversation

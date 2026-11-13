@@ -1,6 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { ObjectIcon } from "@/components/opensvc/ObjectIcon";
+import { AssistantActivityBadge } from "@/features/assistant/AssistantActivityBadge";
 import { SegmentedToggle } from "@/components/ui/SegmentedToggle";
 import {
   CaretRightIcon,
@@ -41,6 +42,8 @@ function NavLink({ entry }: { entry: NavEntry }) {
             background and the label are what mark the selection. */}
         <ObjectIcon kind={entry.icon} />
         {t(entry.labelKey)}
+        {/* A turn of the assistant goes on while the user is on another page. */}
+        {entry.to === "/ai" && <AssistantActivityBadge />}
       </Link>
     </li>
   );

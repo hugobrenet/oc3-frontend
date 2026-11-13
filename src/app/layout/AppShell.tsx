@@ -2,7 +2,7 @@ import { useState, type ReactNode } from "react";
 import { Link, Outlet, useLocation } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { useAuthStatus, useCredentials } from "@/lib/api/auth";
-import { useEffectiveUser } from "@/lib/api/impersonation";
+import { useEffectiveUser, useImpersonation } from "@/lib/api/impersonation";
 import { AboutPage } from "@/features/about/AboutPage";
 import { SignIn } from "@/features/auth/SignIn";
 import opensvcLogo from "@/assets/opensvc-logo.svg";
@@ -25,6 +25,9 @@ import { useAppearance, useNavViewPref } from "@/lib/user-prefs";
 import { BookmarksBar } from "./BookmarksBar";
 import { BookmarksProvider } from "./BookmarksProvider";
 import { GlobalSearch } from "./search/GlobalSearch";
+import { AssistantChatProvider } from "@/features/assistant/assistant-chat-context";
+import { AssistantDock } from "@/features/assistant/AssistantDock";
+import { assistantClient } from "@/features/assistant/assistant-client";
 
 const SIDEBAR_KEY = "oc3.sidebar";
 
@@ -45,6 +48,11 @@ function readSidebarOpen(): boolean {
 export function AppShell() {
   const { t } = useTranslation();
   const credentials = useCredentials();
+  // The chat of the assistant belongs to an identity: another one, by a sign-in or
+  // an impersonation, starts it afresh, the turn of the former one stopped. Given
+  // to the provider rather than as its key, which would remount every page.
+  const impersonated = useImpersonation()?.userId ?? null;
+  const assistantKey = JSON.stringify([credentials?.user ?? "", impersonated]);
   const status = useAuthStatus();
   const user = useEffectiveUser();
   const { pathname } = useLocation();
@@ -154,17 +162,23 @@ export function AppShell() {
             <NoticeRegion />
           </div>
 
-          <div className="grid min-h-0 grid-cols-[auto_1fr]">
-            <Sidebar open={sidebarOpen} />
-            <MainArea>
-              <Outlet />
-              {/* Record of an object opened from a badge, whatever the view. */}
-              <PeekPanel />
-              {/* What brings the panels back once they are closed. */}
-              <PanelAnchor />
-              <ShortcutsHelp />
-            </MainArea>
-          </div>
+          {/* The chat of the assistant, held for every page: a turn goes on while
+              the user looks at another one, its progress in the menu. */}
+          <AssistantChatProvider identity={assistantKey} client={assistantClient}>
+            <div className="grid min-h-0 grid-cols-[auto_1fr]">
+              <Sidebar open={sidebarOpen} />
+              <MainArea>
+                <Outlet />
+                {/* Record of an object opened from a badge, whatever the view. */}
+                <PeekPanel />
+                {/* What brings the panels back once they are closed. */}
+                <PanelAnchor />
+                <ShortcutsHelp />
+              </MainArea>
+            </div>
+            {/* The chat over the page on display, opened from a record. */}
+            <AssistantDock />
+          </AssistantChatProvider>
           {/* The records the user bookmarked, at the foot of every view. */}
           <BookmarksBar />
         </div>

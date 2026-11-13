@@ -5,6 +5,11 @@
  */
 
 :root {
+  /* The layers of what floats over the views, low to high: the side panels
+     (z-10); the dock of the assistant, over them; the menus, the popovers and the
+     actions tray (z-30); the modal dialogs and the notices (z-40). */
+  --z-dock: 20;
+
   /* Surfaces and ink: cool neutral, meant for long sessions over dense tables */
   --surface: #f6f7f5;
   --surface-raised: #ffffff;

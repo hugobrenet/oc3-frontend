@@ -4591,6 +4591,22 @@
       "node": "Review the health of the node {{node}}: its alerts, its checks out of bounds and its latest failed actions.",
       "service": "Review the service {{service}}: its availability, its alerts and its latest failed actions.",
       "failedAction": "Explain why the action {{action}} of the service {{service}} failed on {{node}} (action {{id}}), and suggest a fix."
+    },
+    "activity": {
+      "answering": "The assistant is answering",
+      "ended": "The assistant has finished",
+      "waiting": "An action of the assistant waits for your decision"
+    },
+    "promptDropped": "The question prepared was not taken: a turn runs, or an action waits for your decision. Open it again from the object once done.",
+    "dock": {
+      "open": "Open the assistant",
+      "expand": "Open in the assistant page",
+      "fold": "Fold",
+      "empty": "Ask a question about the estate, or open the assistant from an alert, a node, a service or a failed action.",
+      "waitingLabel": "Action waiting for a decision",
+      "waiting": "The assistant waits for your decision on the action “{{action}}”.",
+      "destructive": "A destructive action.",
+      "detail": "See the details to decide"
     }
   },
   "checks": {

@@ -4591,6 +4591,22 @@
       "node": "Fais le bilan de santé du node {{node}} : ses alertes, ses checks hors seuils et ses dernières actions en échec.",
       "service": "Fais le point sur le service {{service}} : sa disponibilité, ses alertes et ses dernières actions en échec.",
       "failedAction": "Explique l'échec de l'action {{action}} du service {{service}} sur {{node}} (action {{id}}), et propose une correction."
+    },
+    "activity": {
+      "answering": "L'assistant répond",
+      "ended": "L'assistant a terminé",
+      "waiting": "Une action de l'assistant attend votre décision"
+    },
+    "promptDropped": "La question préparée n'a pas été reprise : un tour est en cours, ou une action attend votre décision. Rouvrez-la depuis l'objet une fois terminé.",
+    "dock": {
+      "open": "Ouvrir l'assistant",
+      "expand": "Ouvrir dans la page de l'assistant",
+      "fold": "Réduire",
+      "empty": "Posez une question sur le parc, ou ouvrez l'assistant depuis une alerte, un nœud, un service ou une action en échec.",
+      "waitingLabel": "Action en attente de décision",
+      "waiting": "L'assistant attend votre décision sur l'action « {{action}} ».",
+      "destructive": "Action destructive.",
+      "detail": "Voir le détail pour décider"
     }
   },
   "checks": {
