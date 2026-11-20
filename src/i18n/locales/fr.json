@@ -4808,6 +4808,7 @@
         "feedback_invalid": "L'avis est invalide.",
         "feedback_gone": "Cette réponse ne peut plus être évaluée.",
         "feedback_limit": "L'assistant ne prend plus d'avis pour le moment.",
+        "feedback_disabled": "Les avis sont désactivés sur cet assistant.",
         "tools_unavailable": "L'agent n'a pas pu lire ses outils. Réessayez plus tard.",
         "tools_unlisted": "L'assistant ne liste pas ses outils sur ce collector."
       },

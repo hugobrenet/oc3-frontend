@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   AssistantError,
   createAssistantClient,
+  parseCapabilities,
   parseFeedback,
   type AssistantClient,
   type FeedbackInput,
@@ -46,6 +47,30 @@ describe("parseFeedback", () => {
   it("takes an expected text of exactly 1000 characters, line breaks included", () => {
     expect(parseFeedback({ rating: "down", expected: "😀".repeat(1000) })).not.toBeNull();
     expect(parseFeedback({ rating: "down", expected: "one\n\ttwo" })).not.toBeNull();
+  });
+});
+
+describe("parseCapabilities", () => {
+  it.each([
+    [{ custom: { feedback: true } }, true],
+    [{ custom: { feedback: false } }, false],
+    // An agent older than the setting: the feedback is on.
+    [{ tools: { supported: true } }, true],
+    [{ custom: {} }, true],
+  ])("reads %j", (value, feedback) => {
+    expect(parseCapabilities(value)).toEqual({ feedback });
+  });
+
+  it.each([
+    null,
+    [],
+    "x",
+    { custom: [] },
+    { custom: "x" },
+    { custom: { feedback: "false" } },
+    { custom: { feedback: 0 } },
+  ])("refuses %j", (value) => {
+    expect(() => parseCapabilities(value)).toThrow(AssistantError);
   });
 });
 
@@ -114,6 +139,8 @@ describe("the feedback of the client", () => {
     [400, "feedback_invalid"],
     [404, "feedback_gone"],
     [409, "feedback_limit"],
+    // A 403 without the code of the agent, such as from a proxy.
+    [403, "http_error"],
     [410, "http_error"],
   ])("explains the refusal %i by the code %s", async (status, code) => {
     fetchMock.mockResolvedValueOnce(
@@ -122,6 +149,39 @@ describe("the feedback of the client", () => {
     await expect(
       client.setFeedback("conversation-1", "turn-1", { rating: "up" }),
     ).rejects.toMatchObject({ status, code });
+  });
+
+  it("reads the capabilities of the agent through the relay", async () => {
+    fetchMock.mockResolvedValueOnce(
+      Response.json({ transport: { streaming: true }, custom: { feedback: false } }),
+    );
+    await expect(client.getCapabilities()).resolves.toEqual({ feedback: false });
+    expect(new URL(requestAt(0).url).pathname).toBe("/api/assistant/capabilities");
+    expect(requestAt(0).method).toBe("GET");
+    fetchMock.mockResolvedValueOnce(
+      new Response("not json", { headers: { "Content-Type": "application/json" } }),
+    );
+    await expect(client.getCapabilities()).rejects.toMatchObject({ code: "invalid_response" });
+    fetchMock.mockResolvedValueOnce(
+      Response.json({ error: { code: "assistant_unreachable", message: "x" } }, { status: 502 }),
+    );
+    await expect(client.getCapabilities()).rejects.toMatchObject({
+      code: "assistant_unreachable",
+      status: 502,
+    });
+  });
+
+  it("explains the feedback turned off by the operator by its code, on both routes", async () => {
+    const refusal = () =>
+      Response.json({ error: { code: "feedback_disabled", message: "x" } }, { status: 403 });
+    fetchMock.mockResolvedValueOnce(refusal()).mockResolvedValueOnce(refusal());
+    await expect(
+      client.setFeedback("conversation-1", "turn-1", { rating: "up" }),
+    ).rejects.toMatchObject({ code: "feedback_disabled", status: 403 });
+    await expect(client.deleteFeedback("conversation-1", "turn-1")).rejects.toMatchObject({
+      code: "feedback_disabled",
+      status: 403,
+    });
   });
 
   it("keeps the codes of the relay on the feedback routes", async () => {

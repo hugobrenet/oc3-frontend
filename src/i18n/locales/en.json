@@ -4808,6 +4808,7 @@
         "feedback_invalid": "The feedback is invalid.",
         "feedback_gone": "This answer can no longer be rated.",
         "feedback_limit": "The assistant takes no more feedback for now.",
+        "feedback_disabled": "Feedback is turned off on this assistant.",
         "tools_unavailable": "The agent could not read its tools. Try again later.",
         "tools_unlisted": "The assistant does not list its tools on this collector."
       },

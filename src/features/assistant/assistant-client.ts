@@ -173,6 +173,26 @@ export interface FeedbackInput {
   expected?: string;
 }
 
+/** What the page reads of the AG-UI AgentCapabilities of the agent. */
+export interface Capabilities {
+  /** Whether the turns take a feedback: false when the operator turned it off. */
+  feedback: boolean;
+}
+
+/**
+ * The capabilities of the agent, `custom.feedback`: an agent older than the
+ * setting gives no custom group, and its feedback is on. Anything else than a
+ * boolean is an error of the protocol.
+ */
+export function parseCapabilities(value: unknown): Capabilities {
+  if (!isPlainObject(value)) throw protocolError();
+  const custom = value.custom;
+  if (custom !== undefined && !isPlainObject(custom)) throw protocolError();
+  const feedback = custom?.feedback;
+  if (feedback !== undefined && typeof feedback !== "boolean") throw protocolError();
+  return { feedback: feedback !== false };
+}
+
 /**
  * A feedback, checked and normalized as the agent accepts and returns it: its
  * reasons in the agent's order, what the user expected trimmed and within its
@@ -1230,13 +1250,17 @@ const refuseRun: Refusal = (status, code) => {
   return refuse(status, code);
 };
 
-/** The refusals of a feedback, by their status, past those of the relay. */
+/**
+ * The refusals of a feedback: the feedback the operator turned off by its code,
+ * the others by their status, past those of the relay.
+ */
 const FEEDBACK_REFUSALS: Record<number, string> = {
   400: "feedback_invalid",
   404: "feedback_gone",
   409: "feedback_limit",
 };
-const refuseFeedback: Refusal = (status, code) => refuse(status, code) ?? FEEDBACK_REFUSALS[status];
+const refuseFeedback: Refusal = (status, code) =>
+  code === "feedback_disabled" ? code : (refuse(status, code) ?? FEEDBACK_REFUSALS[status]);
 
 /** The refusals of the list of the tools: a route the relay lacks lists none. */
 const refuseTools: Refusal = (status, code) => {
@@ -1432,6 +1456,8 @@ export interface AssistantClient {
   deleteConversation(id: string, options?: { signal?: AbortSignal }): Promise<void>;
   /** The tools the assistant may call for the user. */
   listTools(options?: { signal?: AbortSignal }): Promise<ToolDoc[]>;
+  /** What the agent offers the page, such as the feedback. */
+  getCapabilities(options?: { signal?: AbortSignal }): Promise<Capabilities>;
   /** The ID this client gives a prompt. */
   newId(): string;
   /** Runs the agent on a conversation, in AG-UI; resolves with its RUN_FINISHED. */
@@ -1470,6 +1496,13 @@ export function createAssistantClient({
       const result = await readJson(sent, signal);
       if (!isPlainObject(result) || !Array.isArray(result.conversations)) throw protocolError();
       return (result.conversations as unknown[]).map(parseConversation);
+    },
+
+    getCapabilities: async ({ signal } = {}) => {
+      const sent = await send(signal, () =>
+        api.GET("/assistant/capabilities", { parseAs: "stream", signal }),
+      );
+      return parseCapabilities(await readJson(sent, signal));
     },
 
     createConversation: async ({ signal } = {}) =>

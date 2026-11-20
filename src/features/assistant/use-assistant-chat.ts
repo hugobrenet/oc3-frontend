@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { EventType } from "@ag-ui/core";
 import {
   AGENT_TOOLS,
+  AssistantError,
   MAX_PROMPT_BYTES,
   type Args,
   type AssistantClient,
@@ -496,8 +497,9 @@ type Update = (change: (previous: ChatState) => ChatState) => void;
 
 /**
  * The conversations of the user with the assistant, the one shown, and the turn
- * running. Only the list is read by itself: a conversation starts, and a turn
- * runs, on an action of the user only. One operation runs at a time; leaving the
+ * running. Only the list, and the capabilities of the agent, which tell whether
+ * the answers take a feedback, are read by themselves: a conversation starts,
+ * and a turn runs, on an action of the user only. One operation runs at a time; leaving the
  * page stops it, and what it gives late is dropped.
  *
  * A message the user sends while a turn runs, or while a call waits for a
@@ -531,6 +533,46 @@ export function useAssistantChat(
   const nextId = useRef(0);
   // Feedback requests run beside the turns, and stop with the page.
   const feedbackRequests = useRef(new Set<AbortController>());
+  // Whether the agent takes the feedback of the client and the identity: true
+  // or false as it says, null when it could not be read. The feedback is off
+  // until the agent says it is on, so that an operator who turned it off never
+  // has it offered; a read that failed is tried again with the next action of
+  // the user (retryCapabilities).
+  const [capabilities, setCapabilities] = useState<{
+    client: AssistantClient | null;
+    identity: string;
+    feedback: boolean | null;
+  }>({ client: null, identity: "", feedback: null });
+  const [capabilitiesRetry, setCapabilitiesRetry] = useState(0);
+  // A read under way, which an action of the user does not start again.
+  const capabilitiesReading = useRef(false);
+  const capabilitiesOwn = capabilities.client === client && capabilities.identity === identity;
+  const capabilitiesKnown = capabilitiesOwn && capabilities.feedback !== null;
+  useEffect(() => {
+    if (!enabled || capabilitiesKnown) return;
+    const controller = new AbortController();
+    capabilitiesReading.current = true;
+    const settle = (feedback: boolean | null) => {
+      if (controller.signal.aborted) return;
+      capabilitiesReading.current = false;
+      setCapabilities({ client, identity, feedback });
+    };
+    Promise.resolve()
+      .then(() => client.getCapabilities({ signal: controller.signal }))
+      .then((result) => result.feedback === true)
+      .then(settle, () => {
+        settle(null);
+      });
+    return () => {
+      controller.abort();
+      capabilitiesReading.current = false;
+    };
+  }, [client, enabled, identity, capabilitiesKnown, capabilitiesRetry]);
+  const feedbackEnabled = enabled && capabilitiesOwn && capabilities.feedback === true;
+  const retryCapabilities = () => {
+    if (capabilitiesOwn && capabilities.feedback === null && !capabilitiesReading.current)
+      setCapabilitiesRetry((count) => count + 1);
+  };
 
   const perform = useCallback(
     async <T>(
@@ -637,6 +679,7 @@ export function useAssistantChat(
   };
 
   const resumeConversation = (id: string) => {
+    retryCapabilities();
     if (state.conversation?.id === id && !state.partial) return undefined;
     return perform("resuming", async ({ signal, update }) => {
       update((previous) => ({ ...previous, ...noConversation, historyReady: false }));
@@ -758,7 +801,8 @@ export function useAssistantChat(
   /** Gives, replaces (feedback) or withdraws (null) the feedback of the user on a turn of the conversation shown. */
   const rateTurn = async (turnId: string, feedback: FeedbackInput | null): Promise<boolean> => {
     const conversationId = state.conversation?.id;
-    if (conversationId === undefined || state.ratings[turnId]?.pending === true) return false;
+    if (!feedbackEnabled || conversationId === undefined || state.ratings[turnId]?.pending === true)
+      return false;
     const requestEpoch = epoch.current;
     const controller = new AbortController();
     feedbackRequests.current.add(controller);
@@ -787,8 +831,17 @@ export function useAssistantChat(
       if (
         !controller.signal.aborted &&
         !(error instanceof DOMException && error.name === "AbortError")
-      )
+      ) {
         setRating((rating) => ({ feedback: rating?.feedback ?? null, pending: false, error }));
+        // The operator turned the feedback off since it was read: the other
+        // answers are no longer offered it.
+        if (error instanceof AssistantError && error.code === "feedback_disabled")
+          setCapabilities((previous) =>
+            previous.client === client && previous.identity === identity
+              ? { ...previous, feedback: false }
+              : previous,
+          );
+      }
       return false;
     } finally {
       feedbackRequests.current.delete(controller);
@@ -910,6 +963,7 @@ export function useAssistantChat(
   const send = (prompt: string, queuedContext?: readonly InterfaceEntry[]) => {
     if (!state.historyReady || state.confirmation !== null || prompt.trim() === "")
       return undefined;
+    retryCapabilities();
     const context =
       queuedContext === undefined
         ? interfaceContext()
@@ -1077,6 +1131,7 @@ export function useAssistantChat(
     queue,
     unqueue,
     takeQueued,
+    feedbackEnabled,
     rate: (turnId: string, feedback: FeedbackInput) => rateTurn(turnId, feedback),
     unrate: (turnId: string) => rateTurn(turnId, null),
   };

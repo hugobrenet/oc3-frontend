@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/icons";
 import { dateTimeFormat } from "@/lib/date-format";
 import { AnswerFeedback } from "./AnswerFeedback";
-import { type AssistantClient, type Conversation } from "./assistant-client";
+import { AssistantError, type AssistantClient, type Conversation } from "./assistant-client";
 import { Composer } from "./Composer";
 import { ConfirmationCard } from "./ConfirmationCard";
 import { groupConversations, useConversationsOpen } from "./conversations";
@@ -26,7 +26,7 @@ import { AnswerFooter, AnswerSteps, TARGET_ARGUMENTS, TargetBadge } from "./Step
 import { ToolsDialog } from "./ToolsDialog";
 import { AssistantChatProvider } from "./assistant-chat-context";
 import { useSharedAssistantChat } from "./assistant-chat";
-import { type AssistantChat, type ChatMessage } from "./use-assistant-chat";
+import { type AssistantChat, type ChatMessage, type Rating } from "./use-assistant-chat";
 import { codeSpans, useTargets } from "./use-targets";
 import { useToolDocs } from "./use-tool-docs";
 
@@ -696,14 +696,31 @@ export function Answer({
         <p className="text-state-warn">{t(`assistant.message.${message.status}`)}</p>
       )}
       {message.status !== "running" && <AnswerFooter message={message} />}
-      {rateable && turnId !== undefined && (
+      {/* The feedback the operator turned off is not shown, not even one given before. */}
+      {rateable && chat.feedbackEnabled && turnId !== undefined && (
         <AnswerFeedback
           rating={chat.ratings[turnId]}
           onRate={(feedback) => chat.rate(turnId, feedback)}
           onUnrate={() => chat.unrate(turnId)}
         />
       )}
+      {/* Turned off while the user rated this answer: the rating goes, the reason stays. */}
+      {rateable && !chat.feedbackEnabled && turnId !== undefined && (
+        <FeedbackTurnedOff rating={chat.ratings[turnId]} />
+      )}
     </AssistantMessage>
+  );
+}
+
+/** Why the rating of an answer went: the agent refused it as turned off. */
+function FeedbackTurnedOff({ rating }: { rating: Rating | undefined }) {
+  const { t } = useTranslation();
+  const error = rating?.error;
+  if (!(error instanceof AssistantError) || error.code !== "feedback_disabled") return null;
+  return (
+    <p role="alert" className="text-state-down">
+      ■ {t("assistant.feedback.failed", { message: errorText(t, error) })}
+    </p>
   );
 }
 
