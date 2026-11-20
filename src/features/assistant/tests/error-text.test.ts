@@ -10,6 +10,7 @@ describe("the failures of the assistant, in words", () => {
       "The AI agent cannot be reached. Try again later.",
     ],
     [new AssistantError("conversation_quota", 409), "Your conversation quota is reached"],
+    [new AssistantError("feedback_disabled", 403), "Feedback is turned off on this assistant."],
     [new AssistantError("http_error", 410), "This conversation has expired."],
     [new AssistantError("http_error", 418), "The assistant refused the request."],
     [new AssistantError("some_code_of_the_agent", 400), "The assistant refused the request."],

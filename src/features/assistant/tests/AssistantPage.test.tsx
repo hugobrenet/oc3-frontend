@@ -45,6 +45,14 @@ describe("the page of the assistant", () => {
       expect(screen.getByText("No conversation yet.")).toBeInTheDocument();
     });
     expect(screen.getByRole("textbox", { name: "Message to the assistant" })).toBeEnabled();
-    expect(paths(fetchMock)).toEqual(["/api/assistant/status", "/api/assistant/conversations"]);
+    // The capabilities are read beside the conversations, for the feedback.
+    expect(paths(fetchMock)).toHaveLength(3);
+    expect(paths(fetchMock)).toEqual(
+      expect.arrayContaining([
+        "/api/assistant/status",
+        "/api/assistant/conversations",
+        "/api/assistant/capabilities",
+      ]),
+    );
   });
 });

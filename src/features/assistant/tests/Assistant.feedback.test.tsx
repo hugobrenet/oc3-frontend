@@ -1,6 +1,7 @@
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { EventType } from "@ag-ui/core";
+import { AssistantError } from "../assistant-client";
 import { completed, fakeClient, stored, type FakeClient } from "./fake-client";
 import { renderAssistant, stubCollector } from "./render";
 
@@ -161,6 +162,56 @@ describe("the feedback on the answers", () => {
         expect.any(Object),
       );
     });
+  });
+
+  test("offers no rating, not even one given before, when the agent turned the feedback off", async () => {
+    client.getCapabilities.mockResolvedValue({ feedback: false });
+    await resume();
+    await screen.findByText("Linux mostly.");
+    expect(client.getCapabilities).toHaveBeenCalled();
+    expect(screen.queryByRole("group", { name: rating })).toBeNull();
+    expect(screen.queryByText("Thanks for your feedback.")).toBeNull();
+  });
+
+  test("offers no rating when the capabilities of the agent cannot be read", async () => {
+    client.getCapabilities.mockRejectedValue(new Error("boom"));
+    await resume();
+    await waitFor(() => {
+      expect(client.getCapabilities).toHaveBeenCalled();
+    });
+    expect(screen.queryByRole("group", { name: rating })).toBeNull();
+  });
+
+  test("says the feedback turned off, and offers it no more", async () => {
+    await resume();
+    client.setFeedback.mockRejectedValueOnce(new AssistantError("feedback_disabled", 403));
+    fireEvent.click(
+      within(answer("There are 484 nodes.")).getByRole("button", { name: "Helpful" }),
+    );
+    await waitFor(() => {
+      expect(screen.queryByRole("group", { name: rating })).toBeNull();
+    });
+    // The reason stays under the answer rated, and under it only.
+    expect(within(answer("There are 484 nodes.")).getByRole("alert")).toHaveTextContent(
+      "Feedback is turned off on this assistant.",
+    );
+    expect(screen.getAllByRole("alert")).toHaveLength(1);
+  });
+
+  test("says the feedback turned off to a user who was telling more", async () => {
+    await resume();
+    const turn = within(answer("There are 484 nodes."));
+    fireEvent.click(turn.getByRole("button", { name: "Not helpful" }));
+    const form = within(await turn.findByRole("form", { name: "Feedback details" }));
+    client.setFeedback.mockRejectedValueOnce(new AssistantError("feedback_disabled", 403));
+    fireEvent.change(form.getByRole("textbox", { name: /What did you expect/ }), {
+      target: { value: "The count per OS" },
+    });
+    fireEvent.click(form.getByRole("button", { name: "Send" }));
+    expect(await turn.findByRole("alert")).toHaveTextContent(
+      "Feedback is turned off on this assistant.",
+    );
+    expect(turn.queryByRole("form", { name: "Feedback details" })).toBeNull();
   });
 
   test("says a failure to save under the answer", async () => {
