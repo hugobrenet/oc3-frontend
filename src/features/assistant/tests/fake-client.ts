@@ -38,7 +38,10 @@ export function fakeClient(conversations: Conversation[] = []) {
     deleteConversation: vi.fn<AssistantClient["deleteConversation"]>(() => Promise.resolve()),
     listTools: vi.fn<AssistantClient["listTools"]>(() => Promise.resolve([])),
     getCapabilities: vi.fn<AssistantClient["getCapabilities"]>(() =>
-      Promise.resolve({ feedback: true }),
+      Promise.resolve({ feedback: true, models: false }),
+    ),
+    listModels: vi.fn<AssistantClient["listModels"]>(() =>
+      Promise.resolve([{ id: "default", label: "Default", default: true, ready: true }]),
     ),
     newId: vi.fn<AssistantClient["newId"]>(() => `prompt-${String(++ids)}`),
     run: vi.fn<AssistantClient["run"]>((_id, _input, options) => {

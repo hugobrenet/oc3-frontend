@@ -8,13 +8,11 @@ import {
 } from "react";
 import { useTranslation } from "react-i18next";
 import { Modal } from "@/components/ui/Modal";
-import { ClockIcon, SendIcon } from "@/components/ui/icons";
+import { AlertTriangleIcon, ClockIcon, SendIcon, StopIcon } from "@/components/ui/icons";
 import { MAX_PROMPT_BYTES } from "./assistant-client";
 import { useSharedAssistantChat } from "./assistant-chat";
+import { ModelSelect } from "./ModelSelect";
 import { errorText } from "./error-text";
-
-/** The composer grows with its text up to this many lines, then scrolls. */
-const MAX_LINES = 8;
 
 const BUTTON =
   "flex h-8 items-center justify-center gap-1.5 rounded-(--radius-control) border border-line px-3 text-ink hover:bg-surface-sunken disabled:opacity-60";
@@ -34,7 +32,7 @@ export function Composer({
   onReplacingChange,
 }: {
   inputRef: RefObject<HTMLTextAreaElement | null>;
-  /** The dock: a shorter hint, the width of the dock. */
+  /** The dock: a message box a line shorter, the width of the dock. */
   compact?: boolean;
   /** Told while the dialog replacing the message queued is open. */
   onReplacingChange?: (open: boolean) => void;
@@ -88,15 +86,6 @@ export function Composer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shared.prompt, chat.historyReady, chat.pending, chat.confirmation, chat.conversation]);
 
-  // The composer fits its text, up to MAX_LINES.
-  useEffect(() => {
-    const input = inputRef.current;
-    if (input === null) return;
-    input.style.height = "auto";
-    const lineHeight = parseFloat(getComputedStyle(input).lineHeight) || 20;
-    input.style.height = `${String(Math.min(input.scrollHeight, lineHeight * MAX_LINES + 16))}px`;
-  }, [draft, inputRef]);
-
   function submit() {
     if (composerClosed || draft.trim() === "" || promptTooLarge) return;
     if (queueing) {
@@ -134,11 +123,13 @@ export function Composer({
 
   // After a stop or a failure, nothing goes alone: the user sends the queued
   // message again, or takes it back.
-  // Sent again, it goes with the page it was asked from.
+  // Sent again, it goes with the page it was asked from, and the model it was
+  // queued with; the one chosen now if none.
   function resend() {
     const context = chat.queued?.context;
+    const model = chat.queued?.model;
     const text = chat.takeQueued();
-    if (text !== null) void chat.send(text, context);
+    if (text !== null) void chat.send(text, context, model);
   }
 
   function replace() {
@@ -156,7 +147,7 @@ export function Composer({
       )}
       <form
         onSubmit={onSubmit}
-        className={`flex flex-col gap-2 border-t border-line bg-surface ${compact ? "p-2" : "p-3"}`}
+        className={`flex flex-col gap-2 border-t border-line ${compact ? "p-2" : "p-3"}`}
       >
         {/* Always there, so that the first message queued is announced too. */}
         <p aria-live="polite" className="sr-only">
@@ -166,7 +157,7 @@ export function Composer({
           <div
             role="group"
             aria-label={t("assistant.queue.label")}
-            className="mx-auto flex w-full max-w-3xl flex-wrap items-center gap-2 rounded-(--radius-control) border border-line bg-surface-sunken px-2 py-1"
+            className="flex flex-wrap items-center gap-2 rounded-(--radius-control) border border-line bg-surface-sunken px-2 py-1 text-data"
           >
             <ClockIcon className="h-3.5 w-3.5 shrink-0 text-ink-muted" />
             <span className="text-ink-muted">{t("assistant.queue.label")}</span>
@@ -199,69 +190,69 @@ export function Composer({
             </button>
           </div>
         )}
-        <div className="mx-auto w-full max-w-3xl">
-          <label htmlFor={composerId} className="sr-only">
+        {/* As the om3 webapp: the label above the box, the hint or the error
+            under it, then the model and the buttons. */}
+        <div>
+          <label htmlFor={composerId} className="mb-1 block font-medium">
             {t("assistant.composer.label")}
           </label>
-          <div className="flex items-end gap-2 rounded-(--radius-panel) border border-line bg-surface-raised p-2 focus-within:border-accent">
-            <textarea
-              id={composerId}
-              ref={inputRef}
-              rows={1}
-              value={draft}
-              disabled={composerClosed}
-              placeholder={t("assistant.composer.placeholder")}
-              aria-describedby={hintId}
-              aria-invalid={promptTooLarge || undefined}
-              onChange={(event) => {
-                setDraft(event.target.value);
-                shared.clearPromptDropped();
-              }}
-              onKeyDown={onKeyDown}
-              className="max-h-56 min-h-8 flex-1 resize-none bg-transparent px-1 py-1 leading-6 text-ink outline-none placeholder:text-ink-muted disabled:opacity-60"
-            />
-            {/* A turn only: after an approval the action runs on the agent, which
-                a stop would not cancel; its result is what to see. */}
-            {chat.pending === "turn" && (
-              <button
-                type="button"
-                onClick={chat.stop}
-                aria-label={t("assistant.composer.stop")}
-                title={t("assistant.composer.stop")}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line text-ink hover:bg-surface-sunken"
-              >
-                <span aria-hidden="true" className="h-3 w-3 rounded-sm bg-current" />
-              </button>
-            )}
-            <button
-              type="submit"
-              disabled={composerClosed || draft.trim() === "" || promptTooLarge}
-              aria-label={queueing ? t("assistant.composer.queue") : t("assistant.composer.send")}
-              title={queueing ? t("assistant.composer.queue") : t("assistant.composer.send")}
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent text-accent-ink disabled:opacity-40"
-            >
-              {queueing ? <ClockIcon className="h-4 w-4" /> : <SendIcon className="h-4 w-4" />}
+          <textarea
+            id={composerId}
+            ref={inputRef}
+            rows={compact ? 2 : 3}
+            value={draft}
+            disabled={composerClosed}
+            placeholder={t("assistant.composer.placeholder")}
+            aria-describedby={hintId}
+            aria-invalid={promptTooLarge || undefined}
+            onChange={(event) => {
+              setDraft(event.target.value);
+              shared.clearPromptDropped();
+            }}
+            onKeyDown={onKeyDown}
+            className={`w-full resize-y rounded-(--radius-control) border border-line bg-surface px-2 py-1 text-ink placeholder:text-ink-muted disabled:opacity-60 aria-invalid:border-state-down ${compact ? "max-h-32" : "max-h-48"}`}
+          />
+          {promptTooLarge ? (
+            <p id={hintId} className="mt-1 flex items-center gap-1 text-data text-state-down">
+              <AlertTriangleIcon className="shrink-0" />
+              {t("assistant.composer.tooLarge")}
+            </p>
+          ) : (
+            <p id={hintId} className="mt-1 text-data text-ink-muted">
+              {waiting && !busy
+                ? t("assistant.composer.queuedDuringConfirmation")
+                : answering
+                  ? t("assistant.composer.queuedHint")
+                  : t("assistant.composer.keys")}
+            </p>
+          )}
+        </div>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          {chat.models !== null && (
+            <div className="mr-auto min-w-0">
+              <ModelSelect chat={chat} disabled={composerClosed} />
+            </div>
+          )}
+          {/* A turn only: after an approval the action runs on the agent, which
+              a stop would not cancel; its result is what to see. */}
+          {chat.pending === "turn" && (
+            <button type="button" onClick={chat.stop} className={`${BUTTON} font-medium`}>
+              <StopIcon className="h-3.5 w-3.5" />
+              {t("assistant.composer.stop")}
             </button>
-          </div>
-          <p
-            id={hintId}
-            className={`mt-1.5 flex flex-wrap justify-between gap-x-4 gap-y-1 ${promptTooLarge ? "text-state-down" : "text-ink-muted"}`}
+          )}
+          <button
+            type="submit"
+            disabled={composerClosed || draft.trim() === "" || promptTooLarge}
+            className="inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-(--radius-control) bg-accent px-3 font-medium whitespace-nowrap text-accent-ink hover:brightness-110 disabled:pointer-events-none disabled:opacity-60"
           >
-            {promptTooLarge ? (
-              <span>{t("assistant.composer.tooLarge")}</span>
-            ) : waiting && !busy ? (
-              <span>{t("assistant.composer.queuedDuringConfirmation")}</span>
-            ) : answering ? (
-              <span>{t("assistant.composer.queuedHint")}</span>
-            ) : compact ? (
-              <span>{t("assistant.composer.keys")}</span>
+            {queueing ? (
+              <ClockIcon className="h-3.5 w-3.5" />
             ) : (
-              <>
-                <span>{t("assistant.composer.scope")}</span>
-                <span>{t("assistant.composer.keys")}</span>
-              </>
+              <SendIcon className="h-3.5 w-3.5" />
             )}
-          </p>
+            {queueing ? t("assistant.composer.queue") : t("assistant.composer.send")}
+          </button>
         </div>
       </form>
       {replacement !== null && (

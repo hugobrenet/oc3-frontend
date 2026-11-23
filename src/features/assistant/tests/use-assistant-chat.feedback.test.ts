@@ -57,13 +57,16 @@ describe("the feedback of useAssistantChat", () => {
     // The read under way is not started again by the action of the user.
     expect(client.getCapabilities).toHaveBeenCalledTimes(1);
     await act(async () => {
-      resolve?.({ feedback: true });
+      resolve?.({ feedback: true, models: false });
     });
     expect(result.current.feedbackEnabled).toBe(true);
   });
 
   it.each([
-    ["turned off", () => client.getCapabilities.mockResolvedValue({ feedback: false })],
+    [
+      "turned off",
+      () => client.getCapabilities.mockResolvedValue({ feedback: false, models: false }),
+    ],
     [
       "unreadable",
       () => client.getCapabilities.mockRejectedValue(new AssistantError("network_error")),
@@ -124,7 +127,7 @@ describe("the feedback of useAssistantChat", () => {
     await resumed(result);
     expect(client.getCapabilities).toHaveBeenCalledTimes(2);
     await act(async () => {
-      resolve?.({ feedback: true });
+      resolve?.({ feedback: true, models: false });
     });
     expect(result.current.feedbackEnabled).toBe(true);
   });
@@ -156,7 +159,7 @@ describe("the feedback of useAssistantChat", () => {
       expect(client.getCapabilities).toHaveBeenCalledTimes(2);
     });
     await act(async () => {
-      resolve?.({ feedback: true });
+      resolve?.({ feedback: true, models: false });
     });
     expect(result.current.feedbackEnabled).toBe(true);
   });
@@ -183,14 +186,14 @@ describe("the feedback of useAssistantChat", () => {
       ({ identity }) => useAssistantChat(client, true, identity),
       { initialProps: { identity: "alice" } },
     );
-    client.getCapabilities.mockResolvedValue({ feedback: false });
+    client.getCapabilities.mockResolvedValue({ feedback: false, models: false });
     rerender({ identity: "bob" });
     await waitFor(() => {
       expect(client.getCapabilities).toHaveBeenCalledTimes(2);
     });
     expect(signal?.aborted).toBe(true);
     await act(async () => {
-      resolve?.({ feedback: true });
+      resolve?.({ feedback: true, models: false });
     });
     expect(result.current.feedbackEnabled).toBe(false);
     // The late answer does not replace those of the new identity, which are
@@ -217,7 +220,7 @@ describe("the feedback of useAssistantChat", () => {
       expect(other.getCapabilities).toHaveBeenCalled();
     });
     await act(async () => {
-      resolve?.({ feedback: true });
+      resolve?.({ feedback: true, models: false });
     });
     expect(result.current.feedbackEnabled).toBe(true);
   });

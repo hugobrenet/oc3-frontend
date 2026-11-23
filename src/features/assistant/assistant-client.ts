@@ -177,20 +177,77 @@ export interface FeedbackInput {
 export interface Capabilities {
   /** Whether the turns take a feedback: false when the operator turned it off. */
   feedback: boolean;
+  /** Whether the runs choose their model among those of `listModels`. */
+  models: boolean;
 }
 
 /**
- * The capabilities of the agent, `custom.feedback`: an agent older than the
- * setting gives no custom group, and its feedback is on. Anything else than a
- * boolean is an error of the protocol.
+ * The capabilities of the agent, `custom.feedback` and `custom.models`: an
+ * agent older than the settings gives no custom group, its feedback is on,
+ * and it offers no choice of model. Anything else than a boolean is an error
+ * of the protocol.
  */
 export function parseCapabilities(value: unknown): Capabilities {
   if (!isPlainObject(value)) throw protocolError();
   const custom = value.custom;
   if (custom !== undefined && !isPlainObject(custom)) throw protocolError();
   const feedback = custom?.feedback;
-  if (feedback !== undefined && typeof feedback !== "boolean") throw protocolError();
-  return { feedback: feedback !== false };
+  const models = custom?.models;
+  if (
+    (feedback !== undefined && typeof feedback !== "boolean") ||
+    (models !== undefined && typeof models !== "boolean")
+  )
+    throw protocolError();
+  return { feedback: feedback !== false, models: models === true };
+}
+
+/** A model a run chooses, as the agent lists it. Its label is the operator's, shown as text. */
+export interface Model {
+  /** Opaque, named by a run. */
+  id: string;
+  label: string;
+  /** Whether a run that names no model runs on it. */
+  default: boolean;
+  /** Whether the user can run on it. */
+  ready: boolean;
+}
+
+/** The bounds of the list of the models, as the agent keeps them. */
+export const MAX_MODELS = 16;
+const MAX_MODEL_ID_BYTES = 64;
+const MAX_MODEL_LABEL_CHARACTERS = 64;
+
+/** Whether a value is the ID of a model: 1 to 64 bytes. */
+export function isModelId(value: unknown): value is string {
+  return (
+    typeof value === "string" &&
+    value !== "" &&
+    new TextEncoder().encode(value).length <= MAX_MODEL_ID_BYTES
+  );
+}
+
+/** The models of the agent, the default first: one default, IDs unique, labels within bounds. */
+export function parseModels(value: unknown): Model[] {
+  const list = isPlainObject(value) ? value.models : undefined;
+  if (!Array.isArray(list) || list.length < 1 || list.length > MAX_MODELS) throw protocolError();
+  const ids = new Set<string>();
+  const models = (list as unknown[]).map((model): Model => {
+    if (
+      !isPlainObject(model) ||
+      !isModelId(model.id) ||
+      ids.has(model.id) ||
+      typeof model.label !== "string" ||
+      model.label.trim() === "" ||
+      Array.from(model.label).length > MAX_MODEL_LABEL_CHARACTERS ||
+      typeof model.default !== "boolean" ||
+      typeof model.ready !== "boolean"
+    )
+      throw protocolError();
+    ids.add(model.id);
+    return { id: model.id, label: model.label, default: model.default, ready: model.ready };
+  });
+  if (models.filter((model) => model.default).length !== 1) throw protocolError();
+  return models;
 }
 
 /**
@@ -357,6 +414,8 @@ export interface StoredMessage {
   feedback?: Feedback;
   /** Only the last assistant message of a turn carries its steps. */
   history?: TurnHistory;
+  /** And the model its turn last ran on. */
+  modelId?: string;
 }
 
 export interface MessagePage {
@@ -403,6 +462,11 @@ function parseMessagePage(page: unknown, limit: number, before: string): Message
       throw protocolError();
     const history = parseHistory(message);
     if (history !== null && message.role !== "assistant") throw protocolError();
+    if (
+      message.model_id !== undefined &&
+      (!isModelId(message.model_id) || message.role !== "assistant")
+    )
+      throw protocolError();
     ids.add(message.id);
     return {
       id: message.id,
@@ -412,6 +476,7 @@ function parseMessagePage(page: unknown, limit: number, before: string): Message
       createdAt: message.created_at,
       ...(feedback !== undefined ? { feedback } : {}),
       ...(history !== null ? { history } : {}),
+      ...(message.model_id !== undefined ? { modelId: message.model_id } : {}),
     };
   });
   // The steps go with the last assistant message of their turn.
@@ -1240,6 +1305,7 @@ const refuseCreation: Refusal = (status, code) =>
  */
 const refuseRun: Refusal = (status, code) => {
   if (
+    code === "model_unknown" ||
     code === "invalid_edited_arguments" ||
     code === "confirmation_not_pending" ||
     code === "confirmation_expired"
@@ -1261,6 +1327,10 @@ const FEEDBACK_REFUSALS: Record<number, string> = {
 };
 const refuseFeedback: Refusal = (status, code) =>
   code === "feedback_disabled" ? code : (refuse(status, code) ?? FEEDBACK_REFUSALS[status]);
+
+/** The refusals of the list of the models: a relay without the route offers no choice. */
+const refuseModels: Refusal = (status, code) =>
+  status === 404 && code !== "assistant_disabled" ? "models_unlisted" : refuse(status, code);
 
 /** The refusals of the list of the tools: a route the relay lacks lists none. */
 const refuseTools: Refusal = (status, code) => {
@@ -1372,6 +1442,8 @@ export type RunInput = { held?: HeldMessage[] } & (
       resume?: undefined;
       /** The context of the interface the prompt is asked from (`interface-context.ts`). */
       context?: readonly InterfaceEntry[];
+      /** The ID of the model of `listModels` it runs on; the default when absent. */
+      model?: string;
     }
   | { resume: { interruptId: string; approved: boolean; editedArgs?: Args; preview?: undefined } }
   | {
@@ -1458,6 +1530,11 @@ export interface AssistantClient {
   listTools(options?: { signal?: AbortSignal }): Promise<ToolDoc[]>;
   /** What the agent offers the page, such as the feedback. */
   getCapabilities(options?: { signal?: AbortSignal }): Promise<Capabilities>;
+  /**
+   * The models a run chooses from, the default first; `models_unlisted` from a
+   * collector that relays no list.
+   */
+  listModels(options?: { signal?: AbortSignal }): Promise<Model[]>;
   /** The ID this client gives a prompt. */
   newId(): string;
   /** Runs the agent on a conversation, in AG-UI; resolves with its RUN_FINISHED. */
@@ -1503,6 +1580,15 @@ export function createAssistantClient({
         api.GET("/assistant/capabilities", { parseAs: "stream", signal }),
       );
       return parseCapabilities(await readJson(sent, signal));
+    },
+
+    listModels: async ({ signal } = {}) => {
+      const sent = await send(
+        signal,
+        () => api.GET("/assistant/models", { parseAs: "stream", signal }),
+        refuseModels,
+      );
+      return parseModels(await readJson(sent, signal));
     },
 
     createConversation: async ({ signal } = {}) =>
@@ -1646,7 +1732,11 @@ export function createAssistantClient({
           new TextEncoder().encode(input.prompt).length > MAX_PROMPT_BYTES
         )
           throw new AssistantError("invalid_prompt");
-        if (typeof input.promptId !== "string" || !promptIdPattern.test(input.promptId))
+        if (
+          typeof input.promptId !== "string" ||
+          !promptIdPattern.test(input.promptId) ||
+          (input.model !== undefined && !isModelId(input.model))
+        )
           throw new AssistantError("invalid_run");
         messages.push({ id: input.promptId, role: "user", content: input.prompt });
       } else {
@@ -1663,7 +1753,9 @@ export function createAssistantClient({
         // takes it; a resume with none, the turn keeping the one of its prompt.
         context: input.resume === undefined ? boundContext(input.context ?? []) : [],
         state: {},
-        forwardedProps: {},
+        // The model of a new prompt; a resume runs on the model of its turn.
+        forwardedProps:
+          input.resume === undefined && input.model !== undefined ? { model: input.model } : {},
         ...(resume !== undefined ? { resume } : {}),
       };
       const run: RunState = {

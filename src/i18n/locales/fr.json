@@ -4761,11 +4761,12 @@
       "send": "Envoyer",
       "queue": "Mettre en file",
       "stop": "Arrêter",
-      "scope": "Les réponses n'utilisent que ce que vous avez le droit de voir. Les actions demandent toujours votre confirmation.",
       "keys": "Entrée pour envoyer · Maj+Entrée pour une nouvelle ligne",
       "tooLarge": "Le message ne doit pas dépasser 32 Kio.",
       "queuedHint": "La réponse est en cours : votre message partira à la fin.",
-      "queuedDuringConfirmation": "Votre message partira après votre décision ; il ne répond pas à la confirmation."
+      "queuedDuringConfirmation": "Votre message partira après votre décision ; il ne répond pas à la confirmation.",
+      "model": "Modèle",
+      "modelHint": "Le modèle des messages que vous envoyez"
     },
     "queue": {
       "label": "Message en file",
@@ -4810,7 +4811,8 @@
         "feedback_limit": "L'assistant ne prend plus d'avis pour le moment.",
         "feedback_disabled": "Les avis sont désactivés sur cet assistant.",
         "tools_unavailable": "L'agent n'a pas pu lire ses outils. Réessayez plus tard.",
-        "tools_unlisted": "L'assistant ne liste pas ses outils sur ce collector."
+        "tools_unlisted": "L'assistant ne liste pas ses outils sur ce collector.",
+        "model_unknown": "Ce modèle n'est plus disponible : le modèle par défaut est sélectionné. Renvoyez votre message."
       },
       "status": {
         "401": "Votre session ne vous authentifie plus auprès de l'assistant : reconnectez-vous.",

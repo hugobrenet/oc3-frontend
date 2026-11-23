@@ -580,43 +580,6 @@ describe("useAssistantChat", () => {
     expect(result.current.messages).toEqual([]);
   });
 
-  it("deletes every conversation of the user, list after list, the one shown with them", async () => {
-    const { result } = await setup();
-    await act(async () => {
-      await result.current.send("hello");
-    });
-    client.listConversations
-      .mockResolvedValueOnce([created, existing])
-      .mockResolvedValueOnce([{ id: "third", title: "Third" }])
-      .mockResolvedValueOnce([]);
-    let deleted: number | undefined;
-    await act(async () => {
-      deleted = await result.current.deleteAllConversations();
-    });
-    expect(deleted).toBe(3);
-    expect(client.deleteConversation.mock.calls.map(([id]) => id)).toEqual([
-      "new",
-      "existing",
-      "third",
-    ]);
-    expect(result.current.conversations).toEqual([]);
-    expect(result.current.conversation).toBeNull();
-    expect(result.current.messages).toEqual([]);
-  });
-
-  it("keeps in the list what a failed deletion of all left", async () => {
-    const { result } = await setup();
-    client.listConversations.mockResolvedValueOnce([existing, { id: "third", title: "Third" }]);
-    client.deleteConversation
-      .mockResolvedValueOnce(undefined)
-      .mockRejectedValueOnce(new AssistantError("http_error", 409));
-    await act(async () => {
-      await result.current.deleteAllConversations();
-    });
-    expect(result.current.error).toMatchObject({ status: 409 });
-    expect(result.current.conversations.map((item) => item.id)).not.toContain("existing");
-  });
-
   it("reads the list again without erasing the transcript", async () => {
     const { result } = await setup();
     await act(async () => {

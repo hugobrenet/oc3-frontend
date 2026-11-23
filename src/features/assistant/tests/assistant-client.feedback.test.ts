@@ -52,13 +52,15 @@ describe("parseFeedback", () => {
 
 describe("parseCapabilities", () => {
   it.each([
-    [{ custom: { feedback: true } }, true],
-    [{ custom: { feedback: false } }, false],
-    // An agent older than the setting: the feedback is on.
-    [{ tools: { supported: true } }, true],
-    [{ custom: {} }, true],
-  ])("reads %j", (value, feedback) => {
-    expect(parseCapabilities(value)).toEqual({ feedback });
+    [{ custom: { feedback: true } }, true, false],
+    [{ custom: { feedback: false } }, false, false],
+    // An agent older than the settings: the feedback is on, no model to choose.
+    [{ tools: { supported: true } }, true, false],
+    [{ custom: {} }, true, false],
+    [{ custom: { feedback: true, models: true } }, true, true],
+    [{ custom: { models: false } }, true, false],
+  ])("reads %j", (value, feedback, models) => {
+    expect(parseCapabilities(value)).toEqual({ feedback, models });
   });
 
   it.each([
@@ -69,6 +71,8 @@ describe("parseCapabilities", () => {
     { custom: "x" },
     { custom: { feedback: "false" } },
     { custom: { feedback: 0 } },
+    { custom: { models: "true" } },
+    { custom: { models: 1 } },
   ])("refuses %j", (value) => {
     expect(() => parseCapabilities(value)).toThrow(AssistantError);
   });
@@ -155,7 +159,7 @@ describe("the feedback of the client", () => {
     fetchMock.mockResolvedValueOnce(
       Response.json({ transport: { streaming: true }, custom: { feedback: false } }),
     );
-    await expect(client.getCapabilities()).resolves.toEqual({ feedback: false });
+    await expect(client.getCapabilities()).resolves.toEqual({ feedback: false, models: false });
     expect(new URL(requestAt(0).url).pathname).toBe("/api/assistant/capabilities");
     expect(requestAt(0).method).toBe("GET");
     fetchMock.mockResolvedValueOnce(

@@ -32,6 +32,7 @@ const EXPLAINED = new Set([
   "feedback_gone",
   "feedback_limit",
   "feedback_disabled",
+  "model_unknown",
   "tools_unavailable",
   "tools_unlisted",
 ]);
