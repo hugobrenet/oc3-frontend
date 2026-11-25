@@ -684,6 +684,14 @@ export function Answer({
       {message.text !== "" && (
         <Markdown
           text={message.text}
+          copyCode={{
+            streaming: message.status === "running",
+            labels: {
+              copy: t("assistant.message.copyCode"),
+              copied: t("assistant.message.codeCopied"),
+              failed: t("assistant.message.codeCopyFailed"),
+            },
+          }}
           renderCode={(code) =>
             targets.has(code) ? <TargetBadge value={code} targets={targets} /> : undefined
           }

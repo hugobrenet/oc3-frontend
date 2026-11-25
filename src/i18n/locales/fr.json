@@ -4617,7 +4617,10 @@
       "awaiting": "En attente de votre décision sur l'action ci-dessous.",
       "stopped": "Réponse incomplète, arrêtée. Elle n'a pas été relancée.",
       "failed": "Réponse incomplète, en échec. Elle n'a pas été relancée.",
-      "tokens": "Jetons : {{total}}"
+      "tokens": "Jetons : {{total}}",
+      "copyCode": "Copier le code",
+      "codeCopied": "Code copié",
+      "codeCopyFailed": "Le code n'a pas pu être copié"
     },
     "notice": {
       "stopped": "Arrêté. Le tour n'a pas été relancé ; les actions déjà exécutées ne sont pas annulées.",

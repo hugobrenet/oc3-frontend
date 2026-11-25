@@ -559,6 +559,15 @@ export function CheckIcon(props: IconProps) {
   );
 }
 
+/** Copying to the clipboard: two sheets, one over the other. */
+export function CopyIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M9 2.5h9.5A2.5 2.5 0 0 1 21 5v11.5a2.5 2.5 0 0 1-2.5 2.5H17v-2.2h1.5c.2 0 .3-.1.3-.3V5c0-.2-.1-.3-.3-.3H9c-.2 0-.3.1-.3.3v.8H6.5V5A2.5 2.5 0 0 1 9 2.5ZM5.5 7h9.5a2.5 2.5 0 0 1 2.5 2.5V19a2.5 2.5 0 0 1-2.5 2.5H5.5A2.5 2.5 0 0 1 3 19V9.5A2.5 2.5 0 0 1 5.5 7Zm0 2.2c-.2 0-.3.1-.3.3V19c0 .2.1.3.3.3H15c.2 0 .3-.1.3-.3V9.5c0-.2-.1-.3-.3-.3H5.5Z" />
+    </Svg>
+  );
+}
+
 /** Folder of forms, in the request catalog (fa-folder-open). */
 export function FolderIcon(props: IconProps) {
   return (

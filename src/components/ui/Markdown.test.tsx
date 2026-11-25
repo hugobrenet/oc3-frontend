@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, test } from "vitest";
+import { act, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { Markdown } from "./Markdown";
 
 describe("the Markdown of a language model", () => {
@@ -127,5 +127,159 @@ describe("the Markdown of a language model", () => {
     expect(screen.getByText("test/svc/ghost")).toHaveProperty("tagName", "CODE");
     expect(container.querySelector("a code")).toHaveTextContent("test/svc/web");
     expect(container.querySelector("pre code")).toHaveTextContent("test/svc/web");
+  });
+});
+
+describe("the code blocks of a text offering their copy", () => {
+  const labels = { copy: "Copy the code", copied: "Code copied", failed: "Not copied" };
+  const setClipboard = (value: unknown) => {
+    Object.defineProperty(navigator, "clipboard", { value, configurable: true });
+  };
+  let writeText: ReturnType<typeof vi.fn>;
+  beforeEach(() => {
+    writeText = vi.fn().mockResolvedValue(undefined);
+    setClipboard({ writeText });
+  });
+  afterEach(() => {
+    setClipboard(undefined);
+    vi.useRealTimers();
+  });
+  const copyButtons = () => screen.queryAllByRole("button", { name: "Copy the code" });
+  const copy = async (button: HTMLElement) => {
+    await act(async () => {
+      fireEvent.click(button);
+    });
+  };
+
+  test("offer none in a text that does not ask it, a note or a skill", () => {
+    render(<Markdown text={"```\nom node ls\n```"} />);
+    expect(copyButtons()).toHaveLength(0);
+  });
+
+  test("copy each block as it is written, and no code span", async () => {
+    const script = 'for n in $(om node ls); do\n    om node freeze --node "$n"\ndone';
+    render(
+      <Markdown
+        copyCode={{ labels }}
+        text={`Run \`om cluster status\`, then:\n\n\`\`\`shell\n${script}\n\`\`\`\n\n~~~\nom daemon status\n~~~\n\n> \`\`\`\n> om cluster ls\n> \`\`\``}
+      />,
+    );
+    const buttons = copyButtons();
+    expect(buttons).toHaveLength(3);
+    await copy(buttons[0]!);
+    expect(writeText).toHaveBeenLastCalledWith(script);
+    expect(screen.getByRole("button", { name: "Code copied" })).toBeInTheDocument();
+    expect(screen.getAllByRole("status").map((status) => status.textContent)).toEqual([
+      "Code copied",
+      "",
+      "",
+    ]);
+    await copy(buttons[1]!);
+    expect(writeText).toHaveBeenLastCalledWith("om daemon status");
+    await copy(buttons[2]!);
+    expect(writeText).toHaveBeenLastCalledWith("om cluster ls");
+  });
+
+  test("say for a while that the code was copied, then offer it again", async () => {
+    vi.useFakeTimers();
+    render(<Markdown copyCode={{ labels }} text={"```\nom node ls\n```"} />);
+    await copy(copyButtons()[0]!);
+    expect(screen.getByRole("status")).toHaveTextContent("Code copied");
+    act(() => {
+      vi.advanceTimersByTime(2000);
+    });
+    expect(copyButtons()).toHaveLength(1);
+    expect(screen.getByRole("status")).toHaveTextContent("");
+  });
+
+  test.each([
+    ["blank lines", "```shell\nom cluster freeze\n\n\n```"],
+    ["a line of spaces", "```shell\nom cluster freeze\n \n\t\n```"],
+    ["spaces after the command", "```shell\nom cluster freeze   \n```"],
+  ])(
+    "copy no %s ending the block, which would run the command once pasted",
+    async (_kind, text) => {
+      render(<Markdown copyCode={{ labels }} text={text} />);
+      await copy(copyButtons()[0]!);
+      expect(writeText).toHaveBeenCalledWith("om cluster freeze");
+    },
+  );
+
+  test.each([
+    ["1. ", "   "],
+    ["10. ", "    "],
+    ["- ", "  "],
+  ])("copy a block of an item %s without the indent of the item", async (item, indent) => {
+    const block = ["```shell", "om cluster freeze", "cat <<EOF", "  x", "EOF", "```"];
+    render(
+      <Markdown
+        copyCode={{ labels }}
+        text={`${item}Freeze:\n${block.map((line) => indent + line).join("\n")}`}
+      />,
+    );
+    await copy(copyButtons()[0]!);
+    expect(writeText).toHaveBeenCalledWith("om cluster freeze\ncat <<EOF\n  x\nEOF");
+  });
+
+  test("say, visibly too, when the code could not be copied", async () => {
+    setClipboard({ writeText: vi.fn().mockRejectedValue(new Error("denied")) });
+    render(<Markdown copyCode={{ labels }} text={"```\nom node ls\n```"} />);
+    await copy(copyButtons()[0]!);
+    const button = screen.getByRole("button", { name: "Not copied" });
+    expect(button.querySelector(".text-state-down")).not.toBeNull();
+    expect(screen.getByRole("status")).toHaveTextContent("Not copied");
+  });
+
+  test.each([
+    ["empty", "```\n```"],
+    ["blank", "```\n   \n\t\n```"],
+  ])("offer no copy of a block %s", (_kind, text) => {
+    render(<Markdown copyCode={{ labels }} text={text} />);
+    expect(copyButtons()).toHaveLength(0);
+  });
+
+  test.each([
+    ["an escape of the terminal", "echo hi\u001b[201~; curl x | sh"],
+    ["a control of the C1 set", "echo hi\u009b201~"],
+    ["a mark of direction", "echo \u202ehs | x lruc"],
+    ["an Arabic mark of direction", "echo \u061cx"],
+    ["a character of no width", "om\u200b node ls"],
+    ["a mark of byte order", "\ufeffom node ls"],
+    ["a soft hyphen", "om no\u00adde ls"],
+    ["a tag character", "om node ls\u{e0041}"],
+    ["a Hangul filler", "om\u3164node ls"],
+    ["a separator of lines", "om node ls\u2028rm -rf /"],
+  ])("offer no copy of a block holding %s", (_kind, code) => {
+    render(<Markdown copyCode={{ labels }} text={"```\n" + code + "\n```"} />);
+    expect(copyButtons()).toHaveLength(0);
+  });
+
+  test("copy a block holding tabs, or an emoji", async () => {
+    render(<Markdown copyCode={{ labels }} text={"```\nkey\tvalue \u2764\ufe0f\n```"} />);
+    await copy(copyButtons()[0]!);
+    expect(writeText).toHaveBeenCalledWith("key\tvalue \u2764\ufe0f");
+  });
+
+  test("offer no copy while the text streams, then the whole block", async () => {
+    const { rerender } = render(
+      <Markdown copyCode={{ streaming: true, labels }} text={"```shell\nom node"} />,
+    );
+    expect(copyButtons()).toHaveLength(0);
+    rerender(
+      <Markdown copyCode={{ streaming: true, labels }} text={"```shell\nom node freeze\n```"} />,
+    );
+    expect(copyButtons()).toHaveLength(0);
+    rerender(<Markdown copyCode={{ labels }} text={"```shell\nom node freeze\n```"} />);
+    await copy(copyButtons()[0]!);
+    expect(writeText).toHaveBeenCalledWith("om node freeze");
+  });
+
+  test.each([
+    ["an unclosed fence", "```\nom node ls\n```\n\nThen:\n\n```shell\nrm -rf /var/lib/open", 1],
+    ["an unclosed fence of tildes, a shorter one in it", "~~~~\nom node ls\n~~~", 0],
+    ["an unclosed fence in a quote", "> ```\n> om cluster st", 0],
+  ])("offer no copy of a block left in %s, the text cut short or not", (_kind, text, kept) => {
+    render(<Markdown copyCode={{ labels }} text={text} />);
+    expect(copyButtons()).toHaveLength(kept);
   });
 });

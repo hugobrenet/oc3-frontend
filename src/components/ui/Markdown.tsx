@@ -1,4 +1,6 @@
-import { createContext, Fragment, useContext, type ReactNode } from "react";
+import { createContext, Fragment, useContext, useEffect, useState, type ReactNode } from "react";
+import { copyText } from "@/lib/clipboard";
+import { AlertTriangleIcon, CheckIcon, CopyIcon } from "@/components/ui/icons";
 
 /**
  * Markdown rendered as React elements, for text written by a language model: the
@@ -15,20 +17,136 @@ import { createContext, Fragment, useContext, type ReactNode } from "react";
  * `renderCode` may render an inline code span otherwise, such as a name the page
  * knows as a badge; it gives undefined to keep the span code. Neither a code block
  * nor a code span within a link goes through it: a link holds no control.
+ *
+ * `copyCode` offers to copy each code block, a command or a script, as it is
+ * written: never run from the page. Not while the text streams, nor of a block
+ * left unclosed, which a text cut short, stopped, failed or past the length the
+ * model may write, leaves: nothing tells it from a complete one.
  */
 export function Markdown({
   text,
   className = "",
   renderCode,
+  copyCode,
 }: {
   text: string;
   className?: string;
   renderCode?: InlineCodeRenderer;
+  copyCode?: CodeCopy;
 }) {
   return (
     <CodeRenderer.Provider value={renderCode}>
-      <div className={`flex flex-col gap-2 text-ink ${className}`}>{blocks(text)}</div>
+      <CodeCopyContext.Provider value={copyCode}>
+        <div className={`flex flex-col gap-2 text-ink ${className}`}>{blocks(text)}</div>
+      </CodeCopyContext.Provider>
     </CodeRenderer.Provider>
+  );
+}
+
+/**
+ * The copy of the code blocks: `streaming` while the text is written, its blocks
+ * growing; `labels`, what the button says, in the words of the page.
+ */
+export type CodeCopy = {
+  streaming?: boolean;
+  labels: { copy: string; copied: string; failed: string };
+};
+
+const CodeCopyContext = createContext<CodeCopy | undefined>(undefined);
+
+// The characters a reader does not see, or sees otherwise than a terminal takes
+// them: the controls, the escape of the terminal sequences included, the marks of
+// format (direction, no width, tags), the separators of lines and paragraphs, and
+// the fillers of the Hangul script, blank. The tab and the line ends are text.
+const HIDDEN = /[\p{Cc}\p{Cf}\p{Zl}\p{Zp}\u115f\u1160\u3164\uffa0]/u;
+
+function hidesCharacters(text: string): boolean {
+  return HIDDEN.test(text.replace(/[\t\n\r]/g, ""));
+}
+
+/**
+ * A code block, with its copy when the text offers it. No copy is offered of a
+ * block a reader cannot check: blank, holding hidden characters, or unclosed. The
+ * blank lines and spaces that end it are left out: pasted in a shell, a line end
+ * would run the command.
+ */
+function CodeBlock({ code, closed }: { code: string; closed: boolean }) {
+  const copy = useContext(CodeCopyContext);
+  const text = code.replace(/\s+$/, "");
+  const copyable =
+    copy !== undefined &&
+    copy.streaming !== true &&
+    closed &&
+    text.trim() !== "" &&
+    !hidesCharacters(text);
+  return (
+    <div className="relative">
+      <pre
+        className={`overflow-x-auto rounded-(--radius-control) border border-line bg-surface-sunken py-2 pl-3 font-mono text-data ${copy === undefined ? "pr-3" : "pr-10"}`}
+      >
+        <code>{code}</code>
+      </pre>
+      {copyable && (
+        // The box hides the text that scrolls under the button, within the
+        // border of the block.
+        <div className="absolute top-px right-px rounded-(--radius-control) bg-surface-sunken p-1">
+          <CopyCodeButton text={text} labels={copy.labels} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** How long the button says the code was copied, or could not be. */
+const COPIED_MS = 2000;
+
+/**
+ * Copies a code block: a check, or the warning of a refusal, in the place of its
+ * icon for a while, said to assistive tools too.
+ */
+function CopyCodeButton({ text, labels }: { text: string; labels: CodeCopy["labels"] }) {
+  const [state, setState] = useState<"idle" | "copied" | "failed">("idle");
+  useEffect(() => {
+    if (state === "idle") return undefined;
+    const timer = window.setTimeout(() => {
+      setState("idle");
+    }, COPIED_MS);
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [state]);
+  const label =
+    state === "copied" ? labels.copied : state === "failed" ? labels.failed : labels.copy;
+  return (
+    <>
+      <button
+        type="button"
+        aria-label={label}
+        title={label}
+        className="flex h-6 w-6 items-center justify-center rounded-(--radius-control) border border-line bg-surface text-ink-muted hover:bg-surface-raised hover:text-ink"
+        onClick={() => {
+          copyText(text).then(
+            () => {
+              setState("copied");
+            },
+            () => {
+              setState("failed");
+            },
+          );
+        }}
+      >
+        {state === "copied" ? (
+          <CheckIcon className="h-3.5 w-3.5 text-state-up" />
+        ) : state === "failed" ? (
+          <AlertTriangleIcon className="h-3.5 w-3.5 text-state-down" />
+        ) : (
+          <CopyIcon className="h-3.5 w-3.5" />
+        )}
+      </button>
+      <span className="sr-only" role="status">
+        {state === "idle" ? "" : label}
+      </span>
+    </>
   );
 }
 
@@ -93,21 +211,19 @@ function blocks(text: string): ReactNode[] {
     const fence = FENCE.exec(line);
     if (fence !== null) {
       const marker = fence[1] ?? "```";
+      // The lines of the block lose the indent of its opening fence, at most
+      // (CommonMark): a block in an item of a list is copied as written.
+      const indent = line.search(/\S/);
       const body: string[] = [];
       i++;
       while (i < lines.length && !(lines[i] ?? "").trim().startsWith(marker)) {
-        body.push(lines[i] ?? "");
+        const raw = lines[i] ?? "";
+        body.push(raw.slice(Math.min(indent, raw.search(/\S|$/))));
         i++;
       }
+      const closed = i < lines.length;
       i++; // the closing fence, if any
-      out.push(
-        <pre
-          key={key}
-          className="overflow-x-auto rounded-(--radius-control) border border-line bg-surface-sunken px-3 py-2 font-mono text-data"
-        >
-          <code>{body.join("\n")}</code>
-        </pre>,
-      );
+      out.push(<CodeBlock key={key} code={body.join("\n")} closed={closed} />);
       continue;
     }
 

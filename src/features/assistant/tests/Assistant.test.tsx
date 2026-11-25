@@ -174,6 +174,34 @@ describe("the page of the assistant", () => {
     expect(client.run).toHaveBeenCalledTimes(1);
   });
 
+  test("offers to copy the blocks an answer closed, not while it streams nor the one it was stopped in", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
+    try {
+      client.run.mockImplementation(
+        hanging(text("```\nom node ls\n```\n\n```shell\nrm -rf /var/lib/open")),
+      );
+      await renderAssistant(client);
+      await submit("clean the node");
+      await waitFor(() => {
+        expect(log().querySelectorAll("pre")).toHaveLength(2);
+      });
+      expect(within(log()).queryByRole("button", { name: "Copy the code" })).toBeNull();
+      fireEvent.click(screen.getByRole("button", { name: "Stop" }));
+      expect(await screen.findByText(/Incomplete answer, stopped/)).toBeInTheDocument();
+      const buttons = within(log()).getAllByRole("button", { name: "Copy the code" });
+      expect(buttons).toHaveLength(1);
+      expect(log().querySelectorAll("pre")[0]?.parentElement).toContainElement(buttons[0] ?? null);
+      await act(async () => {
+        fireEvent.click(buttons[0]!);
+      });
+      expect(writeText).toHaveBeenCalledWith("om node ls");
+      expect(within(log()).getByRole("button", { name: "Code copied" })).toBeInTheDocument();
+    } finally {
+      Object.defineProperty(navigator, "clipboard", { value: undefined, configurable: true });
+    }
+  });
+
   test("restores and pages the saved messages without running a turn", async () => {
     const answer = stored("turn-old:2", "assistant", "Saved answer");
     client.getMessages

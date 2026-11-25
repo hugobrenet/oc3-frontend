@@ -4617,7 +4617,10 @@
       "awaiting": "Waiting for your decision on the action below.",
       "stopped": "Incomplete answer, stopped. It was not retried.",
       "failed": "Incomplete answer, failed. It was not retried.",
-      "tokens": "Tokens: {{total}}"
+      "tokens": "Tokens: {{total}}",
+      "copyCode": "Copy the code",
+      "codeCopied": "Code copied",
+      "codeCopyFailed": "The code could not be copied"
     },
     "notice": {
       "stopped": "Stopped. The turn was not retried; the actions already run are not undone.",
