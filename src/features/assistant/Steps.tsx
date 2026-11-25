@@ -26,7 +26,7 @@ export function TargetBadge({ value, targets }: { value: string; targets: Map<st
   const target = targets.get(value);
   if (target === undefined)
     return (
-      <code className="rounded-(--radius-control) bg-surface-sunken px-1 font-mono text-data break-words">
+      <code className="rounded-(--radius-control) bg-code-span px-1 font-mono text-data break-words text-ink">
         {value}
       </code>
     );

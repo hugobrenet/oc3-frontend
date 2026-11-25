@@ -161,7 +161,7 @@ function InlineCode({ code }: { code: string }) {
   const rendered = render?.(code);
   if (rendered !== undefined) return rendered;
   return (
-    <code className="rounded-(--radius-control) bg-surface-sunken px-1 font-mono text-data break-words">
+    <code className="rounded-(--radius-control) bg-code-span px-1 font-mono text-data break-words text-ink">
       {code}
     </code>
   );
