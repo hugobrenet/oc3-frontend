@@ -16,6 +16,7 @@ import { useMatchRoute, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import {
   ChevronDownIcon,
+  CloseIcon,
   ExternalLinkIcon,
   GripIcon,
   PlusIcon,
@@ -86,7 +87,8 @@ export function AssistantDock() {
   }, [dock]);
 
   if (dock === null || shared === null || onPage) return null;
-  if (status.data?.available !== true || dock.state === "folded") return null;
+  if (status.data?.available !== true) return null;
+  if (dock.state === "folded") return <ActivityNotice onOpen={dock.open} />;
   return <DockPanel dock={dock} onFold={dock.fold} />;
 }
 
@@ -95,8 +97,83 @@ function activityState(activity: ReturnType<typeof useAssistantActivity>) {
   if (activity === null) return null;
   if (activity.waiting) return "waiting";
   if (activity.answering) return "answering";
-  if (activity.ended) return "ended";
+  if (activity.ended) return activity.failed ? "failed" : "ended";
   return null;
+}
+
+/**
+ * What the folded dock tells once a turn ended out of sight, or an action began
+ * to wait there for the decision of the user (`activity.notice`): a notice where
+ * the dock opens, moved with it, which opens it on the answer or the action, or
+ * goes, closed by its button or Escape, the focus then on the button of the
+ * dock. A view shows the chat, and it goes by itself; the menu and the button of
+ * the dock still tell it until the chat is seen. It takes no focus; its words
+ * are told by a region always there, to be announced.
+ */
+export function ActivityNotice({ onOpen }: { onOpen: () => void }) {
+  const { t } = useTranslation();
+  const notice = useAssistantActivity()?.notice ?? null;
+  const wide = useWide();
+  const right = readDockRight();
+  // The notice the user closed: the next one shows.
+  const [closed, setClosed] = useState<typeof notice>(null);
+  if (closed !== null && notice !== closed) setClosed(null);
+  const shown = notice !== null && notice !== closed ? notice : null;
+  const close = () => {
+    setClosed(notice);
+    document.querySelector<HTMLElement>("[data-assistant-dock-button]")?.focus();
+  };
+  // Where the dock was moved, kept within a window narrower since.
+  const kept =
+    right === null ? null : Math.min(right, window.innerWidth - NOTICE_WIDTH - DOCK_MARGIN);
+  const style: CSSProperties =
+    wide && kept !== null && kept > DOCK_MARGIN ? { ...PLACE, right: kept } : PLACE;
+  // The dock opens from its button: the notice that opened it goes with it.
+  const open = () => {
+    document.querySelector<HTMLElement>("[data-assistant-dock-button]")?.focus();
+    onOpen();
+  };
+  return (
+    <>
+      <p role="status" className="sr-only">
+        {shown !== null ? t(`assistant.endNotice.${shown}`) : ""}
+      </p>
+      {shown !== null && (
+        <div
+          onKeyDown={(event) => {
+            if (event.key !== "Escape") return;
+            event.stopPropagation();
+            close();
+          }}
+          style={style}
+          className={`fixed right-4 z-(--z-dock) flex w-[24rem] max-w-[calc(100vw-2rem)] items-start gap-2 rounded-(--radius-panel) border bg-surface-raised p-3 shadow-xl max-sm:right-2 ${
+            shown === "waiting"
+              ? "border-state-warn"
+              : shown === "failed"
+                ? "border-state-down"
+                : "border-line"
+          }`}
+        >
+          <SparklesIcon className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
+          <div className="flex min-w-0 flex-1 flex-col items-start gap-2">
+            <p aria-hidden="true">{t(`assistant.endNotice.${shown}`)}</p>
+            <button type="button" onClick={open} className={SMALL_BUTTON}>
+              {t(shown === "waiting" ? "assistant.endNotice.seeAction" : "assistant.endNotice.see")}
+            </button>
+          </div>
+          <button
+            type="button"
+            aria-label={t("assistant.endNotice.dismiss")}
+            title={t("assistant.endNotice.dismiss")}
+            onClick={close}
+            className={ICON_BUTTON}
+          >
+            <CloseIcon className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
+    </>
+  );
 }
 
 /**
@@ -151,9 +228,11 @@ export function AssistantDockButton() {
           className={`absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-surface-raised ${
             state === "waiting"
               ? "bg-state-warn"
-              : state === "answering"
-                ? "animate-pulse bg-accent"
-                : "bg-accent"
+              : state === "failed"
+                ? "bg-state-down"
+                : state === "answering"
+                  ? "animate-pulse bg-accent"
+                  : "bg-accent"
           }`}
         />
       )}
@@ -165,6 +244,8 @@ export function AssistantDockButton() {
 const DOCK_RIGHT_KEY = "oc3.assistant.dock.right";
 /** The margin of the dock to the edges of the window, as `right-4`. */
 const DOCK_MARGIN = 16;
+/** The width of the notice of the folded dock, as `w-[24rem]`. */
+const NOTICE_WIDTH = 384;
 /** A step of the arrows of the keyboard moving the dock. */
 const DOCK_STEP = 32;
 /** A window wide enough for the dock to move, as Tailwind's sm: narrower, it takes the width. */

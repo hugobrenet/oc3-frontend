@@ -4837,6 +4837,7 @@
     "activity": {
       "answering": "L'assistant répond",
       "ended": "L'assistant a terminé",
+      "failed": "La réponse de l'assistant a échoué",
       "waiting": "Une action de l'assistant attend votre décision"
     },
     "promptDropped": "La question préparée n'a pas été reprise : un tour est en cours, ou une action attend votre décision. Rouvrez-la depuis l'objet une fois terminé.",
@@ -4875,6 +4876,19 @@
       "stepsOmitted_other": "{{count}} étapes non conservées dans l'historique",
       "model": "Modèle : {{model}}",
       "unstored": "Les réponses arrêtées ou en échec ne sont pas enregistrées, ni exportées."
+    },
+    "endNotice": {
+      "ended": "Votre analyse est terminée.",
+      "failed": "Votre analyse a échoué : sa réponse est incomplète.",
+      "waiting": "Votre analyse attend votre décision sur une action.",
+      "see": "Voir la réponse",
+      "seeAction": "Voir l'action",
+      "dismiss": "Fermer",
+      "tab": {
+        "ended": "✓ Analyse terminée",
+        "failed": "✕ Analyse en échec",
+        "waiting": "● Décision attendue"
+      }
     }
   },
   "checks": {

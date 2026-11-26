@@ -8,8 +8,15 @@ export interface AssistantActivity {
   answering: boolean;
   /** A turn ended while no view showed it, answered, stopped or failed. */
   ended: boolean;
+  /** The turn that ended so failed: its answer is incomplete. */
+  failed: boolean;
   /** An action waits for the decision of the user. */
   waiting: boolean;
+  /**
+   * What the folded dock tells, once: an action that began to wait out of
+   * sight, else a turn that ended so; null when nothing.
+   */
+  notice: "ended" | "failed" | "waiting" | null;
 }
 
 export interface SharedChat {

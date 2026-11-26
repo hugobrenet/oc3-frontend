@@ -8,6 +8,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { useTranslation } from "react-i18next";
 import type { AssistantClient } from "./assistant-client";
 import {
   AssistantActivityContext,
@@ -19,6 +20,7 @@ import { useAssistantChat } from "./use-assistant-chat";
 import { checkedRows } from "./checked-rows";
 import { sessionFilterset } from "./session-filterset";
 import { interfaceContext } from "./interface-context";
+import { useTabNotice } from "./use-tab-notice";
 
 /**
  * What the page under the dock shows, read when a prompt is sent or queued, with
@@ -60,9 +62,15 @@ export function AssistantChatProvider({
   identity?: string;
   children: ReactNode;
 }) {
+  const { t } = useTranslation();
   const [enabled, setEnabled] = useState(false);
   const [viewing, setViewing] = useState(false);
   const [ended, setEnded] = useState(false);
+  // The turn that ended so failed: its answer is incomplete.
+  const [endedFailed, setEndedFailed] = useState(false);
+  // An action began to wait for the decision of the user while no view showed
+  // the chat: one seen waiting is not told again.
+  const [waitedUnseen, setWaitedUnseen] = useState(false);
   const [draft, setDraft] = useState("");
   const [prompt, setPrompt] = useState<string | null>(null);
   const [promptDropped, setPromptDropped] = useState(false);
@@ -78,6 +86,8 @@ export function AssistantChatProvider({
     setShownIdentity(identity);
     setEnabled(viewers.current > 0);
     setEnded(false);
+    setEndedFailed(false);
+    setWaitedUnseen(false);
     setDraft("");
     setPrompt(null);
     setPromptDropped(false);
@@ -90,6 +100,7 @@ export function AssistantChatProvider({
     setViewing(true);
     setEnabled(true);
     setEnded(false);
+    setWaitedUnseen(false);
     return () => {
       viewers.current--;
       if (viewers.current === 0) setViewing(false);
@@ -139,12 +150,64 @@ export function AssistantChatProvider({
   }, [conversationKey, chat.pending, chat.historyReady]);
 
   // A turn that ends while no view shows it, answered, stopped or failed, is to
-  // be seen: the folded dock counts as not shown.
-  const wasAnswering = useRef(false);
+  // be seen: the folded dock counts as not shown. The identity it ran for is
+  // kept: one stopped by another identity is not the new one's to see. The tab
+  // hidden meanwhile says it in its title, the view shown or not.
+  const tab = useTabNotice(t);
+  const turnError = useRef(chat.error);
+  turnError.current = chat.error;
+  const waitingNow = useRef(waiting);
+  waitingNow.current = waiting;
+  const viewingNow = useRef(viewing);
+  viewingNow.current = viewing;
+  // The identity a turn began for, kept until it ends: the chat of another one
+  // is reset a render later, its turn stopping then.
+  const answeringFor = useRef<string | null>(null);
   useEffect(() => {
-    if (wasAnswering.current && !answering && !viewing) setEnded(true);
-    wasAnswering.current = answering;
-  }, [answering, viewing]);
+    // A turn runs again, such as a message queued: what the title and the
+    // dock told is over, the end of this one to be told in turn.
+    if (answering) {
+      answeringFor.current ??= identity;
+      setEnded(false);
+      setEndedFailed(false);
+      tab.clear();
+      return;
+    }
+    const endedHere = answeringFor.current === identity;
+    answeringFor.current = null;
+    if (!endedHere) return;
+    // Failed when the chat tells an error: an answer stopped tells none.
+    const failedTurn = turnError.current !== null;
+    if (!viewing) {
+      setEnded(true);
+      setEndedFailed(failedTurn);
+    }
+    // A turn that ends on an action waiting tells that rather.
+    if (!waitingNow.current) tab.tell(failedTurn ? "failed" : "ended");
+  }, [answering, viewing, identity, tab]);
+
+  // An action that begins to wait, told once while it waits.
+  const waitTold = useRef(false);
+  useEffect(() => {
+    if (!waiting) {
+      waitTold.current = false;
+      setWaitedUnseen(false);
+      tab.clear("waiting");
+      return;
+    }
+    if (waitTold.current) return;
+    waitTold.current = true;
+    if (!viewingNow.current) setWaitedUnseen(true);
+    tab.tell("waiting");
+  }, [waiting, identity, tab]);
+
+  // Another identity: the title told nothing of it.
+  useEffect(
+    () => () => {
+      tab.clear();
+    },
+    [identity, tab],
+  );
 
   // What the menu and the folded dock show while no view shows the chat: in one,
   // the chat says so.
@@ -152,9 +215,19 @@ export function AssistantChatProvider({
     () => ({
       answering: answering && !viewing,
       ended: ended && !viewing,
+      failed: ended && endedFailed && !viewing,
       waiting: waiting && !viewing,
+      notice: viewing
+        ? null
+        : waiting && waitedUnseen
+          ? ("waiting" as const)
+          : ended
+            ? endedFailed
+              ? ("failed" as const)
+              : ("ended" as const)
+            : null,
     }),
-    [answering, ended, viewing, waiting],
+    [answering, ended, endedFailed, viewing, waiting, waitedUnseen],
   );
 
   const dockControls = useMemo(
