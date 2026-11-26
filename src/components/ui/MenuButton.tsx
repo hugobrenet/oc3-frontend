@@ -52,6 +52,10 @@ const ITEM =
  * badges, keywords or the submenus they are in, which each one names, flat rather
  * than in their submenus; Down then goes to the first, Enter chooses it, Up from
  * the first goes back to the field. Emptied, the submenus come back.
+ *
+ * `iconOnly` draws the trigger as its icon alone, a square as the icon buttons of
+ * a toolbar, `label` its accessible name and its tooltip; `align="end"` lines the
+ * menu up with the right edge of the trigger, for one at the end of its row.
  */
 export function MenuButton({
   label,
@@ -63,6 +67,8 @@ export function MenuButton({
   filterable = false,
   filterLabel = "",
   filterEmpty = "",
+  iconOnly = false,
+  align = "start",
 }: {
   label: string;
   items: MenuItem[];
@@ -80,6 +86,10 @@ export function MenuButton({
   filterable?: boolean;
   filterLabel?: string;
   filterEmpty?: string;
+  /** The trigger its icon alone, `label` its name and tooltip. */
+  iconOnly?: boolean;
+  /** The edge of the trigger the menu lines up with. */
+  align?: "start" | "end";
 }) {
   const [open, setOpen] = useState(false);
   const menuId = useId();
@@ -246,15 +256,19 @@ export function MenuButton({
           setOpen((previous) => !previous);
         }}
         onKeyDown={onButtonKeyDown}
+        aria-label={iconOnly ? label : undefined}
+        title={iconOnly ? label : undefined}
         className={
-          prominent
-            ? "flex h-7 items-center gap-1.5 rounded-(--radius-pill) border border-accent bg-accent-soft pr-2.5 pl-3 font-medium text-ink hover:bg-accent hover:text-accent-ink disabled:opacity-60 aria-expanded:bg-accent aria-expanded:text-accent-ink"
-            : "flex h-7 items-center gap-1.5 rounded-(--radius-control) border border-line px-2 text-ink-muted hover:border-line-strong hover:text-ink disabled:opacity-60 aria-expanded:text-ink"
+          iconOnly
+            ? "flex h-7 w-7 shrink-0 items-center justify-center rounded-(--radius-control) border border-line text-ink-muted hover:bg-surface-sunken hover:text-ink disabled:opacity-60 aria-expanded:bg-surface-sunken aria-expanded:text-ink"
+            : prominent
+              ? "flex h-7 items-center gap-1.5 rounded-(--radius-pill) border border-accent bg-accent-soft pr-2.5 pl-3 font-medium text-ink hover:bg-accent hover:text-accent-ink disabled:opacity-60 aria-expanded:bg-accent aria-expanded:text-accent-ink"
+              : "flex h-7 items-center gap-1.5 rounded-(--radius-control) border border-line px-2 text-ink-muted hover:border-line-strong hover:text-ink disabled:opacity-60 aria-expanded:text-ink"
         }
       >
         {icon}
-        {label}
-        <ChevronDownIcon className="h-3.5 w-3.5" />
+        {!iconOnly && label}
+        {!iconOnly && <ChevronDownIcon className="h-3.5 w-3.5" />}
       </button>
 
       {open && (
@@ -264,7 +278,7 @@ export function MenuButton({
           role="menu"
           aria-label={label}
           onKeyDown={onMenuKeyDown}
-          className="absolute left-0 z-30 mt-1 min-w-56 rounded-(--radius-panel) border border-line bg-surface-raised p-1 shadow-lg"
+          className={`absolute ${align === "end" ? "right-0 w-max max-w-[min(24rem,calc(100vw-2rem))]" : "left-0"} z-30 mt-1 min-w-56 rounded-(--radius-panel) border border-line bg-surface-raised p-1 shadow-lg`}
         >
           {filterable && (
             <div className="px-1 pt-1 pb-1.5">

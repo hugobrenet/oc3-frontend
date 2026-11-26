@@ -26,6 +26,7 @@ import { AnswerFooter, AnswerSteps, TARGET_ARGUMENTS, TargetBadge } from "./Step
 import { ToolsDialog } from "./ToolsDialog";
 import { AssistantChatProvider } from "./assistant-chat-context";
 import { useSharedAssistantChat } from "./assistant-chat";
+import { useConversationExport } from "./ConversationExport";
 import { type AssistantChat, type ChatMessage, type Rating } from "./use-assistant-chat";
 import { codeSpans, useTargets } from "./use-targets";
 import { useToolDocs } from "./use-tool-docs";
@@ -86,6 +87,7 @@ function AssistantView({ client, initialPrompt, onPromptTaken }: AssistantProps)
   const { attach } = shared;
   useEffect(() => attach(), [attach]);
   const toolDocs = useToolDocs(client, chat.confirmation !== null);
+  const conversationExport = useConversationExport();
   const panel = useConversationsOpen();
   const [search, setSearch] = useState("");
   const { setDraft } = shared;
@@ -375,6 +377,7 @@ function AssistantView({ client, initialPrompt, onPromptTaken }: AssistantProps)
             )
           )}
           <div className="ml-auto flex gap-2">
+            {conversationExport.menu}
             <button
               type="button"
               aria-label={t("assistant.tips.open")}
@@ -498,8 +501,10 @@ function AssistantView({ client, initialPrompt, onPromptTaken }: AssistantProps)
             {t(`assistant.notice.${chat.notice}`)}
           </p>
         )}
+        {conversationExport.notices}
         <Composer inputRef={composer} onReplacingChange={setReplacing} />
       </section>
+      {conversationExport.frame}
 
       {dialog !== "" && (
         <Modal

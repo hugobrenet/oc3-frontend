@@ -169,8 +169,9 @@ export function download(blob: Blob, filename: string): void {
   document.body.appendChild(link);
   link.click();
   link.remove();
-  // Once the download has started: the URL holds the whole file in memory.
+  // Once the download has started: the URL holds the whole file in memory. A
+  // browser may read it once the user confirmed the download, after the click.
   window.setTimeout(() => {
     URL.revokeObjectURL(url);
-  }, 1000);
+  }, 30000);
 }

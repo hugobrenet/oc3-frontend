@@ -74,6 +74,60 @@
 }
 
 @layer base {
+  /*
+   * A conversation of the assistant printed, to be saved as a PDF, in a frame
+   * of its own (PrintView). Paper does not scroll: a code block and a cell of a
+   * table wrap their long lines, a command printed whole; important, to win
+   * over the utilities of the transcript, a later layer. Where a link leads is
+   * written, which paper does not show. The page rule takes no selector: for
+   * any print of the application.
+   */
+  @media print {
+    @page {
+      margin: 15mm;
+    }
+    html:has(.assistant-print) {
+      background: #fff;
+    }
+    .assistant-print {
+      font-size: 11pt;
+    }
+    .assistant-print button {
+      display: none !important;
+    }
+    .assistant-print-meta {
+      break-after: avoid;
+    }
+    .assistant-print pre,
+    .assistant-print table,
+    .assistant-print li {
+      break-inside: avoid;
+    }
+    .assistant-print pre {
+      white-space: pre-wrap !important;
+      overflow: visible !important;
+      overflow-wrap: anywhere !important;
+      padding-right: 0.75rem !important;
+    }
+    /* A table wider than the page wraps its cells rather than scroll. */
+    .assistant-print div:has(> table) {
+      overflow: visible !important;
+    }
+    .assistant-print table {
+      width: 100%;
+    }
+    .assistant-print td,
+    .assistant-print th {
+      overflow-wrap: anywhere !important;
+    }
+    .assistant-print a[href]::after {
+      content: " (" attr(href) ")";
+      overflow-wrap: anywhere;
+    }
+    .assistant-print a[href^="/"]::after {
+      content: " (" var(--print-origin) attr(href) ")";
+    }
+  }
   html {
     font-family: var(--font-sans);
     font-size: 100%;
