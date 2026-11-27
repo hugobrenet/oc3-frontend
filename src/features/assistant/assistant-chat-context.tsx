@@ -18,13 +18,14 @@ import {
 } from "./assistant-chat";
 import { useAssistantChat } from "./use-assistant-chat";
 import { checkedRows } from "./checked-rows";
+import { listFilters } from "./list-filters";
 import { sessionFilterset } from "./session-filterset";
 import { interfaceContext } from "./interface-context";
 import { useTabNotice } from "./use-tab-notice";
 
 /**
  * What the page under the dock shows, read when a prompt is sent or queued, with
- * the rows ticked there and the clock of the user: the clock only on the page of
+ * the filters of its list and the rows ticked there and the clock of the user: the clock only on the page of
  * the assistant, nothing being under the conversation there. From the address of
  * the window, which the router keeps, with no base path, parsed as the router
  * parses it.
@@ -33,6 +34,7 @@ const pageContext = () =>
   interfaceContext(window.location.pathname, defaultParseSearch(window.location.search), {
     now: new Date(),
     timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    listFilters: listFilters(),
     checked: checkedRows(),
     sessionFilterset: sessionFilterset(),
   });

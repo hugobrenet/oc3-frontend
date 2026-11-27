@@ -1,7 +1,9 @@
 import { isPeekStep } from "@/components/opensvc/panel-trail";
 import { NAV_CATEGORIES, NAV_TOP } from "@/app/layout/navigation";
 import { currentIndex, parseTrail } from "@/lib/peek-trail";
+import { isInverted } from "@/lib/column-filters";
 import type { CheckedRows } from "./checked-rows";
+import type { ListFilters } from "./list-filters";
 
 /**
  * The context of the interface a prompt goes with (AG-UI `context`): what the page
@@ -18,8 +20,9 @@ import type { CheckedRows } from "./checked-rows";
  * left out.
  *
  * With them, what the user did or set in their session, never the content of a
- * record: the rows they ticked in the list on display (`checked-rows.ts`), which a
- * link cannot tick, and their time zone and clock, for "an hour ago" or "at 2 pm".
+ * record: the filters of the list on display, as the list applies them
+ * (`list-filters.ts`), the rows they ticked there (`checked-rows.ts`), which a link
+ * cannot tick, and their time zone and clock, for "an hour ago" or "at 2 pm".
  *
  * On the page of the assistant nothing is under the conversation: the session only.
  */
@@ -110,6 +113,8 @@ export interface InterfaceSession {
   now?: Date;
   /** Their time zone, as the browser tells it. */
   timeZone?: string;
+  /** The filters of the list on display, as the list applies them. */
+  listFilters?: ListFilters | null;
   /** The rows ticked in the list on display. */
   checked?: CheckedRows | null;
   /** The filterset of the session, `null` for none, `undefined` while not read. */
@@ -152,54 +157,161 @@ function checkedEntries(checked: CheckedRows, criterion: boolean): InterfaceEntr
 const PROP = /^[A-Za-z][A-Za-z0-9_.]{0,63}$/;
 /** The longest expression of a filter told: a longer one is no filter a user typed. */
 const MAX_FILTER_CHARS = 128;
+/** Past them, the filters of the list are said narrower than told. */
+const MAX_TOLD_FILTERS = 8;
+/**
+ * A value of a filter told: a word, a number, a date, or a few words, such as the
+ * status `In service`, at most 40 characters and 3 words, quoted when it holds a
+ * space. A filter may come from a link someone else wrote: a sentence is no value.
+ */
+const VALUE = /^[\p{L}\p{N}._:@#/+%-]+(?: [\p{L}\p{N}._:@#/+%-]+){0,2}$/u;
+/** A regular expression told, `~^dev`: its characters of a pattern, no space. */
+const PATTERN = /^[\p{L}\p{N}._:@#/+%^$*?()[\]{}|\\-]+$/u;
+const MAX_VALUE_CHARS = 40;
+/** A date relative to now, as the collector reads a comparison: `-15m`, `-1d12h`. */
+const RELATIVE = /^-(?=\d)(\d+w)?(\d+d)?(\d+h)?(\d+m)?(\d+s)?$/;
+/** Past them, the values of an `in:` are given by their count, the criterion not known whole. */
+const MAX_LISTED_VALUES = 5;
+/** Told when a filter applied is not given: the list is narrower than said. */
+export const NOT_LISTED = "other filters not listed";
+
+const shapedValue = (text: string) => text.length <= MAX_VALUE_CHARS && VALUE.test(text);
+/** A number, told as it is. */
+const NUMBER = /^-?[0-9]+(\.[0-9]+)?$/;
+/**
+ * A value as told: quoted but a number, so that no value reads as a word of the
+ * sentence: `"up or down"` is one value, `"not"` a value, `"empty"` the text, not
+ * the absence of one.
+ */
+const quoted = (text: string) => (NUMBER.test(text) ? text : `"${text}"`);
 
 /**
  * A filter of a column in words, from the expression of the collector API that
  * `column-filters.ts` keeps: `dev` contains, `~^dev` matches, `in:a,b` is one of,
- * `eq:` `ne:` `gte:` `lte:` `gt:` `lt:` compare, `empty`, a leading `!` inverts.
+ * `eq:` `ne:` `gte:` `lte:` `gt:` `lt:` compare, a `-15m` among them a date
+ * relative to now, `empty`, a leading `!` inverts, keeping the rows without a value
+ * too, as the collector does. Said as the webapp of a cluster says its filters:
+ * `status is up or warn`, `status is not any of up, warn (or is empty)`,
+ * `mem_bytes is at least 8`, `updated is more than 15m ago`. Undefined when a value
+ * is not shaped as one; `whole` false when it is told in part, by a count.
  */
-function describeFilter(prop: string, expression: string): string {
-  const inverted = expression.startsWith("!") && !expression.startsWith("!=");
+function describeFilter(
+  prop: string,
+  expression: string,
+): { said: string; whole: boolean } | undefined {
+  const inverted = isInverted(expression);
   const inner = inverted ? expression.slice(1) : expression;
-  const not = inverted ? "not " : "";
-  if (inner === "empty") return `${prop} is ${not}empty`;
-  if (inner.startsWith("~"))
-    return `${prop} ${inverted ? "does not match" : "matches"} /${inner.slice(1)}/`;
-  if (inner.startsWith("in:"))
-    return `${prop} is ${not}one of ${inner.slice(3).split(",").join(", ")}`;
-  const comparisons: readonly (readonly [string, string])[] = [
-    ["eq:", "is"],
-    ["ne:", "is not"],
-    ["gte:", ">="],
-    ["lte:", "<="],
-    ["gt:", ">"],
-    ["lt:", "<"],
+  // The inverse keeps the rows without a value, but that of empty.
+  const orEmpty = inverted ? " (or is empty)" : "";
+  if (inner === "empty") return { said: `${prop} is ${inverted ? "not " : ""}empty`, whole: true };
+  if (inner.startsWith("~")) {
+    const pattern = inner.slice(1);
+    // A flag of the pattern, such as (?-i), would make the words untrue.
+    if (pattern.length > MAX_VALUE_CHARS || !PATTERN.test(pattern) || pattern.includes("(?"))
+      return undefined;
+    return {
+      said: `${prop} ${inverted ? "does not match" : "matches"} /${pattern}/ (any case)${orEmpty}`,
+      whole: true,
+    };
+  }
+  if (inner.startsWith("in:")) {
+    const values = [...new Set(inner.slice(3).split(","))];
+    if (!values.every(shapedValue)) return undefined;
+    if (values.length > MAX_LISTED_VALUES)
+      return {
+        said: `${prop} is ${inverted ? "none" : "one"} of ${String(values.length)} values${orEmpty}`,
+        whole: false,
+      };
+    const told = values.map(quoted);
+    if (!inverted) return { said: `${prop} is ${told.join(" or ")}`, whole: true };
+    return {
+      said:
+        told.length === 1
+          ? `${prop} is not ${told[0]}${orEmpty}`
+          : `${prop} is not any of ${told.join(", ")}${orEmpty}`,
+      whole: true,
+    };
+  }
+  // Each comparison, its words, and those of its inverse; a date relative to now
+  // in words of time: lt:-15m keeps the dates older than 15 minutes, !gte:-15m too.
+  // ne: leaves out the rows without a value, as SQL does, and its inverse keeps
+  // them; an equality to a date relative to now is no filter a user means.
+  const comparisons: readonly (readonly [string, string, string, string?, string?])[] = [
+    ["eq:", "is", "is not"],
+    ["ne:", "is not", "is"],
+    ["gte:", "is at least", "is less than", "is at most {} ago", "is more than {} ago"],
+    ["lte:", "is at most", "is more than", "is at least {} ago", "is less than {} ago"],
+    ["gt:", "is more than", "is at most", "is less than {} ago", "is at least {} ago"],
+    ["lt:", "is less than", "is at least", "is more than {} ago", "is at most {} ago"],
   ];
-  for (const [prefix, word] of comparisons)
-    if (inner.startsWith(prefix)) return `${prop} ${not}${word} ${inner.slice(prefix.length)}`;
-  return `${prop} ${inverted ? "does not contain" : "contains"} ${inner}`;
+  for (const [prefix, word, opposite, ago, oppositeAgo] of comparisons) {
+    if (!inner.startsWith(prefix)) continue;
+    const value = inner.slice(prefix.length);
+    if (RELATIVE.test(value)) {
+      if (ago === undefined || oppositeAgo === undefined) return undefined;
+      const told = (inverted ? oppositeAgo : ago).replace("{}", value.slice(1));
+      return { said: `${prop} ${told}${orEmpty}`, whole: true };
+    }
+    if (!shapedValue(value)) return undefined;
+    const empty =
+      prefix === "ne:" ? (inverted ? " (or has no value)" : " (and is not empty)") : orEmpty;
+    return {
+      said: `${prop} ${inverted ? opposite : word} ${quoted(value)}${empty}`,
+      whole: true,
+    };
+  }
+  if (!shapedValue(inner)) return undefined;
+  return {
+    said: `${prop} ${inverted ? "does not contain" : "contains"} ${quoted(inner)} (any case)${orEmpty}`,
+    whole: true,
+  };
 }
 
 /**
- * The filters of the columns of the list (`f.<prop>`), in words, `undefined` when
- * one cannot be told: a criterion told in part would name more rows than the list
- * shows. `null` for none.
+ * The filters the list on display applies, in words, after what the list holds,
+ * `null` for none. Only the columns of the list are told of, at most
+ * MAX_TOLD_FILTERS; a filter that cannot be told, or past them, is left out and said
+ * so, `other filters not listed`, as an entry too long for the agent: the list on
+ * display is narrower than told, never wider. `whole`, every filter told whole: the
+ * criterion that makes every row ticked a fact; false too when no list tells its
+ * filters.
  */
-function listFilters(search: Readonly<Record<string, unknown>>): string | null | undefined {
+function listFiltersEntry(shared: ListFilters | null | undefined): {
+  value: string | null;
+  whole: boolean;
+} {
+  if (!shared) return { value: null, whole: false };
   const told: string[] = [];
-  for (const key of Object.keys(search).sort()) {
-    if (!key.startsWith("f.")) continue;
-    const prop = key.slice(2);
-    const raw = search[key];
-    const expression = typeof raw === "number" && Number.isFinite(raw) ? String(raw) : raw;
+  // unlisted, a filter left out, said so; whole, every filter told whole.
+  let unlisted = false;
+  let whole = true;
+  for (const prop of Object.keys(shared.filters).sort()) {
+    const expression = shared.filters[prop];
     if (typeof expression !== "string" || expression === "") continue;
-    if (!PROP.test(prop) || expression.length > MAX_FILTER_CHARS || CONTROL.test(expression))
-      return undefined;
-    told.push(describeFilter(prop, expression));
+    const described =
+      told.length < MAX_TOLD_FILTERS &&
+      PROP.test(prop) &&
+      shared.props.includes(prop) &&
+      expression.length <= MAX_FILTER_CHARS &&
+      !CONTROL.test(expression)
+        ? describeFilter(prop, expression)
+        : undefined;
+    if (described === undefined) {
+      unlisted = true;
+      continue;
+    }
+    told.push(described.said);
+    whole &&= described.whole;
   }
-  if (told.length === 0) return null;
-  const value = told.join("; ");
-  return bytes(value) > MAX_VALUE_BYTES ? undefined : value;
+  if (unlisted) whole = false;
+  if (told.length === 0 && !unlisted) return { value: null, whole };
+  // What the list holds, as the list told it with its filters.
+  const holds = shared.kind;
+  if (unlisted) told.push(NOT_LISTED);
+  const value = [holds, ...told].join("; ");
+  // Too long for the agent, the entry would be left out, and the list read as not filtered.
+  if (bytes(value) > MAX_VALUE_BYTES) return { value: `${holds}; ${NOT_LISTED}`, whole: false };
+  return { value, whole };
 }
 
 /** The name of a filterset, as the collector gives it. */
@@ -208,10 +320,11 @@ const FILTERSET = /^[^\u0000-\u001f\u007f-\u009f]{1,128}$/;
 
 function sessionEntries({ now, timeZone }: InterfaceSession): InterfaceEntry[] {
   const entries: InterfaceEntry[] = [];
-  if (timeZone !== undefined && TIME_ZONE.test(timeZone))
-    entries.push({ description: "time zone", value: timeZone });
+  // The clock first, its offset with it: past the bounds, the time zone goes first.
   if (now !== undefined && !Number.isNaN(now.getTime()))
     entries.push({ description: "local time", value: localTime(now) });
+  if (timeZone !== undefined && TIME_ZONE.test(timeZone))
+    entries.push({ description: "time zone", value: timeZone });
   return entries;
 }
 
@@ -315,15 +428,15 @@ export function interfaceContext(
   }
   // What the list shows: its filters, and the filterset of the session, which
   // narrows every list. Known whole, they make every row ticked a criterion.
-  const filters = listFilters(search);
-  if (typeof filters === "string") entries.push({ description: "list filters", value: filters });
+  const filters = listFiltersEntry(session.listFilters);
+  if (filters.value !== null) entries.push({ description: "list filters", value: filters.value });
   const filterset = session.sessionFilterset;
   const filtersetKnown =
     filterset === null || (typeof filterset === "string" && FILTERSET.test(filterset));
   if (typeof filterset === "string" && filtersetKnown)
     entries.push({ description: "session filterset", value: filterset });
   if (session.checked && session.checked.ids.length > 0)
-    entries.push(...checkedEntries(session.checked, filters !== undefined && filtersetKnown));
+    entries.push(...checkedEntries(session.checked, filters.whole && filtersetKnown));
   const diff = read("diff");
   if (open && name(diff)) entries.push({ description: "open view", value: diff });
   entries.push(...sessionEntries(session));

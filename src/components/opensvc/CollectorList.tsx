@@ -25,7 +25,13 @@ import {
 import type { ListPage } from "@/lib/api/page";
 import { download, toCsv, toXlsx, type ExportFormat } from "@/lib/export/table";
 import { ColumnFamilyIcon, type ColumnFamily } from "./ColumnFamily";
-import { invertFilter, isInverted, withFilter, type ColumnFilters } from "@/lib/column-filters";
+import {
+  filtersKey,
+  invertFilter,
+  isInverted,
+  withFilter,
+  type ColumnFilters,
+} from "@/lib/column-filters";
 import type { ValueStats } from "@/lib/api/value-stats";
 import { ColumnFilterPopover } from "./ColumnFilterPopover";
 import { TransientNotice, type NoticeTone } from "@/components/ui/TransientNotice";
@@ -46,6 +52,8 @@ import { FlashCell, FlashScope } from "./Flash";
 import { useFitColumns, useFitColumnsEnabled } from "@/components/ui/use-fit-columns";
 import { movedColumns, useColumnDrag, type ColumnDropTarget } from "./use-column-drag";
 import { useShareCheckedRows } from "@/features/assistant/checked-rows";
+import { useShareListFilters } from "@/features/assistant/list-filters";
+import { sessionFilterset } from "@/features/assistant/session-filterset";
 import { checkedKind } from "@/features/assistant/interface-context";
 
 export interface ListColumn<T> {
@@ -137,6 +145,9 @@ function resolveUpdater<S>(updater: S | ((old: S) => S), current: S): S {
  * older API, the count stays unknown and the extra row asked of the server says
  * whether a next page exists (`hasMore`).
  */
+/** The filters of a list that takes none. */
+const NO_FILTERS: Readonly<Record<string, string>> = {};
+
 export function CollectorList<T>({
   columns,
   defaultCols,
@@ -240,8 +251,16 @@ export function CollectorList<T>({
   const locale = i18n.language;
   const [columnFilter, setColumnFilter] = useState("");
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
-  // True when the selection covers every page and not just the page on display.
-  const [allMatching, setAllMatching] = useState(false);
+  // The criterion the selection covers every page of, its filters and the
+  // filterset of the session, `null` when it covers the rows ticked only: every
+  // row of the list no longer, once the criterion changed from wherever, the
+  // address, the view saved or the filterset.
+  const [allMatchingOf, setAllMatchingOf] = useState<string | null>(null);
+  const criterion = `${filtersKey(search.filters)}\n#${sessionFilterset() ?? ""}`;
+  const allMatching = allMatchingOf !== null && allMatchingOf === criterion;
+  const setAllMatching = (all: boolean) => {
+    setAllMatchingOf(all ? criterion : null);
+  };
   const [selectingAll, setSelectingAll] = useState(false);
   const [selectionError, setSelectionError] = useState<string | null>(null);
   const picker = useRef<HTMLDetailsElement>(null);
@@ -368,13 +387,19 @@ export function CollectorList<T>({
       if (rowId(row) === undefined) exact = false;
     });
     const all = [...ids, ...selected];
-    // Every row of the list: selected on all its pages, or all of a list whose
-    // total the page knows.
+    // Every row of the list: selected on all its pages under the filters it has
+    // now, or all of a list whose total the page knows, not while it fetches the
+    // rows of other filters, the total still of the former.
     const everything =
-      all.length > 0 && (allMatching || (total !== undefined && all.length === total));
+      all.length > 0 &&
+      (allMatching || (total !== undefined && !isFetching && all.length === total));
     return { ids: all, exact, everything };
-  }, [rowSelection, rows, allMatching, total]);
+  }, [rowSelection, rows, allMatching, total, isFetching]);
   useShareCheckedRows(checkedKind(pathname), ticked.ids, ticked.exact, ticked.everything);
+  // The filters the list applies, those the address names or the view saved, and
+  // its columns, go with a question to the assistant too: what "these" are.
+  // A list that takes no filter applies none.
+  useShareListFilters(checkedKind(pathname), filterable ? search.filters : NO_FILTERS, allProps);
   // At least one page, even for an empty list.
   const pageCount = total === undefined ? undefined : Math.max(1, Math.ceil(total / search.limit));
   const shown = visibleProps(search.cols, defaultCols, allProps);
