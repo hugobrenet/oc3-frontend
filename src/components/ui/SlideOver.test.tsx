@@ -49,6 +49,22 @@ describe("a click beside a drawer", () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
+  test("leaves it open for the dock of the assistant floating over the page, moved or read", () => {
+    const { onClose } = renderDrawer(<Form />);
+    const dock = document.createElement("aside");
+    dock.dataset.assistantDock = "";
+    const edge = document.createElement("div");
+    dock.append(edge);
+    document.body.append(dock);
+    try {
+      fireEvent.pointerDown(edge);
+      fireEvent.pointerDown(dock);
+      expect(onClose).not.toHaveBeenCalled();
+    } finally {
+      dock.remove();
+    }
+  });
+
   test("leaves it open while a form deep in it holds an entry not saved", () => {
     const { onClose, clickBeside } = renderDrawer(
       <section>

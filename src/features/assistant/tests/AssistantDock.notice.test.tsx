@@ -142,6 +142,40 @@ describe("the end of an analysis out of sight", () => {
     expect(toast()).toBeNull();
   });
 
+  test("shows where the dock was moved to open, on a wide window", async () => {
+    vi.stubGlobal("matchMedia", (query: string) => ({
+      matches: query.includes("40rem"),
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+    }));
+    localStorage.setItem(
+      "oc3.assistant.dock.geometry",
+      JSON.stringify({ right: 200, bottom: 120, width: null, height: null }),
+    );
+    // Room above the dock for it to be up there.
+    const height = window.innerHeight;
+    window.innerHeight = 1000;
+    try {
+      const run = hangingRun(client);
+      const { router } = renderApp(client);
+      await send();
+      await screen.findByRole("button", { name: "Stop" });
+      await leave(router);
+      await act(async () => {
+        run.finish(completed());
+        await Promise.resolve();
+      });
+      const notice = (
+        await screen.findByRole("button", { name: "See the answer" })
+      ).closest<HTMLElement>("div[style]");
+      expect(notice?.style.right).toBe("200px");
+      expect(notice?.style.bottom).toBe("calc(var(--bookmarks-bar-height, 0px) + 120px)");
+    } finally {
+      window.innerHeight = height;
+      localStorage.removeItem("oc3.assistant.dock.geometry");
+    }
+  });
+
   test("is closed by its button, the focus on the button of the dock, which still tells it, or by Escape", async () => {
     const run = hangingRun(client);
     const { router } = renderApp(client);

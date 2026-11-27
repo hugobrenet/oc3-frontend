@@ -41,10 +41,11 @@ import { MODAL_BACKDROP } from "./Modal";
 /**
  * What answers a click and therefore must not close the panel: controls and fields,
  * anything carrying a role or a keyboard shortcut, and tables, whose rows open their
- * own panel.
+ * own panel; and the dock of the assistant floating over the page
+ * (`data-assistant-dock`), moved, sized or read, the record under it staying open.
  */
 const INTERACTIVE =
-  'a, button, input, select, textarea, label, summary, details, table, [role="dialog"], [role="button"], [role="menu"], [role="menuitem"], [role="tab"], [role="listbox"], [role="option"], [role="combobox"], [tabindex]';
+  'a, button, input, select, textarea, label, summary, details, table, [role="dialog"], [role="button"], [role="menu"], [role="menuitem"], [role="tab"], [role="listbox"], [role="option"], [role="combobox"], [tabindex], [data-assistant-dock]';
 
 /** Pixels an arrow key moves the left edge by. */
 const KEY_STEP = 32;
