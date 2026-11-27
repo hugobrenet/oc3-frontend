@@ -179,13 +179,15 @@ export interface Capabilities {
   feedback: boolean;
   /** Whether the runs choose their model among those of `listModels`. */
   models: boolean;
+  /** Whether a run may ask a skill of `listSkills`. */
+  skills: boolean;
 }
 
 /**
- * The capabilities of the agent, `custom.feedback` and `custom.models`: an
- * agent older than the settings gives no custom group, its feedback is on,
- * and it offers no choice of model. Anything else than a boolean is an error
- * of the protocol.
+ * The capabilities of the agent, `custom.feedback`, `custom.models` and
+ * `custom.skills`: an agent older than the settings gives no custom group, its
+ * feedback is on, and it offers no choice of model nor any skill. Anything else
+ * than a boolean is an error of the protocol.
  */
 export function parseCapabilities(value: unknown): Capabilities {
   if (!isPlainObject(value)) throw protocolError();
@@ -193,12 +195,53 @@ export function parseCapabilities(value: unknown): Capabilities {
   if (custom !== undefined && !isPlainObject(custom)) throw protocolError();
   const feedback = custom?.feedback;
   const models = custom?.models;
+  const skills = custom?.skills;
   if (
     (feedback !== undefined && typeof feedback !== "boolean") ||
-    (models !== undefined && typeof models !== "boolean")
+    (models !== undefined && typeof models !== "boolean") ||
+    (skills !== undefined && typeof skills !== "boolean")
   )
     throw protocolError();
-  return { feedback: feedback !== false, models: models === true };
+  return { feedback: feedback !== false, models: models === true, skills: skills === true };
+}
+
+/**
+ * A skill a run may ask, as the agent lists it: its name, which the agent takes
+ * in `forwardedProps.skill`, and its description, written by the authors of the
+ * skills, shown as text.
+ */
+export interface Skill {
+  name: string;
+  description: string;
+}
+
+/** The bounds of the list of the skills, as the agent keeps them. */
+export const MAX_SKILLS = 32;
+const MAX_SKILL_DESCRIPTION_BYTES = 300;
+const skillNamePattern = /^[a-z0-9]([a-z0-9-]{0,62}[a-z0-9])?$/;
+
+/** Whether a value is the name of a skill, as the specification of Agent Skills gives it. */
+export function isSkillName(value: unknown): value is string {
+  return typeof value === "string" && skillNamePattern.test(value);
+}
+
+/** The skills of the agent, in its order: names unique, descriptions within bounds. */
+export function parseSkills(value: unknown): Skill[] {
+  const list = isPlainObject(value) ? value.skills : undefined;
+  if (!Array.isArray(list) || list.length > MAX_SKILLS) throw protocolError();
+  const names = new Set<string>();
+  return (list as unknown[]).map((skill): Skill => {
+    if (
+      !isPlainObject(skill) ||
+      !isSkillName(skill.name) ||
+      names.has(skill.name) ||
+      typeof skill.description !== "string" ||
+      new TextEncoder().encode(skill.description).length > MAX_SKILL_DESCRIPTION_BYTES
+    )
+      throw protocolError();
+    names.add(skill.name);
+    return { name: skill.name, description: skill.description };
+  });
 }
 
 /** A model a run chooses, as the agent lists it. Its label is the operator's, shown as text. */
@@ -416,6 +459,8 @@ export interface StoredMessage {
   history?: TurnHistory;
   /** And the model its turn last ran on. */
   modelId?: string;
+  /** Only the message of the user that starts a turn names the skill it asked. */
+  skill?: string;
 }
 
 export interface MessagePage {
@@ -467,6 +512,8 @@ function parseMessagePage(page: unknown, limit: number, before: string): Message
       (!isModelId(message.model_id) || message.role !== "assistant")
     )
       throw protocolError();
+    if (message.skill !== undefined && (!isSkillName(message.skill) || message.role !== "user"))
+      throw protocolError();
     ids.add(message.id);
     return {
       id: message.id,
@@ -477,6 +524,7 @@ function parseMessagePage(page: unknown, limit: number, before: string): Message
       ...(feedback !== undefined ? { feedback } : {}),
       ...(history !== null ? { history } : {}),
       ...(message.model_id !== undefined ? { modelId: message.model_id } : {}),
+      ...(message.skill !== undefined ? { skill: message.skill } : {}),
     };
   });
   // The steps go with the last assistant message of their turn.
@@ -821,7 +869,7 @@ export interface ToolResult {
 
 /** A message of the thread a snapshot gives, the fields the page shows. */
 export type SnapshotMessage =
-  | { id: string; role: "user"; content: string }
+  | { id: string; role: "user"; content: string; skill?: string }
   | {
       id: string;
       role: "assistant";
@@ -968,12 +1016,24 @@ function runTokens(usage: { totalTokens?: number }[] | undefined): number | null
 
 function parseSnapshot(
   event: Extract<ReturnType<typeof EventSchema.parse>, { type: EventType.MESSAGES_SNAPSHOT }>,
+  raw: Record<string, unknown>,
 ): RunEvent {
   const messages: SnapshotMessage[] = [];
-  for (const message of event.messages) {
+  // The skill a prompt asked, an extension of the agent the schema of AG-UI
+  // does not hold: read on the message as sent.
+  const sent = Array.isArray(raw.messages) ? (raw.messages as unknown[]) : [];
+  for (const [index, message] of event.messages.entries()) {
     if (!isEventId(message.id)) throw protocolError();
     if (message.role === "user") {
-      messages.push({ id: message.id, role: "user", content: contentText(message.content) });
+      const original = sent[index];
+      const skill = isPlainObject(original) ? original.skill : undefined;
+      if (skill !== undefined && !isSkillName(skill)) throw protocolError();
+      messages.push({
+        id: message.id,
+        role: "user",
+        content: contentText(message.content),
+        ...(skill !== undefined ? { skill } : {}),
+      });
     } else if (message.role === "assistant") {
       const toolCalls = (message.toolCalls ?? []).map((call) => {
         if (!isEventId(call.id) || !isToolName(call.function.name)) throw protocolError();
@@ -1011,7 +1071,12 @@ function parseSnapshot(
 }
 
 /** The run error codes the page explains; any other is a failure of the turn. */
-const RUN_ERROR_CODES = new Set(["request_timeout", "tool_name_conflict", "tool_call_limit"]);
+const RUN_ERROR_CODES = new Set([
+  "request_timeout",
+  "tool_name_conflict",
+  "tool_call_limit",
+  "skill_unavailable",
+]);
 
 type AguiEvent = ReturnType<typeof EventSchema.parse>;
 
@@ -1097,7 +1162,7 @@ function parseRunEvent(raw: unknown, run: RunState): RunEvent | RunResult | null
       run.startedAt = stampOf(event.timestamp);
       return { type: EventType.RUN_STARTED, at: run.startedAt };
     case EventType.MESSAGES_SNAPSHOT:
-      return parseSnapshot(event);
+      return parseSnapshot(event, raw);
     case EventType.TEXT_MESSAGE_START:
       if (run.text !== "" || !isEventId(event.messageId)) throw protocolError();
       run.text = event.messageId;
@@ -1306,6 +1371,7 @@ const refuseCreation: Refusal = (status, code) =>
 const refuseRun: Refusal = (status, code) => {
   if (
     code === "model_unknown" ||
+    code === "invalid_skill" ||
     code === "invalid_edited_arguments" ||
     code === "confirmation_not_pending" ||
     code === "confirmation_expired"
@@ -1331,6 +1397,16 @@ const refuseFeedback: Refusal = (status, code) =>
 /** The refusals of the list of the models: a relay without the route offers no choice. */
 const refuseModels: Refusal = (status, code) =>
   status === 404 && code !== "assistant_disabled" ? "models_unlisted" : refuse(status, code);
+
+/**
+ * The refusals of the list of the skills: the MCP the agent could not read, and
+ * a relay without the route, which offers none.
+ */
+const refuseSkills: Refusal = (status, code) => {
+  if (status === 502 && code === "skills_unavailable") return code;
+  if (status === 404 && code !== "assistant_disabled") return "skills_unlisted";
+  return refuse(status, code);
+};
 
 /** The refusals of the list of the tools: a route the relay lacks lists none. */
 const refuseTools: Refusal = (status, code) => {
@@ -1444,6 +1520,8 @@ export type RunInput = { held?: HeldMessage[] } & (
       context?: readonly InterfaceEntry[];
       /** The ID of the model of `listModels` it runs on; the default when absent. */
       model?: string;
+      /** The name of a skill of `listSkills` the agent loads first; none when absent. */
+      skill?: string;
     }
   | { resume: { interruptId: string; approved: boolean; editedArgs?: Args; preview?: undefined } }
   | {
@@ -1535,6 +1613,11 @@ export interface AssistantClient {
    * collector that relays no list.
    */
   listModels(options?: { signal?: AbortSignal }): Promise<Model[]>;
+  /**
+   * The skills a run may ask for the user, in the order of the agent;
+   * `skills_unlisted` from a collector that relays no list.
+   */
+  listSkills(options?: { signal?: AbortSignal }): Promise<Skill[]>;
   /** The ID this client gives a prompt. */
   newId(): string;
   /** Runs the agent on a conversation, in AG-UI; resolves with its RUN_FINISHED. */
@@ -1589,6 +1672,15 @@ export function createAssistantClient({
         refuseModels,
       );
       return parseModels(await readJson(sent, signal));
+    },
+
+    listSkills: async ({ signal } = {}) => {
+      const sent = await send(
+        signal,
+        () => api.GET("/assistant/skills", { parseAs: "stream", signal }),
+        refuseSkills,
+      );
+      return parseSkills(await readJson(sent, signal));
     },
 
     createConversation: async ({ signal } = {}) =>
@@ -1735,7 +1827,8 @@ export function createAssistantClient({
         if (
           typeof input.promptId !== "string" ||
           !promptIdPattern.test(input.promptId) ||
-          (input.model !== undefined && !isModelId(input.model))
+          (input.model !== undefined && !isModelId(input.model)) ||
+          (input.skill !== undefined && !isSkillName(input.skill))
         )
           throw new AssistantError("invalid_run");
         messages.push({ id: input.promptId, role: "user", content: input.prompt });
@@ -1753,9 +1846,15 @@ export function createAssistantClient({
         // takes it; a resume with none, the turn keeping the one of its prompt.
         context: input.resume === undefined ? boundContext(input.context ?? []) : [],
         state: {},
-        // The model of a new prompt; a resume runs on the model of its turn.
+        // The model and the skill of a new prompt; a resume runs on the model
+        // of its turn, its skill loaded already.
         forwardedProps:
-          input.resume === undefined && input.model !== undefined ? { model: input.model } : {},
+          input.resume === undefined
+            ? {
+                ...(input.model !== undefined ? { model: input.model } : {}),
+                ...(input.skill !== undefined ? { skill: input.skill } : {}),
+              }
+            : {},
         ...(resume !== undefined ? { resume } : {}),
       };
       const run: RunState = {

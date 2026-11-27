@@ -90,7 +90,7 @@ function AssistantView({ client, initialPrompt, onPromptTaken }: AssistantProps)
   const conversationExport = useConversationExport();
   const panel = useConversationsOpen();
   const [search, setSearch] = useState("");
-  const { setDraft } = shared;
+  const { setDraft, setDraftSkill } = shared;
   const [dialog, setDialog] = useState<Dialog>("");
   // The dialog of the composer replacing the message queued is open.
   const [replacing, setReplacing] = useState(false);
@@ -447,7 +447,9 @@ function AssistantView({ client, initialPrompt, onPromptTaken }: AssistantProps)
           {empty && (
             <EmptyState
               onPick={(text) => {
+                // A question of its own, as one another page asks: no procedure.
                 setDraft(text);
+                setDraftSkill(null);
                 composer.current?.focus();
               }}
             />
@@ -643,7 +645,19 @@ export function UserMessage({
         <span aria-hidden="true">{t("assistant.message.you")}</span>
         <span className="sr-only">{t("assistant.you")}</span>
       </p>
-      <p className="[overflow-wrap:anywhere] whitespace-pre-wrap text-ink">{message.text}</p>
+      {/* The procedure the message asked. */}
+      {message.skill !== undefined && (
+        <p className="mb-1 flex flex-wrap items-center gap-1 text-data">
+          <span className="text-ink-muted">{t("assistant.skills.tag")}</span>{" "}
+          <span className="rounded-(--radius-control) border border-line bg-surface-raised px-1.5 font-mono [overflow-wrap:anywhere]">
+            /{message.skill}
+          </span>
+        </p>
+      )}
+      {/* Sent without words, the message is the procedure named, told above. */}
+      {(message.skill === undefined || message.text !== `/${message.skill}`) && (
+        <p className="[overflow-wrap:anywhere] whitespace-pre-wrap text-ink">{message.text}</p>
+      )}
       {!Number.isNaN(date.getTime()) && (
         <time
           dateTime={date.toISOString()}

@@ -16,6 +16,7 @@ import {
   type RunEvent,
   type RunResult,
   type RunSpan,
+  type Skill,
   type SnapshotMessage,
   type Step,
   type StoredMessage,
@@ -49,6 +50,8 @@ export interface ChatMessage {
   usage: { totalTokens: number } | null;
   messageIds: string[];
   textId: string;
+  /** On a message of the user, the skill it asked. */
+  skill?: string;
 }
 
 /** The call the conversation waits on, with the answer of the turn it belongs to, if shown. */
@@ -88,7 +91,19 @@ export interface Queued {
   context: readonly InterfaceEntry[];
   /** The model chosen when it was queued, which it goes on; the one chosen when it goes if none. */
   model?: string;
+  /** The skill asked, kept apart from the words: its prompt is made as it goes (`promptOf`). */
+  skill?: string;
 }
+
+/**
+ * The prompt of a message: its words, or, a skill asked without any, the skill
+ * named as `/name`, which the conversation shows as the message of the user.
+ */
+export const promptOf = (words: string, skill?: string | null) =>
+  words.trim() !== "" ? words : skill ? `/${skill}` : "";
+/** The words of a prompt sent with a skill: none when the prompt is the skill named alone. */
+const wordsOf = (prompt: string, skill?: string) =>
+  skill !== undefined && prompt === `/${skill}` ? "" : prompt;
 
 /**
  * The last choice of a model of the user, kept by the browser for the next
@@ -248,7 +263,7 @@ function mergeTurns(messages: ChatMessage[]): ChatMessage[] {
 /** The stored messages as the transcript shows them, the call a user edited with its edit. */
 function historyMessages(messages: StoredMessage[]): ChatMessage[] {
   return mergeTurns(
-    messages.map(({ id, turnId, role, text, createdAt, history }) =>
+    messages.map(({ id, turnId, role, text, createdAt, history, skill }) =>
       role === "assistant"
         ? assistantMessage(id, {
             turnId,
@@ -265,7 +280,7 @@ function historyMessages(messages: StoredMessage[]): ChatMessage[] {
             runs: history?.runs ?? [],
             usage: history?.usage ?? null,
           })
-        : userMessage(id, text, { turnId, createdAt }),
+        : userMessage(id, text, { turnId, createdAt, ...(skill !== undefined ? { skill } : {}) }),
     ),
   );
 }
@@ -440,7 +455,11 @@ function snapshotThread(messages: SnapshotMessage[]): ChatMessage[] {
   const thread: ChatMessage[] = [];
   for (const message of messages) {
     if (message.role === "user") {
-      thread.push(userMessage(message.id, message.content));
+      thread.push(
+        userMessage(message.id, message.content, {
+          ...(message.skill !== undefined ? { skill: message.skill } : {}),
+        }),
+      );
       continue;
     }
     if (message.role === "tool") {
@@ -500,8 +519,29 @@ type Snapshot = Extract<RunEvent, { type: EventType.MESSAGES_SNAPSHOT }>;
  * it, or going on with the answer so far of the turn it resumes. The ratings are
  * kept by turn.
  */
-function applySnapshot(previous: ChatState, snapshot: Snapshot, answerId: string): ChatState {
-  const thread = snapshotThread(snapshot.messages);
+function applySnapshot(
+  previous: ChatState,
+  snapshot: Snapshot,
+  answerId: string,
+  promptSkill?: string,
+): ChatState {
+  // The skill of a prompt the snapshot does not name: the one the page holds
+  // under the same ID, as the history gave it, and, for the prompt of the
+  // run, which goes under another ID out of phase, the one it was sent with.
+  const held = new Map(
+    previous.messages.flatMap((message) =>
+      message.role === "user" && message.skill !== undefined ? [[message.id, message.skill]] : [],
+    ),
+  );
+  const prompts = snapshotThread(snapshot.messages);
+  // ES2022 has no findLastIndex.
+  let lastPrompt = prompts.length - 1;
+  while (lastPrompt >= 0 && prompts[lastPrompt]?.role !== "user") lastPrompt -= 1;
+  const thread = prompts.map((message, index) => {
+    if (message.role !== "user" || message.skill !== undefined) return message;
+    const skill = held.get(message.id) ?? (index === lastPrompt ? promptSkill : undefined);
+    return skill !== undefined ? { ...message, skill } : message;
+  });
   const running = previous.messages.find((message) => message.id === answerId);
   const last = thread.at(-1);
   const messages =
@@ -572,13 +612,15 @@ export function useAssistantChat(
   // has it offered; a read that failed is tried again with the next action of
   // the user (retryCapabilities).
   // Whether its runs choose their model is read with it: models, true or
-  // false, null as feedback when it could not be read.
+  // false, null as feedback when it could not be read. Whether a run may ask
+  // a skill, skills, too.
   const [capabilities, setCapabilities] = useState<{
     client: AssistantClient | null;
     identity: string;
     feedback: boolean | null;
     models: boolean | null;
-  }>({ client: null, identity: "", feedback: null, models: null });
+    skills: boolean | null;
+  }>({ client: null, identity: "", feedback: null, models: null, skills: null });
   const [capabilitiesRetry, setCapabilitiesRetry] = useState(0);
   // A read under way, which an action of the user does not start again.
   const capabilitiesReading = useRef(false);
@@ -596,6 +638,7 @@ export function useAssistantChat(
         identity,
         feedback: result === null ? null : result.feedback,
         models: result === null ? null : result.models,
+        skills: result === null ? null : result.skills,
       });
     };
     Promise.resolve()
@@ -660,6 +703,53 @@ export function useAssistantChat(
     modelsOffered && modelsOwn && models.list !== null && models.list.length >= 2
       ? models.list
       : null;
+
+  // The skills a run may ask, read once the agent says its runs take one: the
+  // list, or null when it could not be read, tried again with the next action
+  // of the user. None to ask, no list is offered.
+  const [skills, setSkills] = useState<{
+    client: AssistantClient | null;
+    identity: string;
+    list: Skill[] | null;
+  }>({ client: null, identity: "", list: null });
+  const [skillsRetry, setSkillsRetry] = useState(0);
+  const skillsReading = useRef(false);
+  const skillsOwn = skills.client === client && skills.identity === identity;
+  const skillsOffered = enabled && capabilitiesOwn && capabilities.skills === true;
+  const skillsKnown = skillsOwn && skills.list !== null;
+  useEffect(() => {
+    if (!skillsOffered || skillsKnown) return;
+    const controller = new AbortController();
+    skillsReading.current = true;
+    const settle = (list: Skill[] | null) => {
+      if (controller.signal.aborted) return;
+      skillsReading.current = false;
+      setSkills({ client, identity, list });
+    };
+    // A collector that relays no list offers none, and is not asked again.
+    Promise.resolve()
+      .then(() => client.listSkills({ signal: controller.signal }))
+      .then(settle, (error: unknown) => {
+        settle(error instanceof AssistantError && error.code === "skills_unlisted" ? [] : null);
+      });
+    return () => {
+      controller.abort();
+      skillsReading.current = false;
+    };
+  }, [client, identity, skillsOffered, skillsKnown, skillsRetry]);
+  // Read again, as for a skill the agent no longer serves to the user.
+  const readSkillsAgain = () => {
+    setSkills((previous) =>
+      previous.client === client && previous.identity === identity
+        ? { ...previous, list: null }
+        : previous,
+    );
+    setSkillsRetry((count) => count + 1);
+  };
+  const skillList =
+    skillsOffered && skillsOwn && skills.list !== null && skills.list.length > 0
+      ? skills.list
+      : null;
   // The model chosen, by its ID: the choice of the user or the model of the
   // conversation opened, else the last choice of the user the browser keeps,
   // read once, else the default. An ID the list no longer holds, or that the
@@ -700,6 +790,8 @@ export function useAssistantChat(
       setCapabilitiesRetry((count) => count + 1);
     if (modelsOffered && modelsOwn && models.list === null && !modelsReading.current)
       setModelsRetry((count) => count + 1);
+    if (skillsOffered && skillsOwn && skills.list === null && !skillsReading.current)
+      setSkillsRetry((count) => count + 1);
   };
 
   const perform = useCallback(
@@ -952,14 +1044,16 @@ export function useAssistantChat(
    * replaces the thread first. `resumed` applies to the first result of a
    * resumed run, the one of the confirmed call.
    */
-  const runEvents = (answerId: string, update: Update, resumed?: Resumed) => {
+  // `promptSkill`, the skill the prompt of a new turn asked, which a snapshot
+  // keeps on it.
+  const runEvents = (answerId: string, update: Update, resumed?: Resumed, promptSkill?: string) => {
     let pending = resumed;
     return (event: RunEvent) => {
       const call = event.type === EventType.TOOL_CALL_RESULT ? pending : undefined;
       if (call !== undefined) pending = undefined;
       update((previous) =>
         event.type === EventType.MESSAGES_SNAPSHOT
-          ? applySnapshot(previous, event, answerId)
+          ? applySnapshot(previous, event, answerId, promptSkill)
           : {
               ...previous,
               messages: previous.messages.map((message) =>
@@ -1060,10 +1154,12 @@ export function useAssistantChat(
 
   // `queuedContext`, the context of a message queued: its page, the clock of
   // now. `runModel`, the model of a message queued; else the one chosen.
+  // `skill`, the name of a skill of the list, the agent loads first.
   const send = (
     prompt: string,
     queuedContext?: readonly InterfaceEntry[],
     runModel: string | null = model,
+    skill?: string,
   ) => {
     if (!state.historyReady || state.confirmation !== null || prompt.trim() === "")
       return undefined;
@@ -1084,7 +1180,10 @@ export function useAssistantChat(
         ...previous,
         messages: [
           ...previous.messages,
-          userMessage(promptId, prompt, { createdAt: new Date().toISOString() }),
+          userMessage(promptId, prompt, {
+            createdAt: new Date().toISOString(),
+            ...(skill !== undefined ? { skill } : {}),
+          }),
           assistantMessage(answerId),
         ],
       }));
@@ -1104,8 +1203,15 @@ export function useAssistantChat(
       try {
         result = await client.run(
           conversation.id,
-          { prompt, promptId, held, context, ...(runModel !== null ? { model: runModel } : {}) },
-          { signal, onEvent: runEvents(answerId, update) },
+          {
+            prompt,
+            promptId,
+            held,
+            context,
+            ...(runModel !== null ? { model: runModel } : {}),
+            ...(skill !== undefined ? { skill } : {}),
+          },
+          { signal, onEvent: runEvents(answerId, update, undefined, skill) },
         );
       } catch (error) {
         // An operation stopped, as by another identity, changes nothing more.
@@ -1118,6 +1224,40 @@ export function useAssistantChat(
         // the page it was asked from, for the user to send it again; a message
         // queued meanwhile is not replaced: the prompt then stays in the
         // thread, failed.
+        // The skill is no longer served to the user, or was refused: the list
+        // is read again, its step told failed, an agent of before telling no
+        // error of its own tools; the prompt stays failed in the thread, and
+        // its words go to the queue, without the skill, for the user to send
+        // them again.
+        if (
+          error instanceof AssistantError &&
+          (error.code === "skill_unavailable" || error.code === "invalid_skill")
+        ) {
+          readSkillsAgain();
+          update((previous) => ({
+            ...previous,
+            messages: previous.messages.map((message) =>
+              message.id !== answerId
+                ? message
+                : {
+                    ...message,
+                    steps: message.steps.map((step) =>
+                      step.tool === "load_skill" && step.status === "completed"
+                        ? { ...step, status: "failed" as const }
+                        : step,
+                    ),
+                  },
+            ),
+          }));
+          const words = wordsOf(prompt, skill);
+          if (words.trim() !== "" && queuedRef.current === null)
+            setQueued({
+              conversationId: conversation.id,
+              text: words,
+              context,
+              ...(runModel !== null ? { model: runModel } : {}),
+            });
+        }
         if (error instanceof AssistantError && error.code === "model_unknown") {
           if (runModel !== null && kept === runModel) {
             keepModelChoice(null);
@@ -1127,7 +1267,12 @@ export function useAssistantChat(
             setChoice({ identity, id: modelList?.find((item) => item.default)?.id ?? null });
           readModelsAgain();
           if (queuedRef.current === null) {
-            setQueued({ conversationId: conversation.id, text: prompt, context });
+            setQueued({
+              conversationId: conversation.id,
+              text: wordsOf(prompt, skill),
+              context,
+              ...(skill !== undefined ? { skill } : {}),
+            });
             update((previous) => ({
               ...previous,
               messages: previous.messages.filter(
@@ -1164,17 +1309,24 @@ export function useAssistantChat(
     });
   };
 
-  /** Queues a message, its text the user's as typed; false for one empty or too long. */
-  const queue = (text: string) => {
-    if (text.trim() === "" || new TextEncoder().encode(text).length > MAX_PROMPT_BYTES)
+  /**
+   * Queues a message, its text the user's words as typed, none for a skill asked
+   * alone, the skill kept apart; false for one empty or too long.
+   */
+  const queue = (text: string, skill?: string) => {
+    if (
+      promptOf(text, skill).trim() === "" ||
+      new TextEncoder().encode(text).length > MAX_PROMPT_BYTES
+    )
       return false;
-    // The page it is asked from and the model chosen go with it, whatever page
-    // is shown, and model chosen, once it goes.
+    // The page it is asked from, the model chosen and the skill asked go with
+    // it, whatever page is shown, and model chosen, once it goes.
     setQueued({
       conversationId: state.conversation?.id ?? null,
       text,
       context: interfaceContext(),
       ...(model !== null ? { model } : {}),
+      ...(skill !== undefined ? { skill } : {}),
     });
     return true;
   };
@@ -1204,7 +1356,7 @@ export function useAssistantChat(
       return;
     if (item.conversationId !== null && item.conversationId !== conversationId) return;
     setQueued(null);
-    void send(item.text, item.context, item.model);
+    void send(promptOf(item.text, item.skill), item.context, item.model, item.skill);
     // The release and the end of the operation only: send reads the state of
     // this render, which is up to date then.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1274,6 +1426,8 @@ export function useAssistantChat(
     models: modelList,
     model,
     selectModel,
+    /** The skills a run may ask, null when none is to ask. */
+    skills: skillList,
     rate: (turnId: string, feedback: FeedbackInput) => rateTurn(turnId, feedback),
     unrate: (turnId: string) => rateTurn(turnId, null),
   };

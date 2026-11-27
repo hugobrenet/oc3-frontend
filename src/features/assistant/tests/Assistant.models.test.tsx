@@ -16,7 +16,7 @@ describe("the choice of the model", () => {
     localStorage.clear();
     stubCollector();
     client = fakeClient([]);
-    client.getCapabilities.mockResolvedValue({ feedback: true, models: true });
+    client.getCapabilities.mockResolvedValue({ feedback: true, models: true, skills: false });
     client.listModels.mockResolvedValue(models);
     client.run.mockResolvedValue(completed("turn-live"));
   });
@@ -56,7 +56,7 @@ describe("the choice of the model", () => {
   });
 
   test("offers no choice when the agent offers none", async () => {
-    client.getCapabilities.mockResolvedValue({ feedback: true, models: false });
+    client.getCapabilities.mockResolvedValue({ feedback: true, models: false, skills: false });
     await renderAssistant(client);
     await waitFor(() => {
       expect(client.getCapabilities).toHaveBeenCalled();

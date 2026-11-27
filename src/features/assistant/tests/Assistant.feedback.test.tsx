@@ -165,7 +165,7 @@ describe("the feedback on the answers", () => {
   });
 
   test("offers no rating, not even one given before, when the agent turned the feedback off", async () => {
-    client.getCapabilities.mockResolvedValue({ feedback: false, models: false });
+    client.getCapabilities.mockResolvedValue({ feedback: false, models: false, skills: false });
     await resume();
     await screen.findByText("Linux mostly.");
     expect(client.getCapabilities).toHaveBeenCalled();

@@ -20,7 +20,7 @@ describe("the models of useAssistantChat", () => {
   beforeEach(() => {
     localStorage.clear();
     client = fakeClient([existing, other]);
-    client.getCapabilities.mockResolvedValue({ feedback: true, models: true });
+    client.getCapabilities.mockResolvedValue({ feedback: true, models: true, skills: false });
     client.listModels.mockResolvedValue([haiku, luna, small]);
     client.getMessages.mockResolvedValue({ messages: saved("small"), nextCursor: "" });
     client.run.mockResolvedValue(completed("turn-live"));
@@ -58,7 +58,7 @@ describe("the models of useAssistantChat", () => {
   });
 
   it("offers no choice, and sends no model, when the agent does not say its runs choose", async () => {
-    client.getCapabilities.mockResolvedValue({ feedback: true, models: false });
+    client.getCapabilities.mockResolvedValue({ feedback: true, models: false, skills: false });
     const { result } = await setup({ models: false });
     await waitFor(() => {
       expect(result.current.feedbackEnabled).toBe(true);

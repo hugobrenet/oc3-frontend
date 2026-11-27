@@ -35,6 +35,8 @@ const EXPLAINED = new Set([
   "model_unknown",
   "tools_unavailable",
   "tools_unlisted",
+  "skill_unavailable",
+  "invalid_skill",
 ]);
 
 /** The statuses said when the code of a refusal is not one the page explains. */

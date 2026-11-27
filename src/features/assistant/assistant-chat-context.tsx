@@ -74,6 +74,8 @@ export function AssistantChatProvider({
   // the chat: one seen waiting is not told again.
   const [waitedUnseen, setWaitedUnseen] = useState(false);
   const [draft, setDraft] = useState("");
+  const [draftSkill, setDraftSkill] = useState<string | null>(null);
+  const [skillGone, setSkillGone] = useState<string | null>(null);
   const [prompt, setPrompt] = useState<string | null>(null);
   const [promptDropped, setPromptDropped] = useState(false);
   const [dock, setDock] = useState<DockState>("folded");
@@ -91,6 +93,8 @@ export function AssistantChatProvider({
     setEndedFailed(false);
     setWaitedUnseen(false);
     setDraft("");
+    setDraftSkill(null);
+    setSkillGone(null);
     setPrompt(null);
     setPromptDropped(false);
     setDock("folded");
@@ -146,7 +150,9 @@ export function AssistantChatProvider({
     if (previous === conversationKey) return;
     shownConversation.current = conversationKey;
     if (chat.pending === "turn" && previous === "") return;
+    const skill = chat.queued?.skill ?? null;
     setDraft(chat.takeQueued() ?? "");
+    setDraftSkill(skill);
     // The conversation shown only: the queue is read when it changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversationKey, chat.pending, chat.historyReady]);
@@ -268,6 +274,10 @@ export function AssistantChatProvider({
         attach,
         draft,
         setDraft,
+        draftSkill,
+        setDraftSkill,
+        skillGone,
+        setSkillGone,
         prompt,
         ask,
         takePrompt,

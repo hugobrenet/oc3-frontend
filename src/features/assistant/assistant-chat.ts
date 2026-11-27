@@ -32,6 +32,15 @@ export interface SharedChat {
   draft: string;
   setDraft: (draft: string) => void;
   /**
+   * The skill the message typed asks, chosen with / in the message box: it goes
+   * with the draft from the dock to the page.
+   */
+  draftSkill: string | null;
+  setDraftSkill: (skill: string | null) => void;
+  /** The skill removed from the message as the list no longer holds it, said once. */
+  skillGone: string | null;
+  setSkillGone: (skill: string | null) => void;
+  /**
    * A question to open the chat with (`ask`), until the view on display puts it
    * in the message box of a new conversation (`takePrompt`).
    */

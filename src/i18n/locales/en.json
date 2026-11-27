@@ -4769,7 +4769,15 @@
       "queuedHint": "The answer is running: your message will be sent once it ends.",
       "queuedDuringConfirmation": "Your message will be sent after your decision; it does not answer the confirmation.",
       "model": "Model",
-      "modelHint": "The model of the messages you send"
+      "modelHint": "The model of the messages you send",
+      "skillsHint": "Type / at the start to follow a procedure of the assistant."
+    },
+    "skills": {
+      "tag": "Procedure",
+      "remove": "Remove the procedure “{{skill}}”",
+      "list": "Procedures matching what you type",
+      "chosen": "Procedure /{{skill}} chosen",
+      "gone": "The procedure “{{skill}}” is no longer available to you: it was removed from your message."
     },
     "queue": {
       "label": "Queued message",
@@ -4815,7 +4823,9 @@
         "feedback_disabled": "Feedback is turned off on this assistant.",
         "tools_unavailable": "The agent could not read its tools. Try again later.",
         "tools_unlisted": "The assistant does not list its tools on this collector.",
-        "model_unknown": "This model is no longer available: the default model is selected. Send your message again."
+        "model_unknown": "This model is no longer available: the default model is selected. Send your message again.",
+        "skill_unavailable": "This procedure is not available to you now: choose another, or send your message without it.",
+        "invalid_skill": "The agent refused the name of this procedure. Choose it again in the list."
       },
       "status": {
         "401": "Your session no longer authenticates you to the assistant: sign in again.",

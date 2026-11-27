@@ -238,7 +238,14 @@ export function conversationMarkdown(doc: ExportDocument, t: TFunction, i18n: I1
     if (turn.prompt !== null) {
       out.push(`### ${messageMeta(t("assistant.message.you"), turn.prompt, dates)}`);
       blank();
-      out.push(...promptBlock(turn.prompt.text));
+      // The skill asked, then the words, as the message box shows them; the
+      // skill alone when it was sent without words.
+      const { skill, text } = turn.prompt;
+      out.push(
+        ...promptBlock(
+          skill === undefined || text === `/${skill}` ? text : `/${skill} ${text.trimStart()}`,
+        ),
+      );
       blank();
     }
     const answer = turn.answer;

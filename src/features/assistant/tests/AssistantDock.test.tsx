@@ -222,6 +222,58 @@ describe("the dock of the assistant", () => {
     expect(await screen.findByRole("button", { name: "Open the assistant" })).toBeInTheDocument();
   });
 
+  test("closes the list of the skills on Escape, staying open; the tag chosen goes with the draft to the page", async () => {
+    client.getCapabilities.mockResolvedValue({ feedback: false, models: false, skills: true });
+    client.listSkills.mockResolvedValue([
+      { name: "morning-check", description: "Check the collector in the morning." },
+    ]);
+    const router = renderApp(client, { link: false });
+    fireEvent.click(await screen.findByRole("button", { name: "Open the assistant" }));
+    await waitFor(() => {
+      expect(dockBox()).toBeEnabled();
+    });
+    await waitFor(() => {
+      expect(client.listSkills).toHaveBeenCalled();
+    });
+    fireEvent.change(dockBox(), { target: { value: "/mor" } });
+    expect(within(dock()).getByRole("listbox")).toBeInTheDocument();
+    fireEvent.keyDown(dockBox(), { key: "Escape" });
+    expect(within(dock()).queryByRole("listbox")).toBeNull();
+    expect(dock()).toBeInTheDocument();
+    fireEvent.change(dockBox(), { target: { value: "/morning-check " } });
+    const remove = { name: "Remove the procedure “morning-check”" };
+    expect(within(dock()).getByRole("button", remove)).toBeInTheDocument();
+    // To the page of the assistant: the tag goes with the draft.
+    fireEvent.click(within(dock()).getByRole("button", { name: "Open in the assistant page" }));
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe("/ai");
+    });
+    expect(await screen.findByRole("button", remove)).toBeInTheDocument();
+  });
+
+  test("takes the question of a record in place of the skill chosen", async () => {
+    client.getCapabilities.mockResolvedValue({ feedback: false, models: false, skills: true });
+    client.listSkills.mockResolvedValue([
+      { name: "morning-check", description: "Check the collector in the morning." },
+    ]);
+    renderApp(client);
+    fireEvent.click(await screen.findByRole("button", { name: "Open the assistant" }));
+    await waitFor(() => {
+      expect(dockBox()).toBeEnabled();
+    });
+    await waitFor(() => {
+      expect(client.listSkills).toHaveBeenCalled();
+    });
+    fireEvent.change(dockBox(), { target: { value: "/morning-check " } });
+    const remove = { name: "Remove the procedure “morning-check”" };
+    expect(within(dock()).getByRole("button", remove)).toBeInTheDocument();
+    fireEvent.click(link());
+    await waitFor(() => {
+      expect(dockBox()).toHaveValue(question);
+    });
+    expect(within(dock()).queryByRole("button", remove)).toBeNull();
+  });
+
   test("names an action waiting, to reject, or to decide on in the card of the page", async () => {
     // The golden confirmation expires on 2026-10-09 at 17:45.
     vi.useFakeTimers({ toFake: ["Date"], now: new Date("2026-10-09T17:00:00Z") });

@@ -52,15 +52,16 @@ describe("parseFeedback", () => {
 
 describe("parseCapabilities", () => {
   it.each([
-    [{ custom: { feedback: true } }, true, false],
-    [{ custom: { feedback: false } }, false, false],
-    // An agent older than the settings: the feedback is on, no model to choose.
-    [{ tools: { supported: true } }, true, false],
-    [{ custom: {} }, true, false],
-    [{ custom: { feedback: true, models: true } }, true, true],
-    [{ custom: { models: false } }, true, false],
-  ])("reads %j", (value, feedback, models) => {
-    expect(parseCapabilities(value)).toEqual({ feedback, models });
+    [{ custom: { feedback: true } }, true, false, false],
+    [{ custom: { feedback: false } }, false, false, false],
+    // An agent older than the settings: the feedback is on, no model to choose, no skill.
+    [{ tools: { supported: true } }, true, false, false],
+    [{ custom: {} }, true, false, false],
+    [{ custom: { feedback: true, models: true, skills: false } }, true, true, false],
+    [{ custom: { models: false } }, true, false, false],
+    [{ custom: { skills: true } }, true, false, true],
+  ])("reads %j", (value, feedback, models, skills) => {
+    expect(parseCapabilities(value)).toEqual({ feedback, models, skills });
   });
 
   it.each([
@@ -73,6 +74,7 @@ describe("parseCapabilities", () => {
     { custom: { feedback: 0 } },
     { custom: { models: "true" } },
     { custom: { models: 1 } },
+    { custom: { skills: "true" } },
   ])("refuses %j", (value) => {
     expect(() => parseCapabilities(value)).toThrow(AssistantError);
   });
@@ -159,7 +161,11 @@ describe("the feedback of the client", () => {
     fetchMock.mockResolvedValueOnce(
       Response.json({ transport: { streaming: true }, custom: { feedback: false } }),
     );
-    await expect(client.getCapabilities()).resolves.toEqual({ feedback: false, models: false });
+    await expect(client.getCapabilities()).resolves.toEqual({
+      feedback: false,
+      models: false,
+      skills: false,
+    });
     expect(new URL(requestAt(0).url).pathname).toBe("/api/assistant/capabilities");
     expect(requestAt(0).method).toBe("GET");
     fetchMock.mockResolvedValueOnce(

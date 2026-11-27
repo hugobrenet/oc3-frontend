@@ -4769,7 +4769,15 @@
       "queuedHint": "La réponse est en cours : votre message partira à la fin.",
       "queuedDuringConfirmation": "Votre message partira après votre décision ; il ne répond pas à la confirmation.",
       "model": "Modèle",
-      "modelHint": "Le modèle des messages que vous envoyez"
+      "modelHint": "Le modèle des messages que vous envoyez",
+      "skillsHint": "Tapez / en début de message pour suivre une procédure de l'assistant."
+    },
+    "skills": {
+      "tag": "Procédure",
+      "remove": "Retirer la procédure « {{skill}} »",
+      "list": "Procédures correspondant à votre saisie",
+      "chosen": "Procédure /{{skill}} choisie",
+      "gone": "La procédure « {{skill}} » ne vous est plus disponible : elle a été retirée de votre message."
     },
     "queue": {
       "label": "Message en file",
@@ -4815,7 +4823,9 @@
         "feedback_disabled": "Les avis sont désactivés sur cet assistant.",
         "tools_unavailable": "L'agent n'a pas pu lire ses outils. Réessayez plus tard.",
         "tools_unlisted": "L'assistant ne liste pas ses outils sur ce collector.",
-        "model_unknown": "Ce modèle n'est plus disponible : le modèle par défaut est sélectionné. Renvoyez votre message."
+        "model_unknown": "Ce modèle n'est plus disponible : le modèle par défaut est sélectionné. Renvoyez votre message.",
+        "skill_unavailable": "Cette procédure ne vous est pas disponible pour le moment : choisissez-en une autre, ou envoyez votre message sans elle.",
+        "invalid_skill": "L'agent a refusé le nom de cette procédure. Choisissez-la de nouveau dans la liste."
       },
       "status": {
         "401": "Votre session ne vous authentifie plus auprès de l'assistant : reconnectez-vous.",
